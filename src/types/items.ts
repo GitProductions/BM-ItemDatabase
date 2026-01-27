@@ -24,6 +24,7 @@ export interface Item {
   flags: string[];
   owner?: string;
   stats: ItemStats;
+  ego?: string;
   isArtifact?: boolean;
   raw?: string[];
   flaggedForReview?: boolean;

@@ -123,6 +123,11 @@ export const parseIdentifyDump = (text: string): Item[] => {
           const statAffect = parseStatAffect(nextLine);
           if (statAffect) currentItem.stats.affects.push(statAffect);
         }
+      } else if (nextLine.includes("This item's ego")) {
+        const egoMatch = nextLine.match(/This item's ego is of\s+(.+)/i);
+        if (egoMatch) {
+          currentItem.ego = egoMatch[1];
+        }
       }
 
       currentItem.raw?.push(nextLine);

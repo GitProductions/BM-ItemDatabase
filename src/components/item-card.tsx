@@ -43,35 +43,65 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item }) => {
             <div className="text-xs text-zinc-500 mt-1 font-mono">
               {item.keywords} • <span className="uppercase text-zinc-400">{item.type}</span>
             </div>
-            {stats.condition && (
-              <div className="text-[10px] uppercase text-zinc-500 mt-1 tracking-wide">{stats.condition}</div>
-            )}
+
           </div>
         </div>
+
         <div className="text-right">
           {item.isArtifact && (
-          <span className="text-xs font-mono text-zinc-500 bg-zinc-900 px-2 py-1 rounded">
-             {item.isArtifact ? 'Artifact: Yes' : undefined}
-          </span>
+            <span className="text-xs font-mono text-zinc-500 bg-zinc-900 px-2 py-1 rounded">
+              {item.isArtifact ? 'Artifact: Yes' : undefined}
+            </span>
           )}
 
+          {/* <div className="mt-1">
+            {item.ego && (
+              <span
+                className="text-[10px] uppercase border border-zinc-600 text-whte-400 px-1.5 py-0.5 rounded mr-1 mb-1 pt-1"
+              >
+                Ego: {item.ego}
+              </span>
+            )}
+          </div> */}
+
         </div>
+
       </div>
 
-      <div className="mb-3 mt-3 flex flex-wrap">
-        {stats.weight !== undefined && ( <StatBadge label="Weight" value={stats.weight.toString()} color="bg-yellow-900/50 border border-yellow-800" />)}
-        {stats.damage && <StatBadge label="Damage" value={stats.damage} color="bg-red-900/50 border border-red-800" />}
-        {stats.ac !== undefined && <StatBadge label="AC" value={stats.ac} color="bg-blue-900/50 border border-blue-800" />}
+      <div className="mb-1">
+        {item.ego && (
+          <span
+            className="text-[10px] uppercase border border-zinc-600 text-whte-400 px-1.5 py-0.5 rounded mr-1 mb-1 pt-1"
+          >
+            Ego: {item.ego}
+          </span>
+        )}
+      </div>
 
+      <div className="mb-2">
         {item.flags.map((flag) => (
           <span
             key={flag}
-            className="text-[10px] uppercase border border-zinc-600 text-zinc-400 px-1.5 py-0.5 rounded mr-1 mb-1"
+            className="text-[10px] uppercase border border-zinc-600 text-zinc-400 px-1.5 py-0.5 rounded mr-1 mb-1 pt-1"
           >
             {flag}
           </span>
         ))}
       </div>
+
+      <div className="mb-1 ">
+        {stats.weight !== undefined && (<StatBadge label="Weight" value={stats.weight.toString()} color="bg-yellow-900/50 border border-yellow-800" />)}
+        {stats.ac !== undefined && <StatBadge label="AC" value={stats.ac} color="bg-blue-900/50 border border-blue-800" />}
+      </div>
+
+      <div className="pb-1">
+        {stats.damage && <StatBadge label="Damage" value={stats.damage} color="bg-red-900/50 border border-red-800" />}
+
+      </div>
+
+
+
+
 
       {affects.length > 0 && (
         <div className="bg-zinc-900/50 rounded p-2 text-sm border-l-2 border-orange-600">
