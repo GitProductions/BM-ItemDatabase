@@ -4,6 +4,7 @@ import { Database, Plus, Search } from 'lucide-react';
 import { DatabaseView } from '@/components/database-view';
 import { ImportPanel } from '@/components/import-panel';
 import { Item } from '@/types/items';
+import { parseIdentifyDump } from '@/lib/parse-identify-dump';
 
 type AppView = 'db' | 'import';
 
@@ -80,6 +81,11 @@ export default function App() {
       setIsProcessing(false);
     }
   };
+
+  const previewItems = useMemo(() => {
+    if (!rawInput.trim()) return [];
+    return parseIdentifyDump(rawInput);
+  }, [rawInput]);
 
   const filteredItems = useMemo(() => {
     const searchTerm = search.trim().toLowerCase();
@@ -169,11 +175,12 @@ export default function App() {
           )
         ) : (
           <ImportPanel
-            rawInput={rawInput}
-            onRawInputChange={setRawInput}
-            onImport={handleImport}
-            onClear={clearDb}
-            isProcessing={isProcessing}
+              rawInput={rawInput}
+              onRawInputChange={setRawInput}
+              onImport={handleImport}
+              onClear={clearDb}
+              isProcessing={isProcessing}
+              previewItems={previewItems}
           />
         )}
       </main>
