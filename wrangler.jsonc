@@ -1,0 +1,49 @@
+{
+    "$schema": "node_modules/wrangler/config-schema.json",
+    "main": ".open-next/worker.js",
+    "name": "bm-item-database",
+    "account_id": "c6d06e402cc1a55fd8080bf1212ecb9a",
+    "compatibility_date": "2025-11-04",
+    "compatibility_flags": [
+        "nodejs_compat",
+        "global_fetch_strictly_public"
+    ],
+    "assets": {
+        "directory": ".open-next/assets",
+        "binding": "ASSETS"
+    },
+    "services": [
+        {
+            "binding": "WORKER_SELF_REFERENCE",
+            "service": "bm-item-database"
+        }
+    ]
+    
+    // "r2_buckets": [
+    //     {
+    //         "binding": "NEXT_INC_CACHE_R2_BUCKET",
+    //         "bucket_name": "your-bucket-name",
+    //         "preview": true
+    //     }
+    // ],
+    // "durable_objects": {
+    //     "bindings": [
+    //         {
+    //             "name": "NEXT_CACHE_DO_QUEUE",
+    //             "class_name": "Queue",
+    //             "script_name": "bm-item-database"
+    //         }
+    //     ]
+    // },
+    // "env": {
+    //     "development": {
+    //         "r2_buckets": [
+    //             {
+    //                 "binding": "NEXT_INC_CACHE_R2_BUCKET",
+    //                 "bucket_name": "your-bucket-name-preview",
+    //                 "preview": true
+    //             }
+    //         ]
+    //     }
+    // }
+}
