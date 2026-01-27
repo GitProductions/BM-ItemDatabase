@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Database, Filter, Search } from 'lucide-react';
+import { Filter, Search } from 'lucide-react';
 import { Item } from '@/types/items';
 import { ItemCard } from './item-card';
 import Image from 'next/image';

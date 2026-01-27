@@ -1,9 +1,11 @@
 
 import {  Plus, Search } from 'lucide-react';
 import Image from 'next/image';
+import { Item } from '@/types/items';
 
+type AppView = 'db' | 'import';
 
-function Header( {items, view, setView}: {items: any[], view: string, setView: (view: any) => void}) {
+function Header( {items, view, setView}: {items: Item[], view: AppView, setView: (view: AppView) => void}) {
   return (
       <header className="bg-zinc-900 border-b border-zinc-800 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
