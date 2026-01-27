@@ -50,6 +50,23 @@ const stripCondition = (value: string) => {
   return { label: match[1].trim(), condition: match[2].trim() };
 };
 
+/**
+ * Detects potential duplicates by comparing name, keywords, and type
+ * Returns the ID of the matching item or undefined if no match found
+ */
+export const findDuplicate = (newItem: Item, existingItems: Item[]): string | undefined => {
+  return existingItems.find((existing) => {
+    const nameSimilarity =
+      existing.name.toLowerCase().trim() === newItem.name.toLowerCase().trim();
+    const keywordsSimilarity =
+      existing.keywords.toLowerCase().trim() === newItem.keywords.toLowerCase().trim();
+    const typeSimilarity = existing.type.toLowerCase().trim() === newItem.type.toLowerCase().trim();
+
+    // Match if name and type are the same, or if all three match
+    return (nameSimilarity && typeSimilarity) || (nameSimilarity && keywordsSimilarity && typeSimilarity);
+  })?.id;
+};
+
 export const parseIdentifyDump = (text: string): Item[] => {
   const lines = text
     .split('\n')

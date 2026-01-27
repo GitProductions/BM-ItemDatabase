@@ -26,4 +26,6 @@ export interface Item {
   stats: ItemStats;
   isArtifact?: boolean;
   raw?: string[];
+  flaggedForReview?: boolean;
+  duplicateOf?: string; // id of the duplicate item
 }

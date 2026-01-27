@@ -27,7 +27,7 @@ function Header( {items, view, setView}: {items: any[], view: string, setView: (
                   : 'text-zinc-400 hover:text-white'
               }`}
             >
-              <Search size={16} /> Database
+              <Search size={16} /> Items
             </button>
             <button
               onClick={() => setView('import')}
@@ -37,7 +37,7 @@ function Header( {items, view, setView}: {items: any[], view: string, setView: (
                   : 'text-zinc-400 hover:text-white'
               }`}
             >
-              <Plus size={16} /> Add Data
+              <Plus size={16} /> Add Items
             </button>
           </div>
         </div>
