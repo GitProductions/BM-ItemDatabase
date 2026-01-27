@@ -98,7 +98,10 @@ export default function App() {
   }, [rawInput]);
 
   const handleCheckDuplicates = () => {
-    console.log('handleCheckDuplicates called', { previewItemsCount: previewItems.length, itemsCount: items.length });
+    // console.log('handleCheckDuplicates called', { previewItemsCount: previewItems.length, itemsCount: items.length });
+    // Store Users Name for Later Recall
+    localStorage.setItem('bm-database-userName', userName);
+
     const duplicates: Item[] = [];
     const newItems: Item[] = [];
 
@@ -165,6 +168,12 @@ export default function App() {
   const handleCancelImport = () => {
     setDuplicateCheck(null);
   };
+
+
+  useEffect(() => {
+    const storedUserName = localStorage.getItem('bm-database-userName') || '';
+    setUserName(storedUserName);
+  }, []);
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-200 font-sans selection:bg-orange-500/30">
