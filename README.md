@@ -38,6 +38,19 @@ pnpm lint
 pnpm build
 ```
 
+### MongoDB integration
+
+- Create a `.env.local` file in the project root (add it to `.gitignore` if not already ignored).
+- Add the MongoDB connection information before starting the app:
+
+```bash
+MONGODB_URI="mongodb+srv://<user>:<secret>@cluster.mongodb.net/?retryWrites=true&w=majority"
+MONGODB_DB="bm-item-database"
+MONGODB_COLLECTION="items"
+```
+
+- The API under `app/api/items` uses those variables to drive the new Mongo-backed database, so restart `pnpm dev` after editing `.env.local`.
+
 ### Notes
 
 - Velite outputs to `.velite/` and static assets to `public/static` (both ignored in git).

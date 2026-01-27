@@ -6,9 +6,16 @@ type ImportPanelProps = {
   onRawInputChange: (value: string) => void;
   onImport: () => void;
   onClear: () => void;
+  isProcessing?: boolean;
 };
 
-export const ImportPanel: React.FC<ImportPanelProps> = ({ rawInput, onRawInputChange, onImport, onClear }) => (
+export const ImportPanel: React.FC<ImportPanelProps> = ({
+  rawInput,
+  onRawInputChange,
+  onImport,
+  onClear,
+  isProcessing = false,
+}) => (
   <div className="max-w-3xl mx-auto">
     <div className="bg-slate-900 rounded-xl border border-slate-800 p-6 shadow-lg">
       <div className="flex items-center gap-3 mb-4">
@@ -35,14 +42,15 @@ export const ImportPanel: React.FC<ImportPanelProps> = ({ rawInput, onRawInputCh
       <div className="flex justify-between items-center">
         <button
           onClick={onClear}
-          className="px-4 py-2 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-900/20 text-sm font-medium transition-colors flex items-center gap-2"
+          disabled={isProcessing}
+          className="px-4 py-2 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-900/20 text-sm font-medium transition-colors flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:text-slate-500"
         >
           <Trash2 size={16} /> Clear Database
         </button>
 
         <button
           onClick={onImport}
-          disabled={!rawInput.trim()}
+          disabled={isProcessing || !rawInput.trim()}
           className="px-6 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition-colors shadow-lg shadow-emerald-900/50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
         >
           <Save size={18} /> Process & Add to DB
