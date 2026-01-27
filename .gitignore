@@ -17,9 +17,7 @@
 /.next/
 /out/
 
-# velite output
-.velite
-public/static
+
 
 # production
 /build

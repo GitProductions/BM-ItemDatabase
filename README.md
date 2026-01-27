@@ -47,6 +47,5 @@ MONGODB_COLLECTION="items"
 
 ### Notes
 
-- Velite outputs to `.velite/` and static assets to `public/static` (both ignored in git).
 - Light/dark mode is handled with CSS variables and a small client toggle.
 - In-view animations use native IntersectionObserver; gradients are minimal and controlled.
