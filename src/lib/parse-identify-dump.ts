@@ -31,12 +31,20 @@ const parseSpellAffect = (line: string): ItemAffect => {
   };
 };
 
+// todo: 
+// strip hum or glow conditions
+// ..They glow blue
+// ..They glow softly
+// ..It hums powerfully
 const nameDescriptorRegex = /(.*?)\s*\(([^)]+)\)\s*$/;
+const descriptorLineRegex = /^\.\.(.+)$/;
+const descriptorSuffixRegex = /(\.\.[^.]+)+$/g;
 
 const stripCondition = (value: string) => {
-  const match = value.match(nameDescriptorRegex);
+  const cleanedValue = value.replace(descriptorSuffixRegex, '').trim();
+  const match = cleanedValue.match(nameDescriptorRegex);
   if (!match) {
-    return { label: value.trim(), condition: undefined };
+    return { label: cleanedValue, condition: undefined };
   }
 
   return { label: match[1].trim(), condition: match[2].trim() };
@@ -46,7 +54,7 @@ export const parseIdentifyDump = (text: string): Item[] => {
   const lines = text
     .split('\n')
     .map((line) => line.trim())
-    .filter((line) => line.length > 0);
+    .filter((line) => line.length > 0 && !descriptorLineRegex.test(line));
 
   const items: Item[] = [];
 

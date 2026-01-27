@@ -22,6 +22,7 @@ export interface Item {
   keywords: string;
   type: string;
   flags: string[];
+  owner?: string;
   stats: ItemStats;
   isArtifact?: boolean;
   raw?: string[];

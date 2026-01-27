@@ -17,6 +17,7 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [userName, setUserName] = useState('');
 
   useEffect(() => {
     const loadItems = async () => {
@@ -44,10 +45,13 @@ export default function App() {
     setStatusMessage(null);
 
     try {
+      const trimmedUserName = userName.trim();
+      const payload: { raw: string; owner?: string } = { raw: rawInput };
+      if (trimmedUserName) payload.owner = trimmedUserName;
       const response = await fetch('/api/items', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ raw: rawInput }),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) throw new Error('Import failed');
@@ -175,12 +179,14 @@ export default function App() {
           )
         ) : (
           <ImportPanel
-              rawInput={rawInput}
-              onRawInputChange={setRawInput}
-              onImport={handleImport}
-              onClear={clearDb}
-              isProcessing={isProcessing}
-              previewItems={previewItems}
+            rawInput={rawInput}
+            onRawInputChange={setRawInput}
+            onImport={handleImport}
+            onClear={clearDb}
+            isProcessing={isProcessing}
+            previewItems={previewItems}
+            userName={userName}
+            onUserNameChange={setUserName}
           />
         )}
       </main>

@@ -13,10 +13,10 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  let payload: { raw?: string };
+  let payload: { raw?: string; owner?: string };
 
   try {
-    payload = (await request.json()) as { raw?: string };
+    payload = (await request.json()) as { raw?: string; owner?: string };
   } catch {
     return NextResponse.json({ message: 'Invalid request payload' }, { status: 400 });
   }
@@ -32,6 +32,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ items });
   }
 
+  const ownerName = payload?.owner?.trim();
+
   const collection = await getItemsCollection();
   const now = new Date();
 
@@ -42,6 +44,7 @@ export async function POST(request: NextRequest) {
         $set: {
           ...item,
           updatedAt: now,
+          ...(ownerName ? { owner: ownerName } : {}),
         },
         $setOnInsert: {
           createdAt: now,
