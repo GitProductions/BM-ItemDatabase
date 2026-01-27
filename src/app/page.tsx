@@ -1,11 +1,11 @@
 "use client";
-import React, { useEffect, useMemo, useState } from 'react';
-import { Database, Plus, Search } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 import { DatabaseView } from '@/components/database-view';
 import { ImportPanel } from '@/components/import-panel';
 import { Item } from '@/types/items';
 import { parseIdentifyDump } from '@/lib/parse-identify-dump';
-import Image from 'next/image';
+import Header from '@/components/header';
+import Footer from '@/components/footer';
 
 type AppView = 'db' | 'import';
 
@@ -13,8 +13,6 @@ export default function App() {
   const [items, setItems] = useState<Item[]>([]);
   const [view, setView] = useState<AppView>('db');
   const [rawInput, setRawInput] = useState('');
-  const [search, setSearch] = useState('');
-  const [filterType, setFilterType] = useState('all');
   const [loading, setLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
@@ -92,74 +90,13 @@ export default function App() {
     return parseIdentifyDump(rawInput);
   }, [rawInput]);
 
-  const filteredItems = useMemo(() => {
-    const searchTerm = search.trim().toLowerCase();
-
-    return items.filter((item) => {
-      const stats = item.stats ?? { affects: [], weight: 0 };
-      const affects = stats.affects ?? [];
-      const matchesSearch =
-        !searchTerm ||
-        item.name.toLowerCase().includes(searchTerm) ||
-        item.keywords.toLowerCase().includes(searchTerm) ||
-        affects.some(
-          (affect) =>
-            affect.stat?.toLowerCase().includes(searchTerm) ||
-            (affect.spell && affect.spell.toLowerCase().includes(searchTerm))
-        );
-
-      const matchesType = filterType === 'all' ? true : item.type.includes(filterType);
-
-      return matchesSearch && matchesType;
-    });
-  }, [items, search, filterType]);
-
-  const uniqueTypes = useMemo(() => {
-    const types = new Set(items.map((item) => item.type));
-    return ['all', ...Array.from(types)];
-  }, [items]);
-
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-200 font-sans selection:bg-orange-500/30">
-      <header className="bg-zinc-900 border-b border-zinc-800 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className=" p-2 rounded text-white ">
-     
-              <Image className="shadow-lg shadow-orange-900/50" src="/bm-logo.png" alt="Logo" width={24} height={24} />
-            </div>
-            <div>
-              <h1 className="font-bold text-xl tracking-tight text-white">BlackMUD Item DB</h1>
-              <p className="text-xs text-zinc-400 font-mono">{items.length} artifacts indexed</p>
-            </div>
-          </div>
 
-          <div className="flex gap-2">
-            <button
-              onClick={() => setView('db')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2  ${
-                view === 'db'
-                  ? 'bg-zinc-800 text-orange-400 border border-zinc-700'
-                  : 'text-zinc-400 hover:text-white'
-              }`}
-            >
-              <Search size={16} /> Database
-            </button>
-            <button
-              onClick={() => setView('import')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 ${
-                view === 'import'
-                  ? 'bg-zinc-800 text-orange-400 border border-zinc-700'
-                  : 'text-zinc-400 hover:text-white'
-              }`}
-            >
-              <Plus size={16} /> Add Data
-            </button>
-          </div>
-        </div>
-      </header>
 
-      <main className="max-w-7xl mx-auto px-4 py-6 space-y-6">
+      <Header items={items} view={view} setView={setView} />
+
+      <main className="max-w-7xl mx-auto px-4 py-6 space-y-6 h-[80dvh]">
         {statusMessage && (
           <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-3 text-sm text-rose-400">
             {statusMessage}
@@ -170,14 +107,7 @@ export default function App() {
           loading ? (
             <div className="text-center py-20 text-zinc-500">Loading artifacts from MongoDB...</div>
           ) : (
-            <DatabaseView
-              items={filteredItems}
-              search={search}
-              filterType={filterType}
-              uniqueTypes={uniqueTypes}
-              onSearchChange={setSearch}
-              onFilterChange={setFilterType}
-            />
+            <DatabaseView items={items} />
           )
         ) : (
           <ImportPanel
@@ -191,7 +121,11 @@ export default function App() {
             onUserNameChange={setUserName}
           />
         )}
+
+
       </main>
+
+      <Footer />
     </div>
   );
 }

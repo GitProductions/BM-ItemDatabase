@@ -100,6 +100,8 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item }) => {
           </ul>
         </div>
       )}
+
+      <p className='text-xs text-zinc-500 mt-2'>Item added by: {item.owner ?? 'Unknown'}</p>
     </div>
   );
 };
