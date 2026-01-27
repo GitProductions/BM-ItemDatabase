@@ -120,8 +120,8 @@ export default function App() {
   }, [items]);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-orange-500/30">
-      <header className="bg-slate-900 border-b border-slate-800 sticky top-0 z-10">
+    <div className="min-h-screen bg-zinc-950 text-zinc-200 font-sans selection:bg-orange-500/30">
+      <header className="bg-zinc-900 border-b border-zinc-800 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className=" p-2 rounded text-white ">
@@ -130,17 +130,17 @@ export default function App() {
             </div>
             <div>
               <h1 className="font-bold text-xl tracking-tight text-white">BlackMUD Item DB</h1>
-              <p className="text-xs text-slate-400 font-mono">{items.length} artifacts indexed</p>
+              <p className="text-xs text-zinc-400 font-mono">{items.length} artifacts indexed</p>
             </div>
           </div>
 
           <div className="flex gap-2">
             <button
               onClick={() => setView('db')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 ${
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2  ${
                 view === 'db'
-                  ? 'bg-slate-800 text-orange-400 border border-slate-700'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-zinc-800 text-orange-400 border border-zinc-700'
+                  : 'text-zinc-400 hover:text-white'
               }`}
             >
               <Search size={16} /> Database
@@ -149,8 +149,8 @@ export default function App() {
               onClick={() => setView('import')}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 ${
                 view === 'import'
-                  ? 'bg-slate-800 text-orange-400 border border-slate-700'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-zinc-800 text-orange-400 border border-zinc-700'
+                  : 'text-zinc-400 hover:text-white'
               }`}
             >
               <Plus size={16} /> Add Data
@@ -161,14 +161,14 @@ export default function App() {
 
       <main className="max-w-7xl mx-auto px-4 py-6 space-y-6">
         {statusMessage && (
-          <div className="rounded-xl border border-slate-800 bg-slate-900/40 px-4 py-3 text-sm text-rose-400">
+          <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-3 text-sm text-rose-400">
             {statusMessage}
           </div>
         )}
 
         {view === 'db' ? (
           loading ? (
-            <div className="text-center py-20 text-slate-500">Loading artifacts from MongoDB...</div>
+            <div className="text-center py-20 text-zinc-500">Loading artifacts from MongoDB...</div>
           ) : (
             <DatabaseView
               items={filteredItems}

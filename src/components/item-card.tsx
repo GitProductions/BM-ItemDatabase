@@ -9,7 +9,7 @@ type ItemCardProps = {
 
 export const ItemCard: React.FC<ItemCardProps> = ({ item }) => {
   let Icon = Database;
-  let typeColor = 'text-slate-400';
+  let typeColor = 'text-zinc-400';
 
   const stats = item.stats ?? { affects: [], weight: 0 };
   const affects = stats.affects ?? [];
@@ -32,25 +32,25 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item }) => {
   }
 
   return (
-    <div className="bg-slate-800 border border-slate-700 rounded-lg p-4 hover:border-slate-500 transition-colors shadow-sm">
+    <div className="bg-zinc-800 border border-zinc-700 rounded-lg p-4 hover:border-zinc-500 transition-colors shadow-sm">
       <div className="flex justify-between items-start mb-2">
         <div className="flex items-start gap-3">
-          <div className={`p-2 rounded-md bg-slate-900 ${typeColor}`}>
+          <div className={`p-2 rounded-md bg-zinc-900 ${typeColor}`}>
             <Icon size={20} />
           </div>
           <div>
-            <h3 className="font-bold text-orange-400 text-lg leading-tight">{item.name}</h3>
-            <div className="text-xs text-slate-500 mt-1 font-mono">
-              {item.keywords} • <span className="uppercase text-slate-400">{item.type}</span>
+            <h3 className="font-bold text-white text-lg leading-tight">{item.name}</h3>
+            <div className="text-xs text-zinc-500 mt-1 font-mono">
+              {item.keywords} • <span className="uppercase text-zinc-400">{item.type}</span>
             </div>
             {stats.condition && (
-              <div className="text-[10px] uppercase text-slate-500 mt-1 tracking-wide">{stats.condition}</div>
+              <div className="text-[10px] uppercase text-zinc-500 mt-1 tracking-wide">{stats.condition}</div>
             )}
           </div>
         </div>
         <div className="text-right">
           {item.isArtifact && (
-          <span className="text-xs font-mono text-slate-500 bg-slate-900 px-2 py-1 rounded">
+          <span className="text-xs font-mono text-zinc-500 bg-zinc-900 px-2 py-1 rounded">
              {item.isArtifact ? 'Artifact: Yes' : undefined}
           </span>
           )}
@@ -66,7 +66,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item }) => {
         {item.flags.map((flag) => (
           <span
             key={flag}
-            className="text-[10px] uppercase border border-slate-600 text-slate-400 px-1.5 py-0.5 rounded mr-1 mb-1"
+            className="text-[10px] uppercase border border-zinc-600 text-zinc-400 px-1.5 py-0.5 rounded mr-1 mb-1"
           >
             {flag}
           </span>
@@ -74,11 +74,11 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item }) => {
       </div>
 
       {affects.length > 0 && (
-        <div className="bg-slate-900/50 rounded p-2 text-sm border-l-2 border-orange-600">
-          <div className="text-[10px] uppercase text-slate-500 mb-1 font-bold">Affects</div>
+        <div className="bg-zinc-900/50 rounded p-2 text-sm border-l-2 border-orange-600">
+          <div className="text-[10px] uppercase text-zinc-500 mb-1 font-bold">Affects</div>
           <ul className="space-y-1">
             {affects.map((affect, index) => (
-              <li key={`${affect.type}-${index}`} className="flex justify-between text-slate-300 font-mono text-xs">
+              <li key={`${affect.type}-${index}`} className="flex justify-between text-zinc-300 font-mono text-xs">
                 {affect.type === 'spell' ? (
                   <>
                     <span>
