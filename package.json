@@ -1,12 +1,10 @@
 {
-  "name": "newwebsite-test",
+  "name": "blackmud-item-database",
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "content:build": "velite",
-    "content:watch": "velite dev",
-    "dev": "pnpm content:build && next dev",
-    "build": "pnpm content:build && next build",
+    "dev": "next dev",
+    "build": "next build",
     "start": "next start",
     "lint": "eslint"
   },
