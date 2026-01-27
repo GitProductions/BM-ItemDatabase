@@ -7,6 +7,34 @@ type ItemCardProps = {
   item: Item;
 };
 
+type DamageStats = {
+  average: string;
+  high: number;
+  low: number;
+};
+
+const calculateDamage = (damage: string): DamageStats | null => {
+  // Simple parser to calculate average damage from a dice string like "2D6"
+  const diceRegex = /(\d*)d(\d+)([+-]\d+)?/i;
+  const match = damage.match(diceRegex);
+  if (!match) return null;
+  const numDice = parseInt(match[1]) || 1;
+  const dieSides = parseInt(match[2]);
+  const modifier = match[3] ? parseInt(match[3]) : 0;
+  const averageDie = (dieSides + 1) / 2;
+  const averageDamage = numDice * averageDie + modifier;
+
+  const highDamage = numDice * dieSides + modifier;
+  const lowDamage = numDice * 1 + modifier;
+  return {
+    average: averageDamage.toFixed(2),
+    high: highDamage,
+    low: lowDamage,
+  };
+};
+
+
+
 export const ItemCard: React.FC<ItemCardProps> = ({ item }) => {
   let Icon = Database;
   let typeColor = 'text-zinc-400';
@@ -95,8 +123,29 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item }) => {
       </div>
 
       <div className="pb-1">
-        {stats.damage && <StatBadge label="Damage" value={stats.damage} color="bg-red-900/50 border border-red-800" />}
-
+        {stats.damage && (
+          <div className="relative group inline-block">
+            <StatBadge label="Damage" value={stats.damage} color="bg-red-900/50 border border-red-800" />
+            {(() => {
+              const dmg = calculateDamage(stats.damage);
+              return dmg ? (
+                
+                <div className="absolute 
+                    top-full left-[100%] -translate-x-1/2
+                     mb-2 bg-zinc-950 border border-red-700 rounded px-3 py-2 
+                     text-xs text-red-200 whitespace-nowrap 
+                     opacity-0 group-hover:opacity-100 
+                     transition-opacity pointer-events-none shadow-lg z-10">
+                  <div className="font-mono">
+                    <div>Avg: <span className="text-red-300 font-bold">{dmg.average}</span></div>
+                    <div>Low: <span className="text-red-300">{dmg.low}</span></div>
+                    <div>High: <span className="text-red-300">{dmg.high}</span></div>
+                  </div>
+                </div>
+              ) : null;
+            })()}
+          </div>
+        )}
       </div>
 
 
