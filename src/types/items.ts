@@ -9,8 +9,10 @@ export interface ItemAffect {
 }
 
 export interface ItemStats {
+  affects: ItemAffect[];
   damage?: string;
   ac?: number;
+  weight?: number;
 }
 
 export interface Item {
@@ -18,9 +20,7 @@ export interface Item {
   name: string;
   keywords: string;
   type: string;
-  weight: number;
   flags: string[];
   stats: ItemStats;
-  affects: ItemAffect[];
   raw?: string[];
 }

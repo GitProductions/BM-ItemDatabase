@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
 
   try {
     payload = (await request.json()) as { raw?: string };
-  } catch (error) {
+  } catch {
     return NextResponse.json({ message: 'Invalid request payload' }, { status: 400 });
   }
 

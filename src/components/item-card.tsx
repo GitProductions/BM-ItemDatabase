@@ -43,7 +43,9 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item }) => {
           </div>
         </div>
         <div className="text-right">
-          <span className="text-xs font-mono text-slate-500 bg-slate-900 px-2 py-1 rounded">Wgt: {item.weight}</span>
+          <span className="text-xs font-mono text-slate-500 bg-slate-900 px-2 py-1 rounded">
+            Wgt: {item.stats.weight ?? 0}
+          </span>
         </div>
       </div>
 
@@ -65,11 +67,11 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item }) => {
         ))}
       </div>
 
-      {item.affects.length > 0 && (
+      {item.stats.affects.length > 0 && (
         <div className="bg-slate-900/50 rounded p-2 text-sm border-l-2 border-emerald-600">
           <div className="text-[10px] uppercase text-slate-500 mb-1 font-bold">Affects</div>
           <ul className="space-y-1">
-            {item.affects.map((affect, index) => (
+            {item.stats.affects.map((affect, index) => (
               <li key={`${affect.type}-${index}`} className="flex justify-between text-slate-300 font-mono text-xs">
                 {affect.type === 'spell' ? (
                   <>

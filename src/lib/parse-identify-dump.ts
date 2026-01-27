@@ -52,10 +52,10 @@ export const parseIdentifyDump = (text: string): Item[] => {
       name,
       keywords,
       type,
-      weight: 0,
+      // weight: 0,
       flags: [],
-      stats: {},
-      affects: [],
+      stats: { affects: [] },
+      // affects: [],
       raw: [],
     };
 
@@ -65,7 +65,7 @@ export const parseIdentifyDump = (text: string): Item[] => {
       if (nextLine.match(objectLineRegex)) break;
 
       if (nextLine.startsWith('Weight:')) {
-        currentItem.weight = parseInt(nextLine.replace('Weight:', '').trim(), 10) || 0;
+        currentItem.stats.weight = parseInt(nextLine.replace('Weight:', '').trim(), 10) || 0;
       } else if (nextLine.startsWith('Item is:')) {
         const flagsStr = nextLine.replace('Item is:', '').trim();
         if (flagsStr !== 'NOBITS') {
@@ -79,10 +79,10 @@ export const parseIdentifyDump = (text: string): Item[] => {
         currentItem.stats.ac = Number.isNaN(acValue) ? undefined : acValue;
       } else if (nextLine.startsWith('Type:')) {
         if (nextLine.includes('Spell:')) {
-          currentItem.affects.push(parseSpellAffect(nextLine));
+          currentItem.stats.affects.push(parseSpellAffect(nextLine));
         } else {
           const statAffect = parseStatAffect(nextLine);
-          if (statAffect) currentItem.affects.push(statAffect);
+          if (statAffect) currentItem.stats.affects.push(statAffect);
         }
       }
 
