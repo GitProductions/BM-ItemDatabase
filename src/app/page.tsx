@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useMemo, useState } from 'react';
-import { DatabaseView } from '@/components/database-view';
+import { ItemDB } from '@/components/database-view';
 import { ImportPanel } from '@/components/import-panel';
 import { Item } from '@/types/items';
 import { parseIdentifyDump } from '@/lib/parse-identify-dump';
@@ -107,7 +107,7 @@ export default function App() {
           loading ? (
             <div className="text-center py-20 text-zinc-500">Loading artifacts from MongoDB...</div>
           ) : (
-            <DatabaseView items={items} />
+            <ItemDB items={items} />
           )
         ) : (
           <ImportPanel
