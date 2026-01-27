@@ -105,7 +105,7 @@ export default function App() {
 
         {view === 'db' ? (
           loading ? (
-            <div className="text-center py-20 text-zinc-500">Loading artifacts from MongoDB...</div>
+            <div className="text-center py-20 text-zinc-500">Loading items from MongoDB...</div>
           ) : (
             <ItemDB items={items} />
           )

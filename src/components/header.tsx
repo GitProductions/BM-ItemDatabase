@@ -14,7 +14,7 @@ function Header( {items, view, setView}: {items: any[], view: string, setView: (
             </div>
             <div>
               <h1 className="font-bold text-xl tracking-tight text-white">BlackMUD Item DB</h1>
-              <p className="text-xs text-zinc-400 font-mono">{items.length} artifacts indexed</p>
+              <p className="text-xs text-zinc-400 font-mono">{items.length} items indexed</p>
             </div>
           </div>
 
