@@ -139,7 +139,7 @@
                             placeholder="e.g. Jaela, Merchants Guild"
                             className="w-full rounded-lg border border-zinc-700 bg-zinc-950/60 px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
                           />
-                          <p className="text-[11px] text-zinc-500">Assigning a name helps you locate this batch later.</p>
+                          <p className="text-[11px] text-zinc-500">Assigning a name gives you a way to edit this entry later & you get street cred...</p>
                         </div>
 
                         <textarea
@@ -172,7 +172,7 @@
                       <div className="space-y-4">
                         <div className="flex items-center justify-between">
                           <h3 className="text-sm uppercase tracking-wide text-zinc-400">Preview</h3>
-                          <p className="text-[11px] text-zinc-500">Matches the data that will be persisted.</p>
+                          <p className="text-[11px] text-zinc-500">Review & Confirm the submitted items</p>
                         </div>
 
                         {previewItems.length > 0 ? (
