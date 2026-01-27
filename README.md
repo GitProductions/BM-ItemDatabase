@@ -1,6 +1,6 @@
-## Gitproductions Portfolio (Next.js 16 + Velite)
+## Blackmud Item Database (Next.js 16 + Tailwind CSS)
 
-This is a showcase site for Gitproductions covering website design, esports production/admin, application development, and graphics support. It uses Next.js 16 (App Router) with a Velite content layer, native CSS animations, and a light/dark theme.
+Item database created for the Blackmud Community.
 
 ### Prerequisites
 
@@ -13,12 +13,6 @@ This is a showcase site for Gitproductions covering website design, esports prod
 pnpm install
 ```
 
-### Content build (Velite)
-
-```bash
-pnpm content:build   # one-off build
-pnpm content:watch   # watch mode
-```
 
 ### Develop
 
