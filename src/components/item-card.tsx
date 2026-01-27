@@ -39,7 +39,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item }) => {
             <Icon size={20} />
           </div>
           <div>
-            <h3 className="font-bold text-emerald-400 text-lg leading-tight">{item.name}</h3>
+            <h3 className="font-bold text-orange-400 text-lg leading-tight">{item.name}</h3>
             <div className="text-xs text-slate-500 mt-1 font-mono">
               {item.keywords} • <span className="uppercase text-slate-400">{item.type}</span>
             </div>
@@ -74,7 +74,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item }) => {
       </div>
 
       {affects.length > 0 && (
-        <div className="bg-slate-900/50 rounded p-2 text-sm border-l-2 border-emerald-600">
+        <div className="bg-slate-900/50 rounded p-2 text-sm border-l-2 border-orange-600">
           <div className="text-[10px] uppercase text-slate-500 mb-1 font-bold">Affects</div>
           <ul className="space-y-1">
             {affects.map((affect, index) => (
@@ -89,7 +89,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item }) => {
                 ) : (
                   <>
                     <span className="capitalize">{affect.stat}</span>
-                    <span className={(affect.value ?? 0) >= 0 ? 'text-emerald-400' : 'text-red-400'}>
+                    <span className={(affect.value ?? 0) >= 0 ? 'text-orange-400' : 'text-red-400'}>
                       {(affect.value ?? 0) > 0 ? '+' : ''}
                       {affect.value}
                     </span>

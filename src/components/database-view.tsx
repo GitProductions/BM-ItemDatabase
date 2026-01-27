@@ -29,7 +29,7 @@ export const DatabaseView: React.FC<DatabaseViewProps> = ({
           placeholder="Search by name, keywords, or stats (e.g. 'str', 'hit-n-dam')..."
           value={search}
           onChange={(event) => onSearchChange(event.target.value)}
-          className="w-full bg-slate-950 border border-slate-700 rounded-lg pl-10 pr-4 py-2 text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all"
+          className="w-full bg-slate-950 border border-slate-700 rounded-lg pl-10 pr-4 py-2 text-sm focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all"
         />
       </div>
       <div className="flex gap-2 items-center overflow-x-auto pb-2 md:pb-0">
@@ -39,7 +39,7 @@ export const DatabaseView: React.FC<DatabaseViewProps> = ({
             key={type}
             onClick={() => onFilterChange(type)}
             className={`px-3 py-1.5 rounded-full text-xs font-medium capitalize whitespace-nowrap transition-colors ${
-              filterType === type ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+              filterType === type ? 'bg-orange-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
             }`}
           >
             {type}

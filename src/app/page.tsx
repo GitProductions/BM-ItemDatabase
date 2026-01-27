@@ -5,6 +5,7 @@ import { DatabaseView } from '@/components/database-view';
 import { ImportPanel } from '@/components/import-panel';
 import { Item } from '@/types/items';
 import { parseIdentifyDump } from '@/lib/parse-identify-dump';
+import Image from 'next/image';
 
 type AppView = 'db' | 'import';
 
@@ -119,15 +120,16 @@ export default function App() {
   }, [items]);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-emerald-500/30">
+    <div className="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-orange-500/30">
       <header className="bg-slate-900 border-b border-slate-800 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="bg-emerald-600 p-2 rounded text-white shadow-lg shadow-emerald-900/50">
-              <Database size={24} />
+            <div className=" p-2 rounded text-white ">
+     
+              <Image className="shadow-lg shadow-orange-900/50" src="/bm-logo.png" alt="Logo" width={24} height={24} />
             </div>
             <div>
-              <h1 className="font-bold text-xl tracking-tight text-white">MUD Identify DB</h1>
+              <h1 className="font-bold text-xl tracking-tight text-white">BlackMUD Item DB</h1>
               <p className="text-xs text-slate-400 font-mono">{items.length} artifacts indexed</p>
             </div>
           </div>
@@ -137,7 +139,7 @@ export default function App() {
               onClick={() => setView('db')}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 ${
                 view === 'db'
-                  ? 'bg-slate-800 text-emerald-400 border border-slate-700'
+                  ? 'bg-slate-800 text-orange-400 border border-slate-700'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
@@ -147,7 +149,7 @@ export default function App() {
               onClick={() => setView('import')}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 ${
                 view === 'import'
-                  ? 'bg-slate-800 text-emerald-400 border border-slate-700'
+                  ? 'bg-slate-800 text-orange-400 border border-slate-700'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
