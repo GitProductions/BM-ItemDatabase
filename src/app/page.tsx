@@ -85,11 +85,13 @@ export default function App() {
     const searchTerm = search.trim().toLowerCase();
 
     return items.filter((item) => {
+      const stats = item.stats ?? { affects: [], weight: 0 };
+      const affects = stats.affects ?? [];
       const matchesSearch =
         !searchTerm ||
         item.name.toLowerCase().includes(searchTerm) ||
         item.keywords.toLowerCase().includes(searchTerm) ||
-        item.stats.affects.some(
+        affects.some(
           (affect) =>
             affect.stat?.toLowerCase().includes(searchTerm) ||
             (affect.spell && affect.spell.toLowerCase().includes(searchTerm))
@@ -109,7 +111,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-emerald-500/30">
       <header className="bg-slate-900 border-b border-slate-800 sticky top-0 z-10">
-        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="bg-emerald-600 p-2 rounded text-white shadow-lg shadow-emerald-900/50">
               <Database size={24} />
@@ -145,7 +147,7 @@ export default function App() {
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 py-6 space-y-6">
+      <main className="max-w-7xl mx-auto px-4 py-6 space-y-6">
         {statusMessage && (
           <div className="rounded-xl border border-slate-800 bg-slate-900/40 px-4 py-3 text-sm text-rose-400">
             {statusMessage}

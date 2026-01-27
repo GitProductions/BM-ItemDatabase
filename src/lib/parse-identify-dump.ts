@@ -31,6 +31,17 @@ const parseSpellAffect = (line: string): ItemAffect => {
   };
 };
 
+const nameDescriptorRegex = /(.*?)\s*\(([^)]+)\)\s*$/;
+
+const stripCondition = (value: string) => {
+  const match = value.match(nameDescriptorRegex);
+  if (!match) {
+    return { label: value.trim(), condition: undefined };
+  }
+
+  return { label: match[1].trim(), condition: match[2].trim() };
+};
+
 export const parseIdentifyDump = (text: string): Item[] => {
   const lines = text
     .split('\n')
@@ -45,17 +56,20 @@ export const parseIdentifyDump = (text: string): Item[] => {
 
     const keywords = match[1];
     const type = match[2].trim().toLowerCase();
-    const name = i > 0 ? lines[i - 1] : 'Unknown Item';
+    const rawName = i > 0 ? lines[i - 1] : 'Unknown Item';
+    const { label: name, condition } = stripCondition(rawName);
 
     const currentItem: Item = {
       id: generateId(),
       name,
       keywords,
       type,
-      // weight: 0,
       flags: [],
-      stats: { affects: [] },
-      // affects: [],
+      stats: {
+        weight: 0,
+        affects: [],
+        condition,
+      },
       raw: [],
     };
 

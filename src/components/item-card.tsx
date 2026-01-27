@@ -11,6 +11,9 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item }) => {
   let Icon = Database;
   let typeColor = 'text-slate-400';
 
+  const stats = item.stats ?? { affects: [], weight: 0 };
+  const affects = stats.affects ?? [];
+
   if (item.type.includes('weapon')) {
     Icon = Sword;
     typeColor = 'text-red-400';
@@ -40,22 +43,25 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item }) => {
             <div className="text-xs text-slate-500 mt-1 font-mono">
               {item.keywords} • <span className="uppercase text-slate-400">{item.type}</span>
             </div>
+            {stats.condition && (
+              <div className="text-[10px] uppercase text-slate-500 mt-1 tracking-wide">{stats.condition}</div>
+            )}
           </div>
         </div>
         <div className="text-right">
+          {item.isArtifact && (
           <span className="text-xs font-mono text-slate-500 bg-slate-900 px-2 py-1 rounded">
-            Wgt: {item.stats.weight ?? 0}
+             {item.isArtifact ? 'Artifact: Yes' : undefined}
           </span>
+          )}
+
         </div>
       </div>
 
       <div className="mb-3 mt-3 flex flex-wrap">
-        {item.stats.damage && (
-          <StatBadge label="Damage" value={item.stats.damage} color="bg-red-900/50 border border-red-800" />
-        )}
-        {item.stats.ac !== undefined && (
-          <StatBadge label="AC" value={item.stats.ac} color="bg-blue-900/50 border border-blue-800" />
-        )}
+        {stats.weight !== undefined && ( <StatBadge label="Weight" value={stats.weight.toString()} color="bg-yellow-900/50 border border-yellow-800" />)}
+        {stats.damage && <StatBadge label="Damage" value={stats.damage} color="bg-red-900/50 border border-red-800" />}
+        {stats.ac !== undefined && <StatBadge label="AC" value={stats.ac} color="bg-blue-900/50 border border-blue-800" />}
 
         {item.flags.map((flag) => (
           <span
@@ -67,11 +73,11 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item }) => {
         ))}
       </div>
 
-      {item.stats.affects.length > 0 && (
+      {affects.length > 0 && (
         <div className="bg-slate-900/50 rounded p-2 text-sm border-l-2 border-emerald-600">
           <div className="text-[10px] uppercase text-slate-500 mb-1 font-bold">Affects</div>
           <ul className="space-y-1">
-            {item.stats.affects.map((affect, index) => (
+            {affects.map((affect, index) => (
               <li key={`${affect.type}-${index}`} className="flex justify-between text-slate-300 font-mono text-xs">
                 {affect.type === 'spell' ? (
                   <>

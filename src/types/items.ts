@@ -13,6 +13,7 @@ export interface ItemStats {
   damage?: string;
   ac?: number;
   weight?: number;
+  condition?: string;
 }
 
 export interface Item {
@@ -22,5 +23,6 @@ export interface Item {
   type: string;
   flags: string[];
   stats: ItemStats;
+  isArtifact?: boolean;
   raw?: string[];
 }
