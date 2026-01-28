@@ -32,15 +32,6 @@ type StoredItemRow = {
   updatedAt: string | null;
 };
 
-type StoredSuggestionRow = {
-  id: string;
-  itemId: string;
-  proposer: string | null;
-  note: string;
-  status: string;
-  createdAt: string;
-};
-
 const getDatabase = async () => {
   const { env } = await getCloudflareContext({ async: true });
   const db = (env as Record<string, unknown>)[DB_BINDING];
@@ -144,15 +135,71 @@ const encodeItem = (item: Item, ownerOverride?: string, timestamp?: string) => {
   };
 };
 
-export const fetchItems = async (): Promise<Item[]> => {
+export type ItemSearchParams = {
+  q?: string;
+  type?: string;
+  owner?: string;
+  flagged?: boolean;
+  id?: string;
+  limit?: number;
+  offset?: number;
+};
+
+const sanitizeLimit = (value?: number) => {
+  if (!Number.isFinite(value) || value === undefined || value === null) return 100;
+  return Math.min(Math.max(1, Math.floor(value)), 500);
+};
+
+export const searchItems = async (params: ItemSearchParams = {}): Promise<Item[]> => {
   const db = await getDatabase();
   await ensureSchema(db);
 
-  const result = await db.prepare('SELECT * FROM items ORDER BY name COLLATE NOCASE;').all<StoredItemRow>();
+  const where: string[] = [];
+  const values: unknown[] = [];
+
+  if (params.id) {
+    where.push('id = ?');
+    values.push(params.id);
+  }
+
+  if (params.q) {
+    const like = `%${params.q.toLowerCase()}%`;
+    where.push('(LOWER(name) LIKE ? OR LOWER(keywords) LIKE ? OR LOWER(type) LIKE ? OR LOWER(flags) LIKE ?)');
+    values.push(like, like, like, like);
+  }
+
+  if (params.type) {
+    where.push('LOWER(type) LIKE ?');
+    values.push(`%${params.type.toLowerCase()}%`);
+  }
+
+  if (params.owner) {
+    where.push('LOWER(owner) = ?');
+    values.push(params.owner.toLowerCase());
+  }
+
+  if (typeof params.flagged === 'boolean') {
+    where.push('flaggedForReview = ?');
+    values.push(params.flagged ? 1 : 0);
+  }
+
+  const limit = sanitizeLimit(params.limit);
+  const offset = Number.isFinite(params.offset) && (params.offset ?? 0) > 0 ? Math.floor(params.offset ?? 0) : 0;
+
+  const sql = `
+    SELECT * FROM items
+    ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
+    ORDER BY updatedAt DESC
+    LIMIT ? OFFSET ?;
+  `;
+
+  const result = await db.prepare(sql).bind(...values, limit, offset).all<StoredItemRow>();
   const rows = (result.results ?? result.rows ?? []) as StoredItemRow[];
 
   return rows.map(decodeItem);
 };
+
+export const fetchItems = async (): Promise<Item[]> => searchItems();
 
 
 // Insert into Items table with upsert on unique identity (name, keywords, type)
