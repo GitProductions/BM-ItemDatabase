@@ -180,7 +180,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item }) => {
         </div>
       )}
 
-      <p className='text-xs text-zinc-500 mt-2'>Item added by: {item.owner ?? 'Unknown'}</p>
+      <p className='text-xs text-zinc-500 mt-2 text-right'>Item added by: {item.owner ?? 'Unknown'}</p>
     </div>
   );
 };
