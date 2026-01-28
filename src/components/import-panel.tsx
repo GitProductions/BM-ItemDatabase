@@ -1,9 +1,11 @@
 
 import React from 'react';
+import Image from 'next/image';
 import { Save, Terminal, Info, AlertCircle, CheckCircle } from 'lucide-react';
 import { ItemCard } from './item-card';
 import { Item } from '@/types/items';
 import { SLOT_OPTIONS, guessSlot } from '@/lib/slots';
+import { getRandomOrcPhrase } from '@/lib/orc-phrases';
 
 type ImportPanelProps = {
   rawInput: string;
@@ -39,10 +41,13 @@ export const ImportPanel: React.FC<ImportPanelProps> = ({
   overrides = {},
   duplicateCheck,
 }) => {
+
+  // If there are duplicates, show the duplicate review panel
   if (duplicateCheck && duplicateCheck.hasDuplicates) {
     return (
       <div className="">
         <div className="bg-zinc-900 rounded-xl border border-zinc-800 p-6 shadow-lg">
+          
           <div className="flex items-center gap-3 mb-4">
             <AlertCircle className="text-amber-500" />
             <h2 className="text-lg font-bold text-white">Duplicate Items Detected</h2>
@@ -111,6 +116,7 @@ export const ImportPanel: React.FC<ImportPanelProps> = ({
     );
   }
 
+  // Otherwise, show the main import panel
   return (
     <div className="">
       <div className="bg-zinc-900 rounded-xl border border-zinc-800 p-6 shadow-lg">
@@ -119,16 +125,15 @@ export const ImportPanel: React.FC<ImportPanelProps> = ({
         <h2 className="text-lg font-bold text-white">Import Identify Data</h2>
       </div>
 
+      {/* Tips/Notes */}
       <div className="bg-zinc-950/50 rounded-lg p-2 mb-4 border border-zinc-800 text-sm text-zinc-400">
         <p className="flex gap-2 items-center"> <Info  /> Paste your identify item output directly from the MUD or your doc file below. </p>
-        {/* <ul className="list-disc list-inside space-y-1 ml-2 text-zinc-500 font-mono text-xs">
-          <li>Full &apos;Identify&apos; output blocks</li>
-          <li>Multiple items at once</li>
-          <li>Stats, flags, weights, and affects</li>
-        </ul> */}
       </div>
 
+      {/* Username & submission */}
       <div className="grid gap-6 lg:grid-cols-[1.1fr,0.95fr]">
+
+        {/* Username & submission */}
         <div className="space-y-4">
           <div className="space-y-1">
             <label htmlFor="import-username" className="text-sm font-semibold text-zinc-200">
@@ -154,14 +159,6 @@ export const ImportPanel: React.FC<ImportPanelProps> = ({
           />
 
           <div className="flex justify-between items-center">
-            {/* <button
-              onClick={onClear}
-              disabled={isProcessing}
-              className="px-4 py-2 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-900/20 text-sm font-medium transition-colors flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:text-zinc-500"
-            >
-              <Trash2 size={16} /> Clear Database
-            </button> */}
-
             <button
               onClick={onCheckDuplicates}
               disabled={isProcessing || !rawInput.trim()}
@@ -172,12 +169,15 @@ export const ImportPanel: React.FC<ImportPanelProps> = ({
           </div>
         </div>
 
+
+        {/* Preview Panel */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-sm uppercase tracking-wide text-zinc-400">Preview</h3>
             <p className="text-[11px] text-zinc-500">Review & Confirm the submitted items</p>
           </div>
 
+          {/* Preview Items */}
           {previewItems.length > 0 ? (
             <div className="grid grid-cols-1 gap-4 overflow-y-auto max-h-[500px] pr-1">
               {previewItems.map((item) => {
@@ -226,11 +226,19 @@ export const ImportPanel: React.FC<ImportPanelProps> = ({
             </div>
           ) : (
             <div className="rounded-lg border border-zinc-800 bg-zinc-950/60 px-4 py-3 text-xs text-zinc-500">
-              Enter identify output to preview the cleaned item data before importing.
+
+          <div className="text-center py-20 text-zinc-600">
+            <Image src="/no-results.png" alt="No Results" width={200} height={200} className="mx-auto mb-4" />
+            <p className="text-sm">
+              {getRandomOrcPhrase('noIdentifyInfo', 'random')}
+            </p>
+          </div>
             </div>
           )}
         </div>
       </div>
+
+
     </div>
   </div>
 );

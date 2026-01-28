@@ -5,17 +5,18 @@ import { ItemCard } from './item-card';
 import Image from 'next/image';
 import SuggestionModal from './modals/SuggestionModal';
 import uFuzzy from '@leeoniya/ufuzzy';
+import { getRandomOrcPhrase } from '@/lib/orc-phrases';
 
 // uFuzzy tuned to allow common typos/transpositions while still ranking well.
 const uf = new uFuzzy({
-  intraMode: 1,     // ← Crucial: enable SingleError (one typo per term)
-  intraIns: 1,      // Allow 1 insertion (extra char)
-  intraSub: 1,      // Allow 1 substitution (wrong char)
-  intraDel: 1,      // Allow 1 deletion (missing char)
-  intraTrn: 1,      // Allow 1 transposition (swapped adjacent chars)
-  // Optional extras below – keep or remove based on testing
-  // interIns: Infinity,   // Default – fine for item names
-  intraChars: '[a-z\\d\'-]',  // Allow letters, digits, apostrophes, hyphens (common in item names)
+  intraMode: 1, // Crucial: enable SingleError (one typo per term)
+  intraIns: 1, // Allow 1 insertion (extra char)
+  intraSub: 1, // Allow 1 substitution (wrong char)
+  intraDel: 1, // Allow 1 deletion (missing char)
+  intraTrn: 1, // Allow 1 transposition (swapped adjacent chars)
+  // Optional extras below - keep or remove based on testing
+  // interIns: Infinity,   // Default - fine for item names
+  intraChars: "[a-z\\\\d'-]", // Allow letters, digits, apostrophes, hyphens (common in item names)
 });
 
 type ItemDBProps = {
@@ -58,12 +59,11 @@ export const ItemDB: React.FC<ItemDBProps> = ({ items }) => {
 
             let uniqueIdxs: number[];
 
-            if (searchResult && searchResult.length > 0) {
-              // uf.search returns [idxs, info, order]
-              const [idxs, info, order] = searchResult as [ArrayLike<number>, any, ArrayLike<number> | null];
+            if (searchResult && searchResult[0] && searchResult[0].length > 0) {
+              const [idxs, info, order] = searchResult;
 
               const orderedIdxs =
-                info && order ? Array.from(order, (ord: number) => info.idx[ord]) : Array.from(idxs);
+                info && order ? order.map((ord) => info.idx[ord]) : Array.from(idxs);
 
               uniqueIdxs = Array.from(new Set(orderedIdxs));
             } else {
@@ -132,7 +132,9 @@ export const ItemDB: React.FC<ItemDBProps> = ({ items }) => {
               }}
               className="absolute bottom-2 left-2 inline-flex items-center gap-1 w-auto z-10
               md:top-2 md:right-2 md:left-auto md:bottom-auto
-              text-[11px] px-2 py-1 rounded bg-zinc-900/80 border border-zinc-700 text-zinc-300 hover:text-white hover:border-orange-500 transition-colors"
+              text-[11px] px-2 py-1 rounded
+              bg-zinc-900/80 border border-zinc-700 text-zinc-300 hover:text-white hover:border-orange-500 
+              transition-colors"
             >
               Suggest edit
             </button>
@@ -145,7 +147,9 @@ export const ItemDB: React.FC<ItemDBProps> = ({ items }) => {
         // No results found
         <div className="text-center py-20 text-zinc-600">
           <Image src="/no-results.png" alt="No Results" width={200} height={200} className="mx-auto mb-4" />
-          <p className="text-sm">A half-orc says: Well, wattya lookin for?</p>
+          <p className="text-sm">
+            {getRandomOrcPhrase('noSearchResults', 'random')}
+          </p>
         </div>
 
       )}

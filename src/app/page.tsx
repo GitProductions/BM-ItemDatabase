@@ -126,11 +126,11 @@ export default function App() {
       }
     });
 
-    console.log('Duplicate check result', { duplicatesCount: duplicates.length, newItemsCount: newItems.length });
+    // console.log('Duplicate check result', { duplicatesCount: duplicates.length, newItemsCount: newItems.length });
     
     // If no duplicates found, proceed directly to import
     if (duplicates.length === 0) {
-      console.log('No duplicates found, proceeding with import');
+      // console.log('No duplicates found, proceeding with import');
       handleImport();
       return;
     }
@@ -187,32 +187,21 @@ export default function App() {
     }));
   };
 
-
   useEffect(() => {
     const storedUserName = localStorage.getItem('bm-database-userName') || '';
     setUserName(storedUserName);
   }, []);
 
-  return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-200 font-sans selection:bg-orange-500/30">
-
-
-      <Header items={items} view={view} setView={setView} />
-
-      <main className="max-w-7xl mx-auto px-4 py-6 space-y-6 min-h-[80dvh]">
-        {statusMessage && (
-          <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-3 text-sm text-rose-400">
-            {statusMessage}
-          </div>
-        )}
-
-        {view === 'db' ? (
-          loading ? (
-            <div className="text-center py-20 text-zinc-500">Loading items from the database...</div>
-          ) : (
-            <ItemDB items={items} onRefresh={loadItems} />
-          )
-        ) : view === 'import' ? (
+  const renderCurrentView = () => {
+    switch (view) {
+      case 'db':
+        return loading ? (
+          <div className="text-center py-20 text-zinc-500">Loading items from the database...</div>
+        ) : (
+          <ItemDB items={items} onRefresh={loadItems} />
+        );
+      case 'import':
+        return (
           <ImportPanel
             rawInput={rawInput}
             onRawInputChange={setRawInput}
@@ -227,10 +216,25 @@ export default function App() {
             onOverrideChange={handleOverrideChange}
             duplicateCheck={duplicateCheck}
           />
-        ) : (
-          <GearPlanner items={items} />
+        );
+      default:
+        return <GearPlanner items={items} />;
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-zinc-950 text-zinc-200 font-sans selection:bg-orange-500/30">
+
+      <Header items={items} view={view} setView={setView} />
+
+      <main className="max-w-7xl mx-auto px-4 py-6 space-y-6 min-h-[80dvh]">
+        {statusMessage && (
+          <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-3 text-sm text-rose-400">
+            {statusMessage}
+          </div>
         )}
 
+        {renderCurrentView()}
 
       </main>
 
