@@ -3,6 +3,7 @@ import { Filter, Search } from 'lucide-react';
 import { Item } from '@/types/items';
 import { ItemCard } from './item-card';
 import Image from 'next/image';
+import SuggestionModal from './modals/SuggestionModal';
 
 type ItemDBProps = {
   items: Item[];
@@ -11,6 +12,9 @@ type ItemDBProps = {
 export const ItemDB: React.FC<ItemDBProps> = ({ items }) => {
   const [search, setSearch] = useState('');
   const [filterType, setFilterType] = useState('all');
+  const [suggestItem, setSuggestItem] = useState<Item | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [suggestFeedback, setSuggestFeedback] = useState<string | null>(null);
 
   const uniqueTypes = useMemo(() => {
     const types = new Set(items.map((item) => item.type));
@@ -19,12 +23,12 @@ export const ItemDB: React.FC<ItemDBProps> = ({ items }) => {
 
   const filteredItems = useMemo(() => {
     const searchTerm = search.trim().toLowerCase();
+    if (!searchTerm) return [];
 
     return items.filter((item) => {
       const stats = item.stats ?? { affects: [], weight: 0 };
       const affects = stats.affects ?? [];
       const matchesSearch =
-        !searchTerm ||
         item.name.toLowerCase().includes(searchTerm) ||
         item.keywords.toLowerCase().includes(searchTerm) ||
         affects.some(
@@ -42,6 +46,8 @@ export const ItemDB: React.FC<ItemDBProps> = ({ items }) => {
   return (
     <div className="space-y-6">
       <div className="bg-zinc-900 p-4 rounded-xl border border-zinc-800 shadow-sm flex flex-col md:flex-row gap-4">
+       
+        {/* Main Search  */}
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
           <input
@@ -52,6 +58,8 @@ export const ItemDB: React.FC<ItemDBProps> = ({ items }) => {
             className="w-full bg-zinc-950 border border-zinc-700 rounded-lg pl-10 pr-4 py-2 text-sm focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all"
           />
         </div>
+
+        {/* Type Filters */}
         <div className="flex gap-2 items-center overflow-x-auto pb-2 md:pb-0">
           <Filter size={18} className="text-zinc-500 shrink-0" />
           {uniqueTypes.map((type) => (
@@ -66,23 +74,71 @@ export const ItemDB: React.FC<ItemDBProps> = ({ items }) => {
             </button>
           ))}
         </div>
+
       </div>
 
+      {/* Items Grid */}
       {filteredItems.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
-          {filteredItems.map((item) => (
-            <ItemCard key={item.id} item={{...item}} />
-          ))}
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
+        {filteredItems.map((item) => (
+          <div key={item.id} className="relative">
+            <ItemCard item={{ ...item }} />
+
+            {/* Suggest Edit Button */}
+            <button
+              onClick={() => {
+                setSuggestItem(item);
+                setSuggestFeedback(null);
+              }}
+            className="absolute top-2 right-2 text-[11px] px-2 py-1 rounded bg-zinc-900/80 border border-zinc-700 text-zinc-300 hover:text-white hover:border-orange-500 transition-colors"
+          >
+             Suggest edit
+          </button>
+
+          </div>
+        ))}
+      </div>
       ) : (
+
+        // No results found
         <div className="text-center py-20 text-zinc-600">
-          {/* <Database size={48} className="mx-auto mb-4 opacity-20" /> */}
-
           <Image src="/no-results.png" alt="No Results" width={200} height={200} className="mx-auto mb-4" />
-
-          <p>A half orc says: No items found matching your query.</p>
+          <p className="text-sm">A half-orc says: Well, wattya lookin for?</p>
         </div>
+
       )}
+
+      {/* Suggest Edit Modal */}
+      <SuggestionModal
+        item={suggestItem}
+        open={Boolean(suggestItem)}
+        isSubmitting={isSubmitting}
+        feedback={suggestFeedback}
+        onClose={() => setSuggestItem(null)}
+        onSubmit={async ({ proposer, note, reason }) => {
+          if (!suggestItem) return;
+          setIsSubmitting(true);
+          setSuggestFeedback(null);
+          try {
+            const res = await fetch('/api/suggestions', {
+              method: 'POST',
+              headers: { 'content-type': 'application/json' },
+              body: JSON.stringify({
+                itemId: suggestItem.id,
+                note,
+                proposer,
+                reason,
+              }),
+            });
+            if (!res.ok) throw new Error('Failed');
+            setSuggestFeedback('Submitted for review. Thanks!');
+          } catch {
+            setSuggestFeedback('Could not submit suggestion. Try again.');
+          } finally {
+            setIsSubmitting(false);
+          }
+        }}
+      />
     </div>
   );
 };

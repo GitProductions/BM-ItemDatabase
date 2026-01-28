@@ -1,5 +1,6 @@
 import { getCloudflareContext } from '@opennextjs/cloudflare';
 import { Item } from '@/types/items';
+import { Suggestion } from '@/types/suggestions';
 
 const DB_BINDING = 'ITEMS_DB';
 
@@ -29,6 +30,15 @@ type StoredItemRow = {
   duplicateOf: string | null;
   createdAt: string | null;
   updatedAt: string | null;
+};
+
+type StoredSuggestionRow = {
+  id: string;
+  itemId: string;
+  proposer: string | null;
+  note: string;
+  status: string;
+  createdAt: string;
 };
 
 const getDatabase = async () => {
@@ -72,6 +82,25 @@ const ensureSchema = async (db: D1Database) => {
 
       await db
         .prepare('CREATE UNIQUE INDEX IF NOT EXISTS idx_items_identity ON items(name, keywords, type);')
+        .run();
+
+      await db
+        .prepare(
+          `
+          CREATE TABLE IF NOT EXISTS suggestions (
+            id TEXT PRIMARY KEY,
+            itemId TEXT NOT NULL,
+            proposer TEXT,
+            note TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'pending',
+            createdAt TEXT NOT NULL
+          );
+        `,
+        )
+        .run();
+
+      await db
+        .prepare('CREATE INDEX IF NOT EXISTS idx_suggestions_itemId ON suggestions(itemId);')
         .run();
     })();
   }
@@ -185,4 +214,30 @@ export const deleteAllItems = async () => {
   const db = await getDatabase();
   await ensureSchema(db);
   await db.prepare('DELETE FROM items;').run();
+};
+
+export const addSuggestion = async (suggestion: Suggestion) => {
+  const db = await getDatabase();
+  await ensureSchema(db);
+
+  const combinedNote = suggestion.reason
+    ? `${suggestion.note}\n\nReason: ${suggestion.reason}`
+    : suggestion.note;
+
+  await db
+    .prepare(
+      `
+      INSERT INTO suggestions (id, itemId, proposer, note, status, createdAt)
+      VALUES (?1, ?2, ?3, ?4, ?5, ?6);
+    `,
+    )
+    .bind(
+      suggestion.id,
+      suggestion.itemId,
+      suggestion.proposer ?? null,
+      combinedNote,
+      suggestion.status ?? 'pending',
+      suggestion.createdAt ?? new Date().toISOString(),
+    )
+    .run();
 };
