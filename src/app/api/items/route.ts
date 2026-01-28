@@ -2,12 +2,25 @@ import { NextRequest, NextResponse } from 'next/server';
 import { parseIdentifyDump } from '@/lib/parse-identify-dump';
 import { getItemsCollection } from '@/lib/mongodb';
 
+export const dynamic = 'force-static';
+
+const isMongoConfigured = Boolean(process.env.MONGODB_URI);
+const staticModeMessage = 'MongoDB is not configured; running in static mode.';
+
 const fetchAllItems = async () => {
+  if (!isMongoConfigured) {
+    return [];
+  }
+
   const collection = await getItemsCollection();
   return collection.find().sort({ name: 1 }).toArray();
 };
 
 export async function GET() {
+  if (!isMongoConfigured) {
+    return NextResponse.json({ items: [], message: staticModeMessage });
+  }
+
   const items = await fetchAllItems();
   return NextResponse.json({ items });
 }
@@ -33,6 +46,18 @@ export async function POST(request: NextRequest) {
   }
 
   const ownerName = payload?.owner?.trim();
+
+  if (!isMongoConfigured) {
+    const staticResponse = parsedItems.map((item) => ({
+      ...item,
+      ...(ownerName ? { owner: ownerName } : {}),
+    }));
+
+    return NextResponse.json({
+      items: staticResponse,
+      message: 'MongoDB is not configured; imports are available only in this session.',
+    });
+  }
 
   const collection = await getItemsCollection();
   const now = new Date();
@@ -61,6 +86,10 @@ export async function POST(request: NextRequest) {
 }
 
 export async function DELETE() {
+  if (!isMongoConfigured) {
+    return NextResponse.json({ deleted: true, items: [], message: staticModeMessage });
+  }
+
   const collection = await getItemsCollection();
   await collection.deleteMany({});
   return NextResponse.json({ deleted: true, items: [] });
