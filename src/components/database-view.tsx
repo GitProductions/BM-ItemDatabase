@@ -7,14 +7,17 @@ import SuggestionModal from './modals/SuggestionModal';
 
 type ItemDBProps = {
   items: Item[];
+  onRefresh?: () => Promise<void> | void;
 };
 
-export const ItemDB: React.FC<ItemDBProps> = ({ items }) => {
+export const ItemDB: React.FC<ItemDBProps> = ({ items, onRefresh }) => {
   const [search, setSearch] = useState('');
   const [filterType, setFilterType] = useState('all');
   const [suggestItem, setSuggestItem] = useState<Item | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [suggestFeedback, setSuggestFeedback] = useState<string | null>(null);
+  const [invalidateStatus, setInvalidateStatus] = useState<string | null>(null);
+  const [invalidateLoading, setInvalidateLoading] = useState(false);
 
   const uniqueTypes = useMemo(() => {
     const types = new Set(items.map((item) => item.type));
@@ -73,9 +76,39 @@ export const ItemDB: React.FC<ItemDBProps> = ({ items }) => {
               {type}
             </button>
           ))}
+
+          {/* {onRefresh && (
+            <button
+              onClick={async () => {
+                setInvalidateStatus(null);
+                setInvalidateLoading(true);
+                try {
+                  const res = await fetch('/api/items/invalidate', { method: 'POST' });
+                  if (!res.ok) throw new Error('Failed to invalidate cache');
+                  await onRefresh();
+                  setInvalidateStatus('Cache cleared and data reloaded');
+                } catch (err) {
+                  setInvalidateStatus('Could not invalidate cache');
+                  console.error(err);
+                } finally {
+                  setInvalidateLoading(false);
+                }
+              }}
+              className="ml-2 px-3 py-1.5 rounded-md text-xs font-medium bg-zinc-800 text-orange-300 border border-orange-500/40 hover:border-orange-500 transition-colors whitespace-nowrap"
+              disabled={invalidateLoading}
+            >
+              {invalidateLoading ? 'Clearing…' : 'Invalidate cache'}
+            </button>
+          )} */}
         </div>
 
       </div>
+
+      {invalidateStatus && (
+        <div className="text-xs text-center text-zinc-400">
+          {invalidateStatus}
+        </div>
+      )}
 
       {/* Items Grid */}
       {filteredItems.length > 0 ? (

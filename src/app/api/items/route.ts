@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { parseIdentifyDump } from '@/lib/parse-identify-dump';
 import { deleteAllItems, searchItems, upsertItems } from '@/lib/d1';
 import { ItemInput, normalizeItemInput, parseBooleanParam, withCors } from '@/lib/items-api';
+import { clearCache, getCached, setCached } from '@/lib/memory-cache';
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -14,6 +15,20 @@ export async function GET(request: NextRequest) {
   const limitParam = Number(searchParams.get('limit') ?? undefined);
   const offsetParam = Number(searchParams.get('offset') ?? undefined);
 
+  const cacheKey = JSON.stringify({ q, type, owner, flagged, id, limit: limitParam, offset: offsetParam });
+  const cached = getCached<{ items: unknown[]; count: number }>(cacheKey);
+  if (cached) {
+    return withCors(
+      NextResponse.json(cached, {
+        status: 200,
+        headers: {
+          'Cache-Control': 'public, max-age=3600',
+          'X-Cache': 'HIT',
+        },
+      }),
+    );
+  }
+
   const items = await searchItems({
     q,
     type,
@@ -24,7 +39,18 @@ export async function GET(request: NextRequest) {
     offset: Number.isFinite(offsetParam) ? offsetParam : undefined,
   });
 
-  return withCors(NextResponse.json({ items, count: items.length }));
+  const payload = { items, count: items.length };
+  setCached(cacheKey, payload);
+
+  return withCors(
+    NextResponse.json(payload, {
+      status: 200,
+      headers: {
+        'Cache-Control': 'public, max-age=3600',
+        'X-Cache': 'MISS',
+      },
+    }),
+  );
 }
 
 type PostBody = {
@@ -50,6 +76,7 @@ export async function POST(request: NextRequest) {
     const parsedItems = parseIdentifyDump(cleanedInput);
     if (parsedItems.length) {
       await upsertItems(parsedItems, ownerName);
+      clearCache();
     }
 
     const items = await searchItems();
@@ -64,6 +91,7 @@ export async function POST(request: NextRequest) {
   }
 
   await upsertItems([normalized.item], ownerName);
+  clearCache();
   const [saved] = await searchItems({ id: normalized.item.id });
 
   return withCors(NextResponse.json({ item: saved ?? normalized.item }, { status: 201 }));
@@ -71,6 +99,7 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE() {
   await deleteAllItems();
+  clearCache();
   return withCors(NextResponse.json({ deleted: true, items: [] }));
 }
 

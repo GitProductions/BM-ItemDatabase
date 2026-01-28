@@ -25,22 +25,22 @@ export default function App() {
   const [userName, setUserName] = useState('');
   const [duplicateCheck, setDuplicateCheck] = useState<DuplicateCheckState | null>(null);
 
-  useEffect(() => {
-    const loadItems = async () => {
-      setLoading(true);
-      try {
-        const response = await fetch('/api/items', { cache: 'no-store' });
-        if (!response.ok) throw new Error('Failed to load items');
-        const data = await response.json();
-        setItems(data.items ?? []);
-        setStatusMessage(null);
-      } catch {
-        setStatusMessage('Unable to load items from the database. Check your connection and try again.');
-      } finally {
-        setLoading(false);
-      }
-    };
+  const loadItems = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch('/api/items', { cache: 'no-store' });
+      if (!response.ok) throw new Error('Failed to load items');
+      const data = await response.json();
+      setItems(data.items ?? []);
+      setStatusMessage(null);
+    } catch {
+      setStatusMessage('Unable to load items from the database. Check your connection and try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     loadItems();
   }, []);
 
@@ -62,8 +62,7 @@ export default function App() {
 
       if (!response.ok) throw new Error('Import failed');
 
-      const data = await response.json();
-      setItems(data.items ?? []);
+      await loadItems(); // will reflect cache (may be stale until invalidated)
       setRawInput('');
       setDuplicateCheck(null);
       setView('db');
@@ -176,8 +175,7 @@ export default function App() {
 
       if (!response.ok) throw new Error('Import failed');
 
-      const data = await response.json();
-      setItems(data.items ?? []);
+      await loadItems(); // will reflect cache (may be stale until invalidated)
       setRawInput('');
       setDuplicateCheck(null);
       setView('db');
@@ -215,7 +213,7 @@ export default function App() {
           loading ? (
             <div className="text-center py-20 text-zinc-500">Loading items from the database...</div>
           ) : (
-            <ItemDB items={items} />
+            <ItemDB items={items} onRefresh={loadItems} />
           )
         ) : view === 'import' ? (
           <ImportPanel
