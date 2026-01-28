@@ -33,7 +33,24 @@ const calculateDamage = (damage: string): DamageStats | null => {
   };
 };
 
-
+const formatValueRange = (
+  value?: number,
+  min?: number,
+  max?: number,
+  { signed = false }: { signed?: boolean } = {},
+) => {
+  const fmt = (num?: number) => {
+    if (num === undefined || num === null) return undefined;
+    const rounded = Number.isInteger(num) ? num.toString() : num.toFixed(1);
+    if (!signed) return rounded;
+    return num > 0 ? `+${rounded}` : rounded;
+  };
+  const fmin = fmt(min ?? value);
+  const fmax = fmt(max ?? value);
+  if (fmin && fmax && fmin !== fmax) return `${fmin} - ${fmax}`;
+  if (fmin) return fmin;
+  return value !== undefined ? fmt(value) : '';
+};
 
 export const ItemCard: React.FC<ItemCardProps> = ({ item }) => {
   let Icon = Database;
@@ -60,7 +77,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item }) => {
   }
 
   return (
-    <div className="bg-zinc-800 border border-zinc-700 rounded-lg p-4 mb-4 hover:border-zinc-500 transition-colors shadow-sm h-full">
+    <div className="relative bg-zinc-800 border border-zinc-700 rounded-lg p-4 mb-4 hover:border-zinc-500 transition-colors shadow-sm h-full">
       <div className="flex justify-between items-start mb-2">
         <div className="flex items-start gap-3">
           <div className={`p-2 rounded-md bg-zinc-900 ${typeColor}`}>
@@ -118,8 +135,20 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item }) => {
       </div>
 
       <div className="mb-1 ">
-        {stats.weight !== undefined && (<StatBadge label="Weight" value={stats.weight.toString()} color="bg-yellow-900/50 border border-yellow-800" />)}
-        {stats.ac !== undefined && <StatBadge label="AC" value={stats.ac} color="bg-blue-900/50 border border-blue-800" />}
+        {stats.weight !== undefined && (
+          <StatBadge
+            label="Weight"
+            value={formatValueRange(stats.weight, stats.weightMin, stats.weightMax)}
+            color="bg-yellow-900/50 border border-yellow-800"
+          />
+        )}
+        {stats.ac !== undefined && (
+          <StatBadge
+            label="AC"
+            value={formatValueRange(stats.ac, stats.acMin, stats.acMax, { signed: true })}
+            color="bg-blue-900/50 border border-blue-800"
+          />
+        )}
       </div>
 
       <div className="pb-1">
@@ -168,9 +197,8 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item }) => {
                 ) : (
                   <>
                     <span className="capitalize">{affect.stat}</span>
-                    <span className={(affect.value ?? 0) >= 0 ? 'text-orange-400' : 'text-red-400'}>
-                      {(affect.value ?? 0) > 0 ? '+' : ''}
-                      {affect.value}
+                    <span className={(affect.max ?? affect.value ?? 0) >= 0 ? 'text-orange-400' : 'text-red-400'}>
+                      {formatValueRange(affect.value, affect.min, affect.max, { signed: true })}
                     </span>
                   </>
                 )}
@@ -183,10 +211,25 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item }) => {
       <div className="mt-3 flex flex-col gap-1 text-xs text-zinc-500">
         <div className="flex justify-between gap-2">
           <span>{item.worn ? `Worn: ${item.worn}` : ''}</span>
-          <span>Submitted by: {item.submittedBy ?? 'Unknown'}</span>
+          <span className="flex items-center gap-2">
+            <span>Submitted by:</span>
+            {item.contributors && item.contributors.length > 0 ? (
+              <>
+                <span className="font-semibold text-zinc-200">{item.contributors[0]}</span>
+                {item.contributors.length > 1 && (
+                  <span className="text-[11px] text-zinc-400">
+                    (+{item.contributors.length - 1} more)
+                  </span>
+                )}
+              </>
+            ) : (
+              <span>Unknown</span>
+            )}
+          </span>
         </div>
         {item.droppedBy && <p className="text-right italic">Dropped by: {item.droppedBy}</p>}
       </div>
+
     </div>
   );
 };

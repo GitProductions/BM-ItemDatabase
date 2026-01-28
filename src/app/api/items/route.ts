@@ -15,14 +15,13 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const q = searchParams.get('q')?.trim() || undefined;
   const type = searchParams.get('type')?.trim() || undefined;
-  const owner = searchParams.get('owner')?.trim() || undefined;
   const flagged = parseBooleanParam(searchParams.get('flagged'));
   const id = searchParams.get('id')?.trim() || undefined;
 
   const limitParam = Number(searchParams.get('limit') ?? undefined);
   const offsetParam = Number(searchParams.get('offset') ?? undefined);
 
-  const cacheKey = JSON.stringify({ q, type, owner, flagged, id, limit: limitParam, offset: offsetParam });
+  const cacheKey = JSON.stringify({ q, type, flagged, id, limit: limitParam, offset: offsetParam });
   const cached = getCached<{ items: unknown[]; count: number }>(cacheKey);
   if (cached) {
     return withCors(
@@ -39,7 +38,6 @@ export async function GET(request: NextRequest) {
   const items = await searchItems({
     q,
     type,
-    owner,
     flagged,
     id,
     limit: Number.isFinite(limitParam) ? limitParam : undefined,
@@ -62,7 +60,6 @@ export async function GET(request: NextRequest) {
 
 type PostBody = {
   raw?: string;
-  owner?: string;
   item?: ItemInput;
   overrides?: Record<string, Partial<ItemInput>>;
 } & ItemInput;
@@ -76,8 +73,6 @@ export async function POST(request: NextRequest) {
     return withCors(NextResponse.json({ message: 'Invalid request payload' }, { status: 400 }));
   }
 
-  const ownerName = payload.owner?.trim();
-
   // 1) Raw identify dump -> multiple items
   const cleanedInput = payload?.raw?.trim();
   if (cleanedInput) {
@@ -86,12 +81,12 @@ export async function POST(request: NextRequest) {
       const overrides = payload.overrides ?? {};
       const merged = parsedItems.map((item) => ({
         ...item,
-        submittedBy: ownerName ?? item.submittedBy,
+        submittedBy: item.submittedBy,
         droppedBy: overrides[item.id]?.droppedBy ?? item.droppedBy,
         worn: overrides[item.id]?.worn ?? item.worn,
       }));
 
-      await upsertItems(merged, ownerName);
+      await upsertItems(merged);
       clearCache();
     }
 
@@ -106,7 +101,7 @@ export async function POST(request: NextRequest) {
     return withCors(NextResponse.json({ message: normalized.message }, { status: 400 }));
   }
 
-  await upsertItems([normalized.item], ownerName);
+  await upsertItems([normalized.item]);
   clearCache();
   const [saved] = await searchItems({ id: normalized.item.id });
 

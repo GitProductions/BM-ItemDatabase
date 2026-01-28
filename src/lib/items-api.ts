@@ -18,7 +18,7 @@ export const generateId = () => {
 };
 
 // Override flags to allow either CSV string or string[]
-export type ItemInput = Omit<Partial<Item>, 'flags'> & { flags?: string | string[]; owner?: string }; // allow legacy owner
+export type ItemInput = Omit<Partial<Item>, 'flags'> & { flags?: string | string[] };
 
 export const normalizeItemInput = (input: ItemInput) => {
   const name = input.name?.trim();
@@ -41,7 +41,7 @@ export const normalizeItemInput = (input: ItemInput) => {
   const rawStats = (input.stats ?? {}) as Item['stats'];
   const affects = Array.isArray(rawStats.affects) ? rawStats.affects.filter(Boolean) : [];
 
-  const submittedBy = (input.submittedBy ?? (input as { owner?: string }).owner)?.trim();
+  const submittedBy = input.submittedBy?.trim();
 
   const item: Item = {
     id: input.id ?? generateId(),

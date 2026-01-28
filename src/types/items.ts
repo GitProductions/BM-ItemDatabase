@@ -6,13 +6,19 @@ export interface ItemAffect {
   value?: number;
   spell?: string;
   level?: number;
+  min?: number;
+  max?: number;
 }
 
 export interface ItemStats {
   affects: ItemAffect[];
   damage?: string;
   ac?: number;
+  acMin?: number;
+  acMax?: number;
   weight?: number;
+  weightMin?: number;
+  weightMax?: number;
   condition?: string;
 }
 
@@ -31,4 +37,6 @@ export interface Item {
   raw?: string[];
   flaggedForReview?: boolean;
   duplicateOf?: string; // id of the duplicate item
+  submissionCount?: number; // total submissions recorded
+  contributors?: string[]; // distinct submitter names
 }

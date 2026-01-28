@@ -51,19 +51,28 @@ const stripCondition = (value: string) => {
 };
 
 /**
- * Detects potential duplicates by comparing name, keywords, and type
- * Returns the ID of the matching item or undefined if no match found
+ * Detects potential duplicates by comparing identity *and* stats.
+ * We now treat an item as a duplicate only when the core identity AND stats match,
+ * so variants with the same keywords/name/type but differing rolls are allowed through.
  */
 export const findDuplicate = (newItem: Item, existingItems: Item[]): string | undefined => {
-  return existingItems.find((existing) => {
-    const nameSimilarity =
-      existing.name.toLowerCase().trim() === newItem.name.toLowerCase().trim();
-    const keywordsSimilarity =
-      existing.keywords.toLowerCase().trim() === newItem.keywords.toLowerCase().trim();
-    const typeSimilarity = existing.type.toLowerCase().trim() === newItem.type.toLowerCase().trim();
+  const normalize = (text?: string) => (text ?? '').toLowerCase().trim();
 
-    // Match if name and type are the same, or if all three match
-    return (nameSimilarity && typeSimilarity) || (nameSimilarity && keywordsSimilarity && typeSimilarity);
+  return existingItems.find((existing) => {
+    const sameIdentity =
+      normalize(existing.name) === normalize(newItem.name) &&
+      normalize(existing.keywords) === normalize(newItem.keywords) &&
+      normalize(existing.type) === normalize(newItem.type);
+
+    if (!sameIdentity) return false;
+
+    // Deep compare stats + flags to decide if it's truly the same record
+    const sameFlags = JSON.stringify(existing.flags ?? []) === JSON.stringify(newItem.flags ?? []);
+    const sameStats = JSON.stringify(existing.stats ?? {}) === JSON.stringify(newItem.stats ?? {});
+    const sameEgo = normalize(existing.ego) === normalize(newItem.ego);
+    const sameArtifact = Boolean(existing.isArtifact) === Boolean(newItem.isArtifact);
+
+    return sameFlags && sameStats && sameEgo && sameArtifact;
   })?.id;
 };
 
