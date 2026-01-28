@@ -14,7 +14,7 @@ const AboutPage = () => (
             supporting both new and veteran players in their adventures... and save gold of course!
         </p>
 
-        <h2 className="text-2xl font-semibold mb-3 text-orange-600">What's inside</h2>
+        <h2 className="text-2xl font-semibold mb-3 text-orange-600">What&apos;s inside</h2>
         <ul className="list-disc list-inside space-y-3 text-zinc-200 mb-4">
             <li>
                 <span className="font-semibold text-orange-500">Backend API</span> for submissions and searches, so tools like Mudlet can push
@@ -34,19 +34,19 @@ const AboutPage = () => (
             </li>
 
             <li>
-                <span className="font-semibold text-orange-500">Half-Orc 'error' phrases</span> implemented at random for fun, adding a bit of flavor and humor to the database.
+                <span className="font-semibold text-orange-500">Half-Orc &#39;error&#39; phrases</span> implemented at random for fun, adding a bit of flavor and humor to the database.
             </li>
         </ul>
 
         <h2 className="text-2xl font-semibold mb-3 text-orange-600">Who Made This?</h2>
         <p className="text-zinc-300 leading-relaxed mb-4">
-            This project was created by David "Gitago" Bell and is maintained by the BlackMUD community,
+            This project was created by David &quot;Gitago&quot; Bell and is maintained by the BlackMUD community,
             with development led by <span className="font-semibold text-orange-600">GitProductions</span>.
         </p>
 
         <h2 className="text-2xl font-semibold mb-3 text-orange-600">Get Involved</h2>
         <p className="text-zinc-300 leading-relaxed mb-4">
-            We welcome contributions from the community! Whether it's submitting new items,
+            We welcome contributions from the community! Whether it&apos;s submitting new items,
             improving existing entries, or providing feedback on features, your input helps make
             the database better for everyone.
         </p>
