@@ -1,4 +1,9 @@
-// orcPhrases.ts (or inside your component)
+type AggroLevel = 'mild' | 'medium' | 'high' | 'savage';
+
+type OrcPhraseCategory = Partial<Record<AggroLevel, string[]>> & {
+  allLevels?: string[];
+};
+
 const orcPhrases = {
   noSearchResults: {
     // When search returns 0 items
@@ -82,19 +87,24 @@ const orcPhrases = {
       "The half-orc roars: 'Talk or get smashed!'",
     ],
   },
-};
+} satisfies Record<string, OrcPhraseCategory>;
 
-
-export const getRandomOrcPhrase = (scenario: keyof typeof orcPhrases, aggression: 'random' | 'mild' | 'medium' | 'high' | 'savage' = 'medium') => {
+export const getRandomOrcPhrase = (
+  scenario: keyof typeof orcPhrases,
+  aggression: 'random' | AggroLevel = 'medium',
+) => {
   const category = orcPhrases[scenario];
   if (!category) return "A half-orc grunts: 'Somethin' ain't right.'";
 
   if (aggression === 'random') {
-    const levels = Object.keys(category).filter(level => level !== 'allLevels');
-    aggression = levels[Math.floor(Math.random() * levels.length)] as 'mild' | 'medium' | 'high' | 'savage';
+    const levels = Object.keys(category).filter((level) => level !== 'allLevels') as AggroLevel[];
+    aggression = levels[Math.floor(Math.random() * levels.length)];
   }
 
-  const phrases = category[aggression] || category.allLevels || category.mild;
+  // Narrow category to a consistent shape so TS knows aggression is a valid key
+  const normalized: Partial<Record<AggroLevel, string[]>> & { allLevels?: string[] } = category;
+
+  const phrases = normalized[aggression] || normalized.allLevels || normalized.mild;
   if (!phrases?.length) return "A half-orc says: 'Huh?'";
 
   return phrases[Math.floor(Math.random() * phrases.length)];
