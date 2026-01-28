@@ -39,7 +39,7 @@ function Header( {items, view, setView}: {items: Item[], view: AppView, setView:
                   : 'text-zinc-400 hover:text-white'
               }`}
             >
-              <Sparkles size={16} /> Loadout
+              <Sparkles size={16} /> Equipment
             </button>
             <button
               onClick={() => setView('import')}

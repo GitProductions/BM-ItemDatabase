@@ -50,7 +50,7 @@ const defaultIdState: Record<SlotKey, string | null> = {
   finger2: null,
 };
 
-const STORAGE_KEY = 'bm-loadout';
+const STORAGE_KEY = 'bm-Equipment';
 
 export const GearPlanner: React.FC<GearPlannerProps> = ({ items }) => {
   const [slotIds, setSlotIds] = useState<Record<SlotKey, string | null>>(() => {
@@ -79,7 +79,7 @@ export const GearPlanner: React.FC<GearPlannerProps> = ({ items }) => {
 
   const totals = useMemo(() => computeTotals(selected), [selected]);
 
-  // Persist loadout whenever selection changes
+  // Persist Equipment whenever selection changes
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(slotIds));
   }, [slotIds]);
@@ -94,7 +94,7 @@ export const GearPlanner: React.FC<GearPlannerProps> = ({ items }) => {
       <div className="flex items-center gap-3">
         <Sparkles className="text-orange-400" />
         <div>
-          <h2 className="text-xl font-bold text-white">Loadout & Stats</h2>
+          <h2 className="text-xl font-bold text-white">Equipment & Stats</h2>
           <p className="text-sm text-zinc-400">
             Assign gear from the Item-DB and see a compact rollup of AC, damage, and weight.
           </p>
