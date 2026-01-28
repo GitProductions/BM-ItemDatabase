@@ -46,7 +46,7 @@ export const ItemDB: React.FC<ItemDBProps> = ({ items }) => {
   const calculateFuzzyTolerance = (token: string, candidateLength: number) => {
     if (!token) return 0;
     const baseLength = Math.max(token.length, candidateLength);
-    return Math.min(4, Math.max(1, Math.ceil(baseLength * 0.35)));
+    return Math.min(4, Math.max(1, Math.ceil(baseLength * 0.32)));
   };
   const doesTokenMatchField = (token: string, value?: string) => {
     if (!value) return false;
@@ -56,6 +56,9 @@ export const ItemDB: React.FC<ItemDBProps> = ({ items }) => {
     const candidateWords = normalized.split(/[^a-z0-9]+/).filter(Boolean);
     return candidateWords.some((word) => {
       const tolerance = calculateFuzzyTolerance(token, word.length);
+      if (Math.abs(token.length - word.length) > tolerance) {
+        return false;
+      }
       return getLevenshteinDistance(token, word, tolerance) <= tolerance;
     });
   };
