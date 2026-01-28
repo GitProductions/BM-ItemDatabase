@@ -71,7 +71,7 @@ export const ItemDB: React.FC<ItemDBProps> = ({ items }) => {
       {filteredItems.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
           {filteredItems.map((item) => (
-            <ItemCard key={item.id} item={item} />
+            <ItemCard key={item.id} item={{...item}} />
           ))}
         </div>
       ) : (

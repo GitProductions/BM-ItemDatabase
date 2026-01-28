@@ -151,13 +151,13 @@ export const ImportPanel: React.FC<ImportPanelProps> = ({
           />
 
           <div className="flex justify-between items-center">
-            <button
+            {/* <button
               onClick={onClear}
               disabled={isProcessing}
               className="px-4 py-2 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-900/20 text-sm font-medium transition-colors flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:text-zinc-500"
             >
               <Trash2 size={16} /> Clear Database
-            </button>
+            </button> */}
 
             <button
               onClick={onCheckDuplicates}
@@ -178,7 +178,7 @@ export const ImportPanel: React.FC<ImportPanelProps> = ({
           {previewItems.length > 0 ? (
             <div className="grid grid-cols-1 gap-4 overflow-y-auto max-h-[400px] pr-1">
               {previewItems.map((item) => (
-                <ItemCard key={item.id} item={item} />
+                <ItemCard key={item.id} item={{...item, owner:userName}} />
               ))}
             </div>
           ) : (

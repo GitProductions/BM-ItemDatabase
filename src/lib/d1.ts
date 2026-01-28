@@ -125,6 +125,10 @@ export const fetchItems = async (): Promise<Item[]> => {
   return rows.map(decodeItem);
 };
 
+
+// Insert into Items table with upsert on unique identity (name, keywords, type)
+// We update all fields on conflict to ensure latest data is stored
+// including flags, stats, owner, ego, isArtifact, raw, flaggedForReview, duplicateOf, and updatedAt
 export const upsertItems = async (items: Item[], ownerName?: string) => {
   if (!items.length) return;
 
