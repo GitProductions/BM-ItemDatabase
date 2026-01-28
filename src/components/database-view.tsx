@@ -22,22 +22,73 @@ export const ItemDB: React.FC<ItemDBProps> = ({ items }) => {
     return ['all', ...Array.from(types)];
   }, [items]);
 
+
+  // Fuzzy search helpers
+  const getLevenshteinDistance = (source: string, target: string, maxDistance: number) => {
+    if (Math.abs(source.length - target.length) > maxDistance) return maxDistance + 1;
+    let previousRow = Array.from({ length: target.length + 1 }, (_, index) => index);
+    for (let i = 1; i <= source.length; i += 1) {
+      const currentRow = [i];
+      let minRow = i;
+      for (let j = 1; j <= target.length; j += 1) {
+        const insertCost = currentRow[j - 1] + 1;
+        const deleteCost = previousRow[j] + 1;
+        const replaceCost = previousRow[j - 1] + (source[i - 1] === target[j - 1] ? 0 : 1);
+        const value = Math.min(insertCost, deleteCost, replaceCost);
+        currentRow.push(value);
+        minRow = Math.min(minRow, value);
+      }
+      if (minRow > maxDistance) return maxDistance + 1;
+      previousRow = currentRow;
+    }
+    return previousRow[previousRow.length - 1];
+  };
+  const calculateFuzzyTolerance = (token: string, candidateLength: number) => {
+    if (!token) return 0;
+    const baseLength = Math.max(token.length, candidateLength);
+    return Math.min(4, Math.max(1, Math.ceil(baseLength * 0.35)));
+  };
+  const doesTokenMatchField = (token: string, value?: string) => {
+    if (!value) return false;
+    const normalized = value.toLowerCase();
+    if (normalized.includes(token)) return true;
+
+    const candidateWords = normalized.split(/[^a-z0-9]+/).filter(Boolean);
+    return candidateWords.some((word) => {
+      const tolerance = calculateFuzzyTolerance(token, word.length);
+      return getLevenshteinDistance(token, word, tolerance) <= tolerance;
+    });
+  };
+
+
+  // Filtered items based on search and type filter
   const filteredItems = useMemo(() => {
     const searchTerm = search.trim().toLowerCase();
-    if (!searchTerm) return [];
+    if (searchTerm.length === 0) {
+      return items.filter(item =>
+        filterType === 'all' ? true : item.type.includes(filterType)
+      );
+    }
 
+    const tokens = searchTerm.split(/\s+/).filter(Boolean);
     return items.filter((item) => {
       const stats = item.stats ?? { affects: [], weight: 0 };
       const affects = stats.affects ?? [];
-      const matchesSearch =
-        item.name.toLowerCase().includes(searchTerm) ||
-        item.keywords.toLowerCase().includes(searchTerm) ||
-        affects.some(
-          (affect) =>
-            affect.stat?.toLowerCase().includes(searchTerm) ||
-            (affect.spell && affect.spell.toLowerCase().includes(searchTerm))
-        );
 
+      const matchesToken = (token: string) => {
+        const coreFieldsMatch =
+          doesTokenMatchField(token, item.name) ||
+          doesTokenMatchField(token, item.keywords) ||
+          doesTokenMatchField(token, item.type);
+        if (coreFieldsMatch) return true;
+
+        return affects.some(
+          (affect) =>
+            doesTokenMatchField(token, affect.stat) || doesTokenMatchField(token, affect.spell),
+        );
+      };
+
+      const matchesSearch = tokens.every(matchesToken);
       const matchesType = filterType === 'all' ? true : item.type.includes(filterType);
 
       return matchesSearch && matchesType;
@@ -75,38 +126,10 @@ export const ItemDB: React.FC<ItemDBProps> = ({ items }) => {
             </button>
           ))}
 
-          {/* {onRefresh && (
-            <button
-              onClick={async () => {
-                setInvalidateStatus(null);
-                setInvalidateLoading(true);
-                try {
-                  const res = await fetch('/api/items/invalidate', { method: 'POST' });
-                  if (!res.ok) throw new Error('Failed to invalidate cache');
-                  await onRefresh();
-                  setInvalidateStatus('Cache cleared and data reloaded');
-                } catch (err) {
-                  setInvalidateStatus('Could not invalidate cache');
-                  console.error(err);
-                } finally {
-                  setInvalidateLoading(false);
-                }
-              }}
-              className="ml-2 px-3 py-1.5 rounded-md text-xs font-medium bg-zinc-800 text-orange-300 border border-orange-500/40 hover:border-orange-500 transition-colors whitespace-nowrap"
-              disabled={invalidateLoading}
-            >
-              {invalidateLoading ? 'Clearing…' : 'Invalidate cache'}
-            </button>
-          )} */}
+        
         </div>
 
       </div>
-
-      {/* {invalidateStatus && (
-        <div className="text-xs text-center text-zinc-400">
-          {invalidateStatus}
-        </div>
-      )} */}
 
       {/* Items Grid */}
       {filteredItems.length > 0 ? (
