@@ -1,9 +1,9 @@
 
-import {  Plus, Search } from 'lucide-react';
+import {  Plus, Search, Sparkles } from 'lucide-react';
 import Image from 'next/image';
 import { Item } from '@/types/items';
 
-type AppView = 'db' | 'import';
+type AppView = 'db' | 'import' | 'gear';
 
 function Header( {items, view, setView}: {items: Item[], view: AppView, setView: (view: AppView) => void}) {
   return (
@@ -30,6 +30,16 @@ function Header( {items, view, setView}: {items: Item[], view: AppView, setView:
               }`}
             >
               <Search size={16} /> Items
+            </button>
+            <button
+              onClick={() => setView('gear')}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2  ${
+                view === 'gear'
+                  ? 'bg-zinc-800 text-orange-400 border border-zinc-700'
+                  : 'text-zinc-400 hover:text-white'
+              }`}
+            >
+              <Sparkles size={16} /> Loadout
             </button>
             <button
               onClick={() => setView('import')}

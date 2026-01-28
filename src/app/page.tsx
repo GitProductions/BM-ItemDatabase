@@ -6,8 +6,9 @@ import { Item } from '@/types/items';
 import { parseIdentifyDump, findDuplicate } from '@/lib/parse-identify-dump';
 import Header from '@/components/header';
 import Footer from '@/components/footer';
+import { GearPlanner } from '@/components/gear-planner/gear-planner';
 
-type AppView = 'db' | 'import';
+type AppView = 'db' | 'import' | 'gear';
 type DuplicateCheckState = {
   hasDuplicates: boolean;
   duplicateItems: Item[];
@@ -194,7 +195,7 @@ export default function App() {
           ) : (
             <ItemDB items={items} />
           )
-        ) : (
+        ) : view === 'import' ? (
           <ImportPanel
             rawInput={rawInput}
             onRawInputChange={setRawInput}
@@ -208,6 +209,8 @@ export default function App() {
             onUserNameChange={setUserName}
             duplicateCheck={duplicateCheck}
           />
+        ) : (
+          <GearPlanner items={items} />
         )}
 
 
