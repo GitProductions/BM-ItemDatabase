@@ -4,6 +4,13 @@ import { deleteAllItems, searchItems, upsertItems } from '@/lib/d1';
 import { ItemInput, normalizeItemInput, parseBooleanParam, withCors } from '@/lib/items-api';
 import { clearCache, getCached, setCached } from '@/lib/memory-cache';
 
+const isAuthorized = (request: NextRequest) => {
+  const header = request.headers.get('authorization');
+  const token = header?.startsWith('Bearer ') ? header.slice(7) : null;
+  const secret = process.env.ADMIN_TOKEN;
+  return Boolean(secret && token && token === secret);
+};
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const q = searchParams.get('q')?.trim() || undefined;
@@ -97,7 +104,13 @@ export async function POST(request: NextRequest) {
   return withCors(NextResponse.json({ item: saved ?? normalized.item }, { status: 201 }));
 }
 
-export async function DELETE() {
+export async function DELETE(request: NextRequest) {
+  // Require admin token to clear the database
+  // Note: returning 401 rather than 403 to avoid leaking existence of the endpoint
+  if (!isAuthorized(request)) {
+    return withCors(NextResponse.json({ message: 'Unauthorized' }, { status: 401 }));
+  }
+
   await deleteAllItems();
   clearCache();
   return withCors(NextResponse.json({ deleted: true, items: [] }));

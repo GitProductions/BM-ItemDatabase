@@ -35,6 +35,11 @@ pnpm build
 
 ### Public API (for Mudlet or other clients)
 
+# Auth for destructive actions
+- Set `ADMIN_TOKEN` in `.env` (e.g., `ADMIN_TOKEN="SECRET_TOKEN"`).
+- DELETE `/api/items` requires header `Authorization: Bearer <ADMIN_TOKEN>`.
+- Regular GET/POST continue to allow read/add without the token.
+
 # Search
 curl "http://localhost:3000/api/items?q=broadsword&type=weapon&limit=20"
 
