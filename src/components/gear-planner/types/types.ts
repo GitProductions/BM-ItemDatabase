@@ -1,3 +1,5 @@
+import { Item } from '@/types/items';
+
 export type SlotKey =
   | 'head'
   | 'neck1'

@@ -1,6 +1,7 @@
+import { Item } from '@/types/items';
+import { Selected } from './types/types';
+
 export const normalize = (text: string) => text.toLowerCase();
-
-
 
 export const computeTotals = (selected: Selected) => {
   const selectedItems = Object.values(selected).filter(Boolean) as Item[];

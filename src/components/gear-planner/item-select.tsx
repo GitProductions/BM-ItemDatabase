@@ -1,14 +1,20 @@
-import React from 'react'
-import { useMemo, useState, useRef } from 'react';
+import React, { useMemo, useState, useRef } from 'react';
 import { Item } from '@/types/items';
 import { Sword, Shield, Weight } from 'lucide-react';
 import SearchItem from './search-item';
 import { normalize } from './util';
+import { SlotConfig } from './types/types';
 
+type ItemSelectProps = {
+  slot: SlotConfig;
+  items: Item[];
+  value: Item | null;
+  onChange: (item: Item | null) => void;
+};
 
-function ItemSelect({ slot, items, value, onChange }: { slot: { key: string; label: string; hint: string }; items: Item[]; value: Item | null; onChange: (item: Item | null) => void; }) {
+const ItemSelect: React.FC<ItemSelectProps> = ({ slot, items, value, onChange }) => {
   const [query, setQuery] = useState('');
-  const containerRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
 
   const filtered = useMemo(() => {
     const q = normalize(query);
@@ -22,8 +28,6 @@ function ItemSelect({ slot, items, value, onChange }: { slot: { key: string; lab
       )
       .slice(0, 12);
   }, [items, query]);
-
-
 
   return (
     <div ref={containerRef} className="relative rounded-lg border border-zinc-800/60 bg-zinc-950/60 p-3 shadow-sm">
@@ -47,15 +51,10 @@ function ItemSelect({ slot, items, value, onChange }: { slot: { key: string; lab
         query={query}
         setQuery={setQuery}
         filtered={filtered}
-        onChange={(item) => {
-          onChange(item);
-        }}
+        onChange={(item) => onChange(item)}
         containerRef={containerRef}
       />
 
- 
-
-      {/* Equipped Item Stats Preview  */}
       {value ? (
         <div className="mt-2 rounded-md border border-zinc-800 bg-zinc-900/70 p-2 text-xs text-zinc-200">
           <div className="flex items-center justify-between gap-2">
@@ -91,5 +90,4 @@ function ItemSelect({ slot, items, value, onChange }: { slot: { key: string; lab
   );
 };
 
-
-export default ItemSelect
+export default ItemSelect;

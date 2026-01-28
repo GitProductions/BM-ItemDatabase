@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { Item } from '@/types/items';
-import { Sparkles, RefreshCcw, Shield, Sword, Weight } from 'lucide-react';
+import React from 'react';
+// import { Item } from '@/types/items';
+import {  RefreshCcw, Sword } from 'lucide-react';
 
 function Summary({totals, reset }: { totals: { totalAC: number; totalWeight: number; count: number; affectsTotals: Map<string, number>; damages: string[] }; reset: () => void;}) {
   return (
@@ -21,7 +21,7 @@ function Summary({totals, reset }: { totals: { totalAC: number; totalWeight: num
             <p className="text-2xl font-bold text-white">{totals.totalAC}</p>
           </div>
           <div className="rounded-lg border border-zinc-800 bg-zinc-950/60 p-3">
-            <p className="text-xs uppercase text-zinc-500">Weight</p>
+            <p className="text-xs uppercase text-zinc-500"> Weight </p>
             <p className="text-2xl font-bold text-white">{totals.totalWeight}</p>
           </div>
           <div className="rounded-lg border border-zinc-800 bg-zinc-950/60 p-3">

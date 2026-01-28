@@ -4,15 +4,13 @@ import { Item } from '@/types/items';
 type SearchItemProps = {
   query: string;
   setQuery: (value: string) => void;
-  open: boolean;
-  setOpen: (open: boolean) => void;
   filtered: Item[];
   onChange: (item: Item) => void;
-  containerRef: React.RefObject<HTMLDivElement>;
+  containerRef: React.RefObject<HTMLDivElement | null>;
 };
 
 const SearchItem: React.FC<SearchItemProps> = ({ query, setQuery, filtered, onChange, containerRef }) => {
-    const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(false);
 
       // handling close dropdown search for items
   useEffect(() => {
@@ -29,7 +27,7 @@ const SearchItem: React.FC<SearchItemProps> = ({ query, setQuery, filtered, onCh
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [open]);
+  }, [open, containerRef]);
   return (
     <div className="relative">
       <input
