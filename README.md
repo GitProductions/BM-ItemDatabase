@@ -38,6 +38,8 @@ pnpm build
 # Auth for destructive actions
 - Set `ADMIN_TOKEN` in `.env` (e.g., `ADMIN_TOKEN="SECRET_TOKEN"`).
 - DELETE `/api/items` requires header `Authorization: Bearer <ADMIN_TOKEN>`.
+  - Delete single item: `DELETE /api/items?id=<ITEM_ID>`
+  - Full wipe (admin only): `DELETE /api/items?all=true`
 - Regular GET/POST continue to allow read/add without the token.
 
 # Search

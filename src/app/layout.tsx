@@ -16,11 +16,11 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Blackmud Item Database",
-  description: "An item database and equipment calculator for the BlackMUD.",
+  description: "An item database and equipment calculator for the BlackMUD Community.",
 
   openGraph: {
     title: "Blackmud Item Database",
-    description: "An item database and equipment calculator for the BlackMUD.",
+    description: "An item database and equipment calculator for the BlackMUD Community.",
     type: "website",
     locale: "en_US",
     images: [
@@ -36,7 +36,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Blackmud Item Database",
-    description: "An item database and equipment calculator for the BlackMUD.",
+    description: "An item database and equipment calculator for the BlackMUD Community.",
     images: [
       {
         url: "https://bm-itemdb.gitago.dev/bm-itemdb-ogimage.jpg",

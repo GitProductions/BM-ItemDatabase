@@ -60,14 +60,14 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item }) => {
   }
 
   return (
-    <div className="bg-zinc-800 border border-zinc-700 rounded-lg p-4 hover:border-zinc-500 transition-colors shadow-sm h-full">
+    <div className="bg-zinc-800 border border-zinc-700 rounded-lg p-4 mb-4 hover:border-zinc-500 transition-colors shadow-sm h-full">
       <div className="flex justify-between items-start mb-2">
         <div className="flex items-start gap-3">
           <div className={`p-2 rounded-md bg-zinc-900 ${typeColor}`}>
             <Icon size={20} />
           </div>
           <div>
-            <h3 className="font-bold text-white text-lg leading-tight">{item.name}</h3>
+            <h3 className="font-bold text-white text-md md:text-lg leading-tight">{item.name}</h3>
             <div className="text-xs text-zinc-500 mt-1 font-mono">
               {item.keywords} • <span className="uppercase text-zinc-400">{item.type}</span>
             </div>
@@ -180,7 +180,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item }) => {
         </div>
       )}
 
-      <p className='text-xs text-zinc-500 mt-2 text-right'>Item added by: {item.owner ?? 'Unknown'}</p>
+      <p className='absolute bottom-2 right-5 text-xs text-zinc-500 mt-2 text-right'>Item added by: {item.owner ?? 'Unknown'}</p>
     </div>
   );
 };

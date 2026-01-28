@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { parseIdentifyDump } from '@/lib/parse-identify-dump';
-import { deleteAllItems, searchItems, upsertItems } from '@/lib/d1';
+import { deleteAllItems, deleteItem, searchItems, upsertItems } from '@/lib/d1';
 import { ItemInput, normalizeItemInput, parseBooleanParam, withCors } from '@/lib/items-api';
 import { clearCache, getCached, setCached } from '@/lib/memory-cache';
 
@@ -111,9 +111,24 @@ export async function DELETE(request: NextRequest) {
     return withCors(NextResponse.json({ message: 'Unauthorized' }, { status: 401 }));
   }
 
-  await deleteAllItems();
-  clearCache();
-  return withCors(NextResponse.json({ deleted: true, items: [] }));
+  const { searchParams } = new URL(request.url);
+  const id = searchParams.get('id')?.trim();
+
+  if (id) {
+    await deleteItem(id);
+    clearCache();
+    return withCors(NextResponse.json({ deleted: true, id }));
+  }
+
+  // If no id provided, fall back to full wipe (explicitly requested via ?all=true)
+  const wipe = parseBooleanParam(searchParams.get('all'));
+  if (wipe) {
+    await deleteAllItems();
+    clearCache();
+    return withCors(NextResponse.json({ deleted: true, all: true, items: [] }));
+  }
+
+  return withCors(NextResponse.json({ message: 'id is required to delete an item (or set all=true to wipe)' }, { status: 400 }));
 }
 
 export async function OPTIONS() {

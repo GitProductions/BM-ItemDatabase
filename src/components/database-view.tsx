@@ -10,14 +10,12 @@ type ItemDBProps = {
   onRefresh?: () => Promise<void> | void;
 };
 
-export const ItemDB: React.FC<ItemDBProps> = ({ items, onRefresh }) => {
+export const ItemDB: React.FC<ItemDBProps> = ({ items }) => {
   const [search, setSearch] = useState('');
   const [filterType, setFilterType] = useState('all');
   const [suggestItem, setSuggestItem] = useState<Item | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [suggestFeedback, setSuggestFeedback] = useState<string | null>(null);
-  const [invalidateStatus, setInvalidateStatus] = useState<string | null>(null);
-  const [invalidateLoading, setInvalidateLoading] = useState(false);
 
   const uniqueTypes = useMemo(() => {
     const types = new Set(items.map((item) => item.type));
@@ -51,7 +49,7 @@ export const ItemDB: React.FC<ItemDBProps> = ({ items, onRefresh }) => {
       <div className="bg-zinc-900 p-4 rounded-xl border border-zinc-800 shadow-sm flex flex-col md:flex-row gap-4">
        
         {/* Main Search  */}
-        <div className="relative flex-1">
+        <div className="relative flex-1 ">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
           <input
             type="text"
@@ -63,7 +61,7 @@ export const ItemDB: React.FC<ItemDBProps> = ({ items, onRefresh }) => {
         </div>
 
         {/* Type Filters */}
-        <div className="flex gap-2 items-center overflow-x-auto pb-2 md:pb-0">
+        <div className="flex gap-2 items-center overflow-x-auto pb-3 md:pb-0">
           <Filter size={18} className="text-zinc-500 shrink-0" />
           {uniqueTypes.map((type) => (
             <button
@@ -104,11 +102,11 @@ export const ItemDB: React.FC<ItemDBProps> = ({ items, onRefresh }) => {
 
       </div>
 
-      {invalidateStatus && (
+      {/* {invalidateStatus && (
         <div className="text-xs text-center text-zinc-400">
           {invalidateStatus}
         </div>
-      )}
+      )} */}
 
       {/* Items Grid */}
       {filteredItems.length > 0 ? (
@@ -123,10 +121,12 @@ export const ItemDB: React.FC<ItemDBProps> = ({ items, onRefresh }) => {
                 setSuggestItem(item);
                 setSuggestFeedback(null);
               }}
-            className="absolute top-2 right-2 text-[11px] px-2 py-1 rounded bg-zinc-900/80 border border-zinc-700 text-zinc-300 hover:text-white hover:border-orange-500 transition-colors"
-          >
-             Suggest edit
-          </button>
+              className="absolute bottom-2 left-2 inline-flex items-center gap-1 w-auto z-10
+              md:top-2 md:right-2 md:left-auto md:bottom-auto
+              text-[11px] px-2 py-1 rounded bg-zinc-900/80 border border-zinc-700 text-zinc-300 hover:text-white hover:border-orange-500 transition-colors"
+            >
+              Suggest edit
+            </button>
 
           </div>
         ))}

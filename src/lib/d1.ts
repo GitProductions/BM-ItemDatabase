@@ -263,6 +263,13 @@ export const deleteAllItems = async () => {
   await db.prepare('DELETE FROM items;').run();
 };
 
+export const deleteItem = async (id: string) => {
+  if (!id) return;
+  const db = await getDatabase();
+  await ensureSchema(db);
+  await db.prepare('DELETE FROM items WHERE id = ?1;').bind(id).run();
+};
+
 export const addSuggestion = async (suggestion: Suggestion) => {
   const db = await getDatabase();
   await ensureSchema(db);
