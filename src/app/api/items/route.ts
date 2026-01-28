@@ -1,14 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { parseIdentifyDump } from '@/lib/parse-identify-dump';
-import { getItemsCollection } from '@/lib/mongodb';
-
-const fetchAllItems = async () => {
-  const collection = await getItemsCollection();
-  return collection.find().sort({ name: 1 }).toArray();
-};
+import { deleteAllItems, fetchItems, upsertItems } from '@/lib/d1';
 
 export async function GET() {
-  const items = await fetchAllItems();
+  const items = await fetchItems();
   return NextResponse.json({ items });
 }
 
@@ -28,40 +23,19 @@ export async function POST(request: NextRequest) {
 
   const parsedItems = parseIdentifyDump(cleanedInput);
   if (!parsedItems.length) {
-    const items = await fetchAllItems();
+    const items = await fetchItems();
     return NextResponse.json({ items });
   }
 
   const ownerName = payload?.owner?.trim();
 
-  const collection = await getItemsCollection();
-  const now = new Date();
+  await upsertItems(parsedItems, ownerName);
 
-  const operations = parsedItems.map((item) => ({
-    updateOne: {
-      filter: { keywords: item.keywords, name: item.name, type: item.type },
-      update: {
-        $set: {
-          ...item,
-          updatedAt: now,
-          ...(ownerName ? { owner: ownerName } : {}),
-        },
-        $setOnInsert: {
-          createdAt: now,
-        },
-      },
-      upsert: true,
-    },
-  }));
-
-  await collection.bulkWrite(operations, { ordered: false });
-
-  const items = await fetchAllItems();
+  const items = await fetchItems();
   return NextResponse.json({ items });
 }
 
 export async function DELETE() {
-  const collection = await getItemsCollection();
-  await collection.deleteMany({});
+  await deleteAllItems();
   return NextResponse.json({ deleted: true, items: [] });
 }

@@ -17,33 +17,12 @@
             "binding": "WORKER_SELF_REFERENCE",
             "service": "bm-item-database"
         }
+    ],
+    "d1_databases": [
+        {
+            "binding": "ITEMS_DB",
+            "database_name": "bm-item-database",
+            "database_id": "6f326759-435c-4d77-882a-c338dd9431fc"
+        }
     ]
-    
-    // "r2_buckets": [
-    //     {
-    //         "binding": "NEXT_INC_CACHE_R2_BUCKET",
-    //         "bucket_name": "your-bucket-name",
-    //         "preview": true
-    //     }
-    // ],
-    // "durable_objects": {
-    //     "bindings": [
-    //         {
-    //             "name": "NEXT_CACHE_DO_QUEUE",
-    //             "class_name": "Queue",
-    //             "script_name": "bm-item-database"
-    //         }
-    //     ]
-    // },
-    // "env": {
-    //     "development": {
-    //         "r2_buckets": [
-    //             {
-    //                 "binding": "NEXT_INC_CACHE_R2_BUCKET",
-    //                 "bucket_name": "your-bucket-name-preview",
-    //                 "preview": true
-    //             }
-    //         ]
-    //     }
-    // }
 }

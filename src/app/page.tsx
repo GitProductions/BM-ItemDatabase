@@ -34,7 +34,7 @@ export default function App() {
         setItems(data.items ?? []);
         setStatusMessage(null);
       } catch {
-        setStatusMessage('Unable to load items from MongoDB. Check your connection and try again.');
+        setStatusMessage('Unable to load items from the database. Check your connection and try again.');
       } finally {
         setLoading(false);
       }
@@ -190,7 +190,7 @@ export default function App() {
 
         {view === 'db' ? (
           loading ? (
-            <div className="text-center py-20 text-zinc-500">Loading items from MongoDB...</div>
+            <div className="text-center py-20 text-zinc-500">Loading items from the database...</div>
           ) : (
             <ItemDB items={items} />
           )
