@@ -1,58 +1,43 @@
 
-import { Plus, Search, Sparkles, Menu, X } from 'lucide-react';
+import { Plus, Search, Sparkles, Menu, X, CircleQuestionMark } from 'lucide-react';
 import Image from 'next/image';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { Item } from '@/types/items';
 
-type AppView = 'db' | 'import' | 'gear';
+const navLinks = [
+  { href: '/', label: 'Items', icon: Search },
+  { href: '/gear-planner', label: 'Equipment', icon: Sparkles },
+  { href: '/add-item', label: 'Add Items', icon: Plus },
+  { href: '/about', label: 'About', icon: CircleQuestionMark },
+];
 
-type NavButtonsProps = {
-  view: AppView;
-  setView: (view: AppView) => void;
-  onDone?: () => void;
-};
+function NavButtons({ onDone }: { onDone?: () => void }) {
+  const pathname = usePathname();
 
-function NavButtons({ view, setView, onDone }: NavButtonsProps) {
   return (
     <>
-      <button
-        onClick={() => {
-          setView('db');
-          onDone?.();
-        }}
-        className={`px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 ${
-          view === 'db' ? 'bg-zinc-800 text-orange-400 border border-zinc-700' : 'text-zinc-400 hover:text-white'
-        }`}
-      >
-        <Search size={16} /> Items
-      </button>
-      <button
-        onClick={() => {
-          setView('gear');
-          onDone?.();
-        }}
-        className={`px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 ${
-          view === 'gear' ? 'bg-zinc-800 text-orange-400 border border-zinc-700' : 'text-zinc-400 hover:text-white'
-        }`}
-      >
-        <Sparkles size={16} /> Equipment
-      </button>
-      <button
-        onClick={() => {
-          setView('import');
-          onDone?.();
-        }}
-        className={`px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 ${
-          view === 'import' ? 'bg-zinc-800 text-orange-400 border border-zinc-700' : 'text-zinc-400 hover:text-white'
-        }`}
-      >
-        <Plus size={16} /> Add Items
-      </button>
+      {navLinks.map(({ href, label, icon: Icon }) => {
+        const active = pathname === href;
+        return (
+          <Link
+            key={href}
+            href={href}
+            onClick={onDone}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 ${
+              active ? 'bg-zinc-800 text-orange-400 border border-zinc-700' : 'text-zinc-400 hover:text-white'
+            }`}
+          >
+            <Icon size={16} /> {label}
+          </Link>
+        );
+      })}
     </>
   );
 }
 
-function Header({ items, view, setView }: { items: Item[]; view: AppView; setView: (view: AppView) => void }) {
+function Header({ items }: { items: Item[] }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement | null>(null);
 
@@ -88,7 +73,7 @@ function Header({ items, view, setView }: { items: Item[]; view: AppView; setVie
         </div>
 
         <div className="hidden md:flex gap-2">
-          <NavButtons view={view} setView={setView} />
+          <NavButtons />
         </div>
 
         <button
@@ -104,7 +89,7 @@ function Header({ items, view, setView }: { items: Item[]; view: AppView; setVie
       {mobileOpen && (
         <div className="md:hidden border-t border-zinc-800 bg-zinc-950/95 backdrop-blur supports-[backdrop-filter]:backdrop-blur-md">
           <div ref={panelRef} className="max-w-7xl mx-auto px-4 py-3 flex flex-col gap-2">
-            <NavButtons view={view} setView={setView} onDone={() => setMobileOpen(false)} />
+            <NavButtons onDone={() => setMobileOpen(false)} />
           </div>
         </div>
       )}
