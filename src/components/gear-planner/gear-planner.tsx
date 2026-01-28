@@ -6,21 +6,8 @@ import { Sparkles } from 'lucide-react';
 import Summary from './summary';
 import ItemSelect from './item-select';
 import { computeTotals } from './util';
-import { SlotConfig, Selected, SlotKey, GearPlannerProps } from './types/types';
-
-const SLOT_CONFIG: SlotConfig[] = [
-  { key: 'head', label: 'Head', hint: 'helms, caps' },
-  { key: 'neck1', label: 'Neck', hint: 'amulets, chains' },
-  { key: 'neck2', label: 'Neck', hint: 'amulets, chains' },
-  { key: 'body', label: 'Body', hint: 'robes, chestplates' },
-  { key: 'about-legs', label: 'About Legs', hint: 'kilts, wraps' },
-  { key: 'legs', label: 'Legs', hint: 'greaves, leggings' },
-  { key: 'feet', label: 'Feet', hint: 'boots, shoes' },
-  { key: 'hands', label: 'Hands', hint: 'gloves, gauntlets' },
-  { key: 'waist', label: 'Waist', hint: 'belts, sashes' },
-  { key: 'finger1', label: 'Ring', hint: 'rings, bands' },
-  { key: 'finger2', label: 'Ring', hint: 'rings, bands' },
-];
+import { Selected, SlotKey, GearPlannerProps } from './types/types';
+import { SLOT_CONFIG } from '@/lib/slots';
 
 const defaultGearState: Selected = {
   head: null,

@@ -69,7 +69,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item }) => {
           <div>
             <h3 className="font-bold text-white text-md md:text-lg leading-tight">{item.name}</h3>
             <div className="text-xs text-zinc-500 mt-1 font-mono">
-              {item.keywords} • <span className="uppercase text-zinc-400">{item.type}</span>
+              {item.keywords} • <span className="uppercase text-zinc-400">{item.type}</span> {item.worn ? <>• <span className="capitalize">{item.worn}</span></> : ''}
             </div>
 
           </div>
@@ -180,7 +180,13 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item }) => {
         </div>
       )}
 
-      <p className='absolute bottom-2 right-5 text-xs text-zinc-500 mt-2 text-right'>Item added by: {item.owner ?? 'Unknown'}</p>
+      <div className="mt-3 flex flex-col gap-1 text-xs text-zinc-500">
+        <div className="flex justify-between gap-2">
+          <span>{item.worn ? `Worn: ${item.worn}` : ''}</span>
+          <span>Submitted by: {item.submittedBy ?? 'Unknown'}</span>
+        </div>
+        {item.droppedBy && <p className="text-right italic">Dropped by: {item.droppedBy}</p>}
+      </div>
     </div>
   );
 };

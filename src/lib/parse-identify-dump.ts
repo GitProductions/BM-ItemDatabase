@@ -96,6 +96,9 @@ export const parseIdentifyDump = (text: string): Item[] => {
         condition,
       },
       raw: [],
+      submittedBy: undefined,
+      droppedBy: undefined,
+      worn: undefined,
     };
 
     let j = i + 1;

@@ -22,7 +22,9 @@ export interface Item {
   keywords: string;
   type: string;
   flags: string[];
-  owner?: string;
+  submittedBy?: string;
+  droppedBy?: string;
+  worn?: string;
   stats: ItemStats;
   ego?: string;
   isArtifact?: boolean;

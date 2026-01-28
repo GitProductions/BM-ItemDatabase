@@ -64,6 +64,7 @@ type PostBody = {
   raw?: string;
   owner?: string;
   item?: ItemInput;
+  overrides?: Record<string, Partial<ItemInput>>;
 } & ItemInput;
 
 export async function POST(request: NextRequest) {
@@ -82,7 +83,15 @@ export async function POST(request: NextRequest) {
   if (cleanedInput) {
     const parsedItems = parseIdentifyDump(cleanedInput);
     if (parsedItems.length) {
-      await upsertItems(parsedItems, ownerName);
+      const overrides = payload.overrides ?? {};
+      const merged = parsedItems.map((item) => ({
+        ...item,
+        submittedBy: ownerName ?? item.submittedBy,
+        droppedBy: overrides[item.id]?.droppedBy ?? item.droppedBy,
+        worn: overrides[item.id]?.worn ?? item.worn,
+      }));
+
+      await upsertItems(merged, ownerName);
       clearCache();
     }
 

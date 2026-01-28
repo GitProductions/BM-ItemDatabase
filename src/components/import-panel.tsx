@@ -3,6 +3,7 @@ import React from 'react';
 import { Save, Terminal, Info, AlertCircle, CheckCircle } from 'lucide-react';
 import { ItemCard } from './item-card';
 import { Item } from '@/types/items';
+import { SLOT_CONFIG, guessSlot } from '@/lib/slots';
 
 type ImportPanelProps = {
   rawInput: string;
@@ -10,17 +11,18 @@ type ImportPanelProps = {
   onCheckDuplicates: () => void;
   onProceedWithDuplicates: () => void;
   onCancelDuplicates: () => void;
-  onClear: () => void;
-    isProcessing?: boolean;
-    previewItems: Item[];
-    userName: string;
-    onUserNameChange: (value: string) => void;
-    duplicateCheck?: {
-      hasDuplicates: boolean;
-      duplicateItems: Item[];
-      newItems: Item[];
-    } | null;
-  };
+  isProcessing?: boolean;
+  previewItems: Item[];
+  userName: string;
+  onUserNameChange: (value: string) => void;
+  onOverrideChange: (id: string, overrides: { droppedBy?: string; worn?: string }) => void;
+  overrides: Record<string, { droppedBy?: string; worn?: string }>;
+  duplicateCheck?: {
+    hasDuplicates: boolean;
+    duplicateItems: Item[];
+    newItems: Item[];
+  } | null;
+};
 
 
 export const ImportPanel: React.FC<ImportPanelProps> = ({
@@ -29,11 +31,12 @@ export const ImportPanel: React.FC<ImportPanelProps> = ({
   onCheckDuplicates,
   onProceedWithDuplicates,
   onCancelDuplicates,
-  onClear,
   isProcessing = false,
   previewItems,
   userName,
   onUserNameChange,
+  onOverrideChange,
+  overrides = {},
   duplicateCheck,
 }) => {
   if (duplicateCheck && duplicateCheck.hasDuplicates) {
@@ -176,10 +179,50 @@ export const ImportPanel: React.FC<ImportPanelProps> = ({
           </div>
 
           {previewItems.length > 0 ? (
-            <div className="grid grid-cols-1 gap-4 overflow-y-auto max-h-[400px] pr-1">
-              {previewItems.map((item) => (
-                <ItemCard key={item.id} item={{...item, owner:userName}} />
-              ))}
+            <div className="grid grid-cols-1 gap-4 overflow-y-auto max-h-[500px] pr-1">
+              {previewItems.map((item) => {
+                const override = overrides[item.id] ?? {};
+                const guessedSlot = guessSlot(item);
+                return (
+                  <div key={item.id} className="border border-zinc-800 rounded-lg p-3 bg-zinc-950/60 flex flex-col gap-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                      <label className="flex flex-col text-xs text-zinc-400">
+                        <span className="mb-1">Dropped by</span>
+                        <input
+                          type="text"
+                          value={override.droppedBy ?? item.droppedBy ?? ''}
+                          onChange={(e) => onOverrideChange(item.id, { droppedBy: e.target.value })}
+                          className="w-full rounded-md border border-zinc-700 bg-zinc-900 px-2 py-1 text-xs text-zinc-100 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+                          placeholder="mob name"
+                        />
+                      </label>
+                      <label className="flex flex-col text-xs text-zinc-400">
+                        <span className="mb-1">Worn slot</span>
+                        <select
+                          value={override.worn ?? item.worn ?? guessedSlot ?? ''}
+                          onChange={(e) => onOverrideChange(item.id, { worn: e.target.value })}
+                          className="w-full rounded-md border border-zinc-700 bg-zinc-900 px-2 py-1 text-xs text-zinc-100 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+                        >
+                          <option value="">(unknown)</option>
+                          {SLOT_CONFIG.map((slot) => (
+                            <option key={slot.key} value={slot.key}>
+                              {slot.label}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    </div>
+                    <ItemCard
+                      item={{
+                        ...item,
+                        submittedBy: userName,
+                        droppedBy: override.droppedBy ?? item.droppedBy,
+                        worn: override.worn ?? item.worn,
+                      }}
+                    />
+                  </div>
+                );
+              })}
             </div>
           ) : (
             <div className="rounded-lg border border-zinc-800 bg-zinc-950/60 px-4 py-3 text-xs text-zinc-500">

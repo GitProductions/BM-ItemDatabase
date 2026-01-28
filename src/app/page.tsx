@@ -24,6 +24,7 @@ export default function App() {
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [userName, setUserName] = useState('');
   const [duplicateCheck, setDuplicateCheck] = useState<DuplicateCheckState | null>(null);
+  const [itemOverrides, setItemOverrides] = useState<Record<string, { droppedBy?: string; worn?: string }>>({});
 
   const loadItems = async () => {
     setLoading(true);
@@ -52,8 +53,11 @@ export default function App() {
 
     try {
       const trimmedUserName = userName.trim();
-      const payload: { raw: string; owner?: string } = { raw: rawInput };
-      if (trimmedUserName) payload.owner = trimmedUserName;
+      const payload: { raw: string; submittedBy?: string; overrides?: typeof itemOverrides } = {
+        raw: rawInput,
+        overrides: itemOverrides,
+      };
+      if (trimmedUserName) payload.submittedBy = trimmedUserName;
       const response = await fetch('/api/items', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -64,29 +68,11 @@ export default function App() {
 
       await loadItems(); // will reflect cache (may be stale until invalidated)
       setRawInput('');
+      setItemOverrides({});
       setDuplicateCheck(null);
       setView('db');
     } catch {
       setStatusMessage('Unable to save the identify data. Please try again.');
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const clearDb = async () => {
-    if (!confirm('Are you sure you want to clear the database?')) {
-      return;
-    }
-
-    setIsProcessing(true);
-    setStatusMessage(null);
-
-    try {
-      const response = await fetch('/api/items', { method: 'DELETE' });
-      if (!response.ok) throw new Error('Clear failed');
-      setItems([]);
-    } catch {
-      setStatusMessage('Unable to clear the database. Please try again.');
     } finally {
       setIsProcessing(false);
     }
@@ -164,8 +150,11 @@ export default function App() {
 
     try {
       const trimmedUserName = userName.trim();
-      const payload: { raw: string; owner?: string } = { raw: rawInput };
-      if (trimmedUserName) payload.owner = trimmedUserName;
+      const payload: { raw: string; submittedBy?: string; overrides?: typeof itemOverrides } = {
+        raw: rawInput,
+        overrides: itemOverrides,
+      };
+      if (trimmedUserName) payload.submittedBy = trimmedUserName;
 
       const response = await fetch('/api/items', {
         method: 'POST',
@@ -177,6 +166,7 @@ export default function App() {
 
       await loadItems(); // will reflect cache (may be stale until invalidated)
       setRawInput('');
+      setItemOverrides({});
       setDuplicateCheck(null);
       setView('db');
     } catch {
@@ -188,6 +178,13 @@ export default function App() {
 
   const handleCancelImport = () => {
     setDuplicateCheck(null);
+  };
+
+  const handleOverrideChange = (id: string, overrides: { droppedBy?: string; worn?: string }) => {
+    setItemOverrides((prev) => ({
+      ...prev,
+      [id]: { ...(prev[id] ?? {}), ...overrides },
+    }));
   };
 
 
@@ -222,11 +219,12 @@ export default function App() {
             onCheckDuplicates={handleCheckDuplicates}
             onProceedWithDuplicates={handleProceedWithDuplicates}
             onCancelDuplicates={handleCancelImport}
-            onClear={clearDb}
             isProcessing={isProcessing}
             previewItems={previewItems}
             userName={userName}
             onUserNameChange={setUserName}
+            overrides={itemOverrides}
+            onOverrideChange={handleOverrideChange}
             duplicateCheck={duplicateCheck}
           />
         ) : (

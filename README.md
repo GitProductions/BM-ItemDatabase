@@ -48,12 +48,12 @@ curl "http://localhost:3000/api/items?q=broadsword&type=weapon&limit=20"
 # Import identify dump
 curl -X POST http://localhost:3000/api/items \
   -H "Content-Type: application/json" \
-  -d '{"raw":"...identify output...","owner":"mudlet_user"}'
+  -d '{"raw":"...identify output...","submittedBy":"mudlet_user","droppedBy":"orc shaman","worn":"neck"}'
 
 # Submit a single item
 curl -X POST http://localhost:3000/api/items \
   -H "Content-Type: application/json" \
-  -d '{"item":{"name":"Shiny Dagger","keywords":"dagger shiny","type":"weapon","flags":["glow"],"stats":{"damage":"2d4","affects":[]}},"owner":"mudlet_user"}'
+  -d '{"item":{"name":"Shiny Dagger","keywords":"dagger shiny","type":"weapon","flags":["glow"],"worn":"wield","stats":{"damage":"2d4","affects":[]},"droppedBy":"goblin"},"submittedBy":"mudlet_user"}'
 
 
 

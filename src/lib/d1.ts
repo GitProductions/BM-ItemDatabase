@@ -22,7 +22,10 @@ type StoredItemRow = {
   type: string;
   flags: string | null;
   stats: string | null;
-  owner: string | null;
+  owner: string | null; // legacy
+  submittedBy: string | null;
+  droppedBy: string | null;
+  worn: string | null;
   ego: string | null;
   isArtifact: number | null;
   raw: string | null;
@@ -59,6 +62,9 @@ const ensureSchema = async (db: D1Database) => {
             flags TEXT NOT NULL,
             stats TEXT NOT NULL,
             owner TEXT,
+            submittedBy TEXT,
+            droppedBy TEXT,
+            worn TEXT,
             ego TEXT,
             isArtifact INTEGER DEFAULT 0,
             raw TEXT,
@@ -74,6 +80,11 @@ const ensureSchema = async (db: D1Database) => {
       await db
         .prepare('CREATE UNIQUE INDEX IF NOT EXISTS idx_items_identity ON items(name, keywords, type);')
         .run();
+
+      // Backfill newly added columns if the table already exists
+      await db.prepare('ALTER TABLE items ADD COLUMN submittedBy TEXT;').run().catch(() => {});
+      await db.prepare('ALTER TABLE items ADD COLUMN droppedBy TEXT;').run().catch(() => {});
+      await db.prepare('ALTER TABLE items ADD COLUMN worn TEXT;').run().catch(() => {});
 
       await db
         .prepare(
@@ -106,7 +117,9 @@ const decodeItem = (row: StoredItemRow): Item => ({
   type: row.type,
   flags: row.flags ? (JSON.parse(row.flags) as string[]) : [],
   stats: row.stats ? (JSON.parse(row.stats) as Item['stats']) : { affects: [], weight: 0 },
-  owner: row.owner ?? undefined,
+  submittedBy: row.submittedBy ?? row.owner ?? undefined,
+  droppedBy: row.droppedBy ?? undefined,
+  worn: row.worn ?? undefined,
   ego: row.ego ?? undefined,
   isArtifact: row.isArtifact === 1,
   raw: row.raw ? (JSON.parse(row.raw) as string[]) : undefined,
@@ -114,7 +127,7 @@ const decodeItem = (row: StoredItemRow): Item => ({
   duplicateOf: row.duplicateOf ?? undefined,
 });
 
-const encodeItem = (item: Item, ownerOverride?: string, timestamp?: string) => {
+const encodeItem = (item: Item, submitterOverride?: string, timestamp?: string) => {
   const now = timestamp ?? new Date().toISOString();
 
   return {
@@ -124,7 +137,10 @@ const encodeItem = (item: Item, ownerOverride?: string, timestamp?: string) => {
     type: item.type,
     flags: JSON.stringify(item.flags ?? []),
     stats: JSON.stringify(item.stats ?? { affects: [], weight: 0 }),
-    owner: ownerOverride ?? item.owner ?? null,
+    owner: submitterOverride ?? item.submittedBy ?? null, // legacy column
+    submittedBy: submitterOverride ?? item.submittedBy ?? null,
+    droppedBy: item.droppedBy ?? null,
+    worn: item.worn ?? null,
     ego: item.ego ?? null,
     isArtifact: item.isArtifact ? 1 : 0,
     raw: item.raw ? JSON.stringify(item.raw) : JSON.stringify([]),
@@ -150,6 +166,8 @@ const sanitizeLimit = (value?: number) => {
   return Math.min(Math.max(1, Math.floor(value)), 500);
 };
 
+
+// need to remove refererences to owner as we removed it.. no need to migrate date or anything as its been completed already
 export const searchItems = async (params: ItemSearchParams = {}): Promise<Item[]> => {
   const db = await getDatabase();
   await ensureSchema(db);
@@ -220,14 +238,17 @@ export const upsertItems = async (items: Item[], ownerName?: string) => {
       .prepare(
         `
         INSERT INTO items (
-          id, name, keywords, type, flags, stats, owner, ego, isArtifact, raw,
+          id, name, keywords, type, flags, stats, owner, submittedBy, droppedBy, worn, ego, isArtifact, raw,
           flaggedForReview, duplicateOf, createdAt, updatedAt
         )
-        VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14)
+        VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16)
         ON CONFLICT(name, keywords, type) DO UPDATE SET
           flags=excluded.flags,
           stats=excluded.stats,
           owner=excluded.owner,
+          submittedBy=excluded.submittedBy,
+          droppedBy=excluded.droppedBy,
+          worn=excluded.worn,
           ego=excluded.ego,
           isArtifact=excluded.isArtifact,
           raw=excluded.raw,
@@ -244,6 +265,9 @@ export const upsertItems = async (items: Item[], ownerName?: string) => {
         values.flags,
         values.stats,
         values.owner,
+        values.submittedBy,
+        values.droppedBy,
+        values.worn,
         values.ego,
         values.isArtifact,
         values.raw,
