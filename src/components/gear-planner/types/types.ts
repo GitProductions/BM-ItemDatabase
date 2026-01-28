@@ -1,25 +1,5 @@
 import { Item } from '@/types/items';
-
-export type SlotKey =
-  | 'head'
-  | 'neck1'
-  | 'neck2'
-  | 'body'
-  | 'about-legs'
-  | 'legs'
-  | 'feet'
-  | 'hands'
-  | 'waist'
-  | 'finger1'
-  | 'finger2';
-
-
-
-export type SlotConfig = {
-  key: SlotKey;
-  label: string;
-  hint: string;
-};
+import { SlotKey, SlotConfig } from '@/lib/slots';
 
 
 export type GearPlannerProps = {
@@ -27,5 +7,7 @@ export type GearPlannerProps = {
 };
 
 export type Selected = Record<SlotKey, Item | null>;
+
+export type { SlotKey, SlotConfig };
 
 

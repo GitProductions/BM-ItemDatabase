@@ -241,7 +241,7 @@ export const upsertItems = async (items: Item[], ownerName?: string) => {
           id, name, keywords, type, flags, stats, owner, submittedBy, droppedBy, worn, ego, isArtifact, raw,
           flaggedForReview, duplicateOf, createdAt, updatedAt
         )
-        VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16)
+        VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17)
         ON CONFLICT(name, keywords, type) DO UPDATE SET
           flags=excluded.flags,
           stats=excluded.stats,

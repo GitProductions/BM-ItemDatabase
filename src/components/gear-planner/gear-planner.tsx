@@ -21,6 +21,13 @@ const defaultGearState: Selected = {
   waist: null,
   finger1: null,
   finger2: null,
+  wield: null,
+  offhand: null,
+  held: null,
+  'two-handed': null,
+  back: null,
+  light: null,
+  consumable: null,
 };
 
 const defaultIdState: Record<SlotKey, string | null> = {
@@ -35,6 +42,13 @@ const defaultIdState: Record<SlotKey, string | null> = {
   waist: null,
   finger1: null,
   finger2: null,
+  wield: null,
+  offhand: null,
+  held: null,
+  'two-handed': null,
+  back: null,
+  light: null,
+  consumable: null,
 };
 
 const STORAGE_KEY = 'bm-Equipment';

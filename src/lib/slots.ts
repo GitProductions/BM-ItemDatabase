@@ -15,7 +15,6 @@ export type SlotKey =
   | 'held'
   | 'two-handed'
   | 'back'
-  | 'floating'
   | 'light'
   | 'consumable';
 
