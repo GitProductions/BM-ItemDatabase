@@ -60,7 +60,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item }) => {
   }
 
   return (
-    <div className="bg-zinc-800 border border-zinc-700 rounded-lg p-4 hover:border-zinc-500 transition-colors shadow-sm">
+    <div className="bg-zinc-800 border border-zinc-700 rounded-lg p-4 hover:border-zinc-500 transition-colors shadow-sm h-full">
       <div className="flex justify-between items-start mb-2">
         <div className="flex items-start gap-3">
           <div className={`p-2 rounded-md bg-zinc-900 ${typeColor}`}>
