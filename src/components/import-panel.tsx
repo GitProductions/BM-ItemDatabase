@@ -3,7 +3,7 @@ import React from 'react';
 import { Save, Terminal, Info, AlertCircle, CheckCircle } from 'lucide-react';
 import { ItemCard } from './item-card';
 import { Item } from '@/types/items';
-import { SLOT_CONFIG, guessSlot } from '@/lib/slots';
+import { SLOT_OPTIONS, guessSlot } from '@/lib/slots';
 
 type ImportPanelProps = {
   rawInput: string;
@@ -204,7 +204,7 @@ export const ImportPanel: React.FC<ImportPanelProps> = ({
                           className="w-full rounded-md border border-zinc-700 bg-zinc-900 px-2 py-1 text-xs text-zinc-100 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
                         >
                           <option value="">(unknown)</option>
-                          {SLOT_CONFIG.map((slot) => (
+                          {SLOT_OPTIONS.map((slot) => (
                             <option key={slot.key} value={slot.key}>
                               {slot.label}
                             </option>

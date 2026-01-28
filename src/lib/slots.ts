@@ -16,7 +16,8 @@ export type SlotKey =
   | 'two-handed'
   | 'back'
   | 'floating'
-  | 'light';
+  | 'light'
+  | 'consumable';
 
 export type SlotConfig = {
   key: SlotKey;
@@ -42,21 +43,24 @@ export const SLOT_CONFIG: SlotConfig[] = [
   { key: 'two-handed', label: 'Two-handed', hint: 'greatswords, polearms' },
   { key: 'back', label: 'Back', hint: 'quivers, cloaks' },
   { key: 'light', label: 'Light', hint: 'lights' },
+];
 
-  // scrolls, wands & potions are not included yet, they are not wearable so need a special flag so its not used in equipment manager
-  
+// Options list for selects (includes consumable)
+export const SLOT_OPTIONS: SlotConfig[] = [
+  ...SLOT_CONFIG,
+  { key: 'consumable', label: 'Consumable', hint: 'scroll / wand / potion' },
 ];
 
 // Keywords associated with each slot for guessing
 const slotKeywords: Record<SlotKey, string[]> = {
   head: ['helm', 'hood', 'cap', 'hat', 'crown'],
-  neck1: ['amulet', 'torc', 'necklace', 'pendant', 'gorget'],
-  neck2: ['amulet', 'torc', 'necklace', 'pendant', 'gorget'],
+  neck1: ['amulet', 'torc', 'necklace', 'pendant'],
+  neck2: ['amulet', 'torc', 'necklace', 'pendant'],
   body: ['robe', 'breastplate', 'chest', 'armor'],
   'about-legs': ['kilt', 'skirt'],
   legs: ['greaves', 'leggings', 'pants'],
-  feet: ['boots', 'shoes', 'slippers', 'sabatons'],
-  hands: ['glove', 'gauntlet', 'mitt'],
+  feet: ['boots', 'shoes', 'slippers'],
+  hands: ['glove', 'gauntlet'],
   waist: ['belt', 'sash', 'cord'],
   finger1: ['ring', 'band'],
   finger2: ['ring', 'band'],
@@ -65,15 +69,24 @@ const slotKeywords: Record<SlotKey, string[]> = {
   held: [ 'book', 'tome', 'orb'],
   'two-handed': ['greatsword', 'polearm', 'halberd', 'maul'],
   back: ['quiver', 'cloak', 'cape'],
-  light: ['light', 'lantern',]
+  light: ['light', 'lantern'],
+  consumable: ['scroll', 'wand', 'potion', 'elixir'],
+
 };
 
 export const guessSlot = (item: { keywords?: string; name?: string; worn?: string }): SlotKey | undefined => {
   if (item.worn) return item.worn as SlotKey;
 
   const haystack = `${item.name ?? ''} ${item.keywords ?? ''}`.toLowerCase();
+  if (haystack.match(/\b(scroll|wand|potion|elixir)\b/)) return 'consumable';
   for (const [slot, keys] of Object.entries(slotKeywords) as [SlotKey, string[]][]) {
     if (keys.some((k) => haystack.includes(k))) return slot;
   }
   return undefined;
+};
+
+const NON_EQUIPPABLE: SlotKey[] = ['consumable'];
+export const isWearable = (item: { worn?: string; type?: string }): boolean => {
+  const haystack = `${item.worn ?? ''} ${item.type ?? ''}`.toLowerCase();
+  return !NON_EQUIPPABLE.some((slot) => haystack.includes(slot));
 };

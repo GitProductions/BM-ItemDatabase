@@ -7,7 +7,7 @@ import Summary from './summary';
 import ItemSelect from './item-select';
 import { computeTotals } from './util';
 import { Selected, SlotKey, GearPlannerProps } from './types/types';
-import { SLOT_CONFIG } from '@/lib/slots';
+import { SLOT_CONFIG, isWearable } from '@/lib/slots';
 
 const defaultGearState: Selected = {
   head: null,
@@ -51,6 +51,8 @@ export const GearPlanner: React.FC<GearPlannerProps> = ({ items }) => {
     }
   });
 
+  const wearableItems = useMemo(() => items.filter((item) => isWearable(item)), [items]);
+
   const selected: Selected = useMemo(() => {
     const mapped: Selected = { ...defaultGearState };
     (Object.keys(slotIds) as SlotKey[]).forEach((slot) => {
@@ -59,10 +61,10 @@ export const GearPlanner: React.FC<GearPlannerProps> = ({ items }) => {
         mapped[slot] = null;
         return;
       }
-      mapped[slot] = items.find((item) => item.id === id) ?? null;
+      mapped[slot] = wearableItems.find((item) => item.id === id) ?? null;
     });
     return mapped;
-  }, [items, slotIds]);
+  }, [wearableItems, slotIds]);
 
   const totals = useMemo(() => computeTotals(selected), [selected]);
 
@@ -95,7 +97,7 @@ export const GearPlanner: React.FC<GearPlannerProps> = ({ items }) => {
           <ItemSelect
             key={slot.key}
             slot={slot}
-            items={items}
+            items={wearableItems}
             value={selected[slot.key]}
             onChange={handleChange(slot.key)}
           />
