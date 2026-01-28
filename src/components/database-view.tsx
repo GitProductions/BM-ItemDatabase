@@ -4,6 +4,19 @@ import { Item } from '@/types/items';
 import { ItemCard } from './item-card';
 import Image from 'next/image';
 import SuggestionModal from './modals/SuggestionModal';
+import uFuzzy from '@leeoniya/ufuzzy';
+
+// uFuzzy tuned to allow common typos/transpositions while still ranking well.
+const uf = new uFuzzy({
+  intraMode: 1,     // ← Crucial: enable SingleError (one typo per term)
+  intraIns: 1,      // Allow 1 insertion (extra char)
+  intraSub: 1,      // Allow 1 substitution (wrong char)
+  intraDel: 1,      // Allow 1 deletion (missing char)
+  intraTrn: 1,      // Allow 1 transposition (swapped adjacent chars)
+  // Optional extras below – keep or remove based on testing
+  // interIns: Infinity,   // Default – fine for item names
+  intraChars: '[a-z\\d\'-]',  // Allow letters, digits, apostrophes, hyphens (common in item names)
+});
 
 type ItemDBProps = {
   items: Item[];
@@ -22,80 +35,50 @@ export const ItemDB: React.FC<ItemDBProps> = ({ items }) => {
     return ['all', ...Array.from(types)];
   }, [items]);
 
-
-  // Fuzzy search helpers
-  const getLevenshteinDistance = (source: string, target: string, maxDistance: number) => {
-    if (Math.abs(source.length - target.length) > maxDistance) return maxDistance + 1;
-    let previousRow = Array.from({ length: target.length + 1 }, (_, index) => index);
-    for (let i = 1; i <= source.length; i += 1) {
-      const currentRow = [i];
-      let minRow = i;
-      for (let j = 1; j <= target.length; j += 1) {
-        const insertCost = currentRow[j - 1] + 1;
-        const deleteCost = previousRow[j] + 1;
-        const replaceCost = previousRow[j - 1] + (source[i - 1] === target[j - 1] ? 0 : 1);
-        const value = Math.min(insertCost, deleteCost, replaceCost);
-        currentRow.push(value);
-        minRow = Math.min(minRow, value);
-      }
-      if (minRow > maxDistance) return maxDistance + 1;
-      previousRow = currentRow;
-    }
-    return previousRow[previousRow.length - 1];
-  };
-  const calculateFuzzyTolerance = (token: string, candidateLength: number) => {
-    if (!token) return 0;
-    const baseLength = Math.max(token.length, candidateLength);
-    return Math.min(4, Math.max(1, Math.ceil(baseLength * 0.32)));
-  };
-  const doesTokenMatchField = (token: string, value?: string) => {
-    if (!value) return false;
-    const normalized = value.toLowerCase();
-    if (normalized.includes(token)) return true;
-
-    const candidateWords = normalized.split(/[^a-z0-9]+/).filter(Boolean);
-    return candidateWords.some((word) => {
-      const tolerance = calculateFuzzyTolerance(token, word.length);
-      if (Math.abs(token.length - word.length) > tolerance) {
-        return false;
-      }
-      return getLevenshteinDistance(token, word, tolerance) <= tolerance;
-    });
-  };
-
-
   // Filtered items based on search and type filter
   const filteredItems = useMemo(() => {
     const searchTerm = search.trim().toLowerCase();
-    if (searchTerm.length === 0) {
-      return items.filter(item =>
-        filterType === 'all' ? true : item.type.includes(filterType)
-      );
-    }
 
-    const tokens = searchTerm.split(/\s+/).filter(Boolean);
-    return items.filter((item) => {
-      const stats = item.stats ?? { affects: [], weight: 0 };
-      const affects = stats.affects ?? [];
+    const baseResults =
+      searchTerm.length === 0
+        ? items
+        : (() => {
+            const haystack = items.map((item) => {
+              const affectsStr = (item.stats?.affects ?? [])
+                .flatMap((affect) => [affect.stat, affect.spell])
+                .filter(Boolean)
+                .join(' ');
 
-      const matchesToken = (token: string) => {
-        const coreFieldsMatch =
-          doesTokenMatchField(token, item.name) ||
-          doesTokenMatchField(token, item.keywords) ||
-          doesTokenMatchField(token, item.type);
-        if (coreFieldsMatch) return true;
+              return [item.name, item.keywords || '', item.type, affectsStr]
+                .join(' | ')
+                .toLowerCase();
+            });
 
-        return affects.some(
-          (affect) =>
-            doesTokenMatchField(token, affect.stat) || doesTokenMatchField(token, affect.spell),
-        );
-      };
+            const searchResult = uf.search(haystack, searchTerm);
 
-      const matchesSearch = tokens.every(matchesToken);
-      const matchesType = filterType === 'all' ? true : item.type.includes(filterType);
+            let uniqueIdxs: number[];
 
-      return matchesSearch && matchesType;
-    });
+            if (searchResult && searchResult.length > 0) {
+              // uf.search returns [idxs, info, order]
+              const [idxs, info, order] = searchResult as [ArrayLike<number>, any, ArrayLike<number> | null];
+
+              const orderedIdxs =
+                info && order ? Array.from(order, (ord: number) => info.idx[ord]) : Array.from(idxs);
+
+              uniqueIdxs = Array.from(new Set(orderedIdxs));
+            } else {
+              // Fallback to simple substring includes when fuzzy misses (helps with very short/odd inputs)
+              uniqueIdxs = haystack
+                .map((text, idx) => (text.includes(searchTerm) ? idx : -1))
+                .filter((idx) => idx !== -1);
+            }
+
+            return uniqueIdxs.map((idx) => items[idx]).filter(Boolean);
+          })();
+
+    if (filterType === 'all') return baseResults;
+
+    return baseResults.filter((item) => item.type.includes(filterType));
   }, [items, search, filterType]);
 
   return (

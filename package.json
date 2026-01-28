@@ -11,6 +11,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@leeoniya/ufuzzy": "^1.0.19",
     "@opennextjs/cloudflare": "^1.16.0",
     "lucide-react": "^0.563.0",
     "mongodb": "^7.0.0",
