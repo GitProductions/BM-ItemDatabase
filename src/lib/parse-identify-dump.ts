@@ -31,11 +31,8 @@ const parseSpellAffect = (line: string): ItemAffect => {
   };
 };
 
-// todo: 
+
 // strip hum or glow conditions
-// ..They glow blue
-// ..They glow softly
-// ..It hums powerfully
 const nameDescriptorRegex = /(.*?)\s*\(([^)]+)\)\s*$/;
 const descriptorLineRegex = /^\.\.(.+)$/;
 const descriptorSuffixRegex = /(\.\.[^.]+)+$/g;
@@ -48,6 +45,26 @@ const stripCondition = (value: string) => {
   }
 
   return { label: match[1].trim(), condition: match[2].trim() };
+};
+
+// discard/filter stats/effects for enchanted items
+// if item has Armor +1 +2 or +3 and has a Save_all -1, -2, -3 effect, then we can assume this is an enchanted item
+// There is no need to share 'enchanted' info for the user.
+
+const isArmorEnchant = (affect: ItemAffect) =>
+  affect.type === 'stat' &&
+  affect.stat?.toLowerCase().includes('armor') &&
+  (affect.value === 1 || affect.value === 2 || affect.value === 3);
+
+const isSaveAllEnchant = (affect: ItemAffect) =>
+  affect.type === 'stat' &&
+  affect.stat?.toLowerCase() === 'save_all' &&
+  (affect.value === -1 || affect.value === -2 || affect.value === -3);
+
+export const filterEnchanted = (affects: ItemAffect[]): boolean => {
+  const armorAffects = affects.filter(isArmorEnchant);
+  const saveAllAffects = affects.filter(isSaveAllEnchant);
+  return armorAffects.length > 0 && saveAllAffects.length > 0;
 };
 
 /**
@@ -92,6 +109,7 @@ export const parseIdentifyDump = (text: string): Item[] => {
     const type = match[2].trim().toLowerCase();
     const rawName = i > 0 ? lines[i - 1] : 'Unknown Item';
     const { label: name, condition } = stripCondition(rawName);
+    
 
     const currentItem: Item = {
       id: generateId(),
@@ -144,6 +162,13 @@ export const parseIdentifyDump = (text: string): Item[] => {
 
       currentItem.raw?.push(nextLine);
       j += 1;
+    }
+
+    // If the affects indicate an enchanted item (last entries), strip the enchant-only lines but keep other stats
+    if (filterEnchanted(currentItem.stats.affects)) {
+      currentItem.stats.affects = currentItem.stats.affects.filter(
+        (affect) => !isArmorEnchant(affect) && !isSaveAllEnchant(affect),
+      );
     }
 
     items.push(currentItem);
