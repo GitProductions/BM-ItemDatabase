@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Save, Terminal, Info, AlertCircle, CheckCircle, Trash2 } from 'lucide-react';
+import { Save, Terminal, Info, AlertCircle, CheckCircle } from 'lucide-react';
 import { ItemCard } from './item-card';
 import { Item } from '@/types/items';
 

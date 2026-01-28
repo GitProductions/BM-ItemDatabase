@@ -30,11 +30,13 @@ const SuggestionModal: React.FC<SuggestionModalProps> = ({
   const [reason, setReason] = useState('');
 
   useEffect(() => {
-    if (open) {
+    if (!open) return;
+    const resetTimer = setTimeout(() => {
       setNote('');
       setReason('');
       setName('');
-    }
+    }, 0);
+    return () => clearTimeout(resetTimer);
   }, [open, item]);
 
   const handleSubmit = async () => {
