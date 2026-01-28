@@ -213,18 +213,37 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item }) => {
           <span>{item.worn ? `Worn: ${item.worn}` : ''}</span>
           <span className="flex items-center gap-2">
             <span>Submitted by:</span>
-            {item.contributors && item.contributors.length > 0 ? (
-              <>
-                <span className="font-semibold text-zinc-200">{item.contributors[0]}</span>
-                {item.contributors.length > 1 && (
-                  <span className="text-[11px] text-zinc-400">
-                    (+{item.contributors.length - 1} more)
-                  </span>
-                )}
-              </>
-            ) : (
-              <span>Unknown</span>
-            )}
+            {(() => {
+              const names = item.contributors ?? [];
+              const primary = names[0] ?? item.submittedBy;
+              if (!primary) return <span>Unknown</span>;
+
+              const extras = names.slice(1);
+
+              return (
+                <div className="relative group inline-flex items-center gap-2">
+                  <span className="font-semibold text-zinc-200">{primary}</span>
+                  {extras.length > 0 && (
+                    <>
+                      <button
+                        type="button"
+                        className="text-[11px] text-zinc-400 underline-offset-2 hover:underline"
+                      >
+                        (+{extras.length} more)
+                      </button>
+                      <div className="absolute right-0 top-[120%] hidden group-hover:block bg-zinc-900 border border-zinc-700 rounded shadow-lg p-2 text-[11px] text-zinc-200 z-30 min-w-[160px]">
+                        <div className="font-semibold text-orange-300 mb-1">Other submitters</div>
+                        <ul className="space-y-0.5">
+                          {extras.map((name) => (
+                            <li key={name}>{name}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    </>
+                  )}
+                </div>
+              );
+            })()}
           </span>
         </div>
         {item.droppedBy && <p className="text-right italic">Dropped by: {item.droppedBy}</p>}

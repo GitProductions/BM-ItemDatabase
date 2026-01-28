@@ -60,6 +60,7 @@ export async function GET(request: NextRequest) {
 
 type PostBody = {
   raw?: string;
+  submittedBy?: string;
   item?: ItemInput;
   overrides?: Record<string, Partial<ItemInput>>;
 } & ItemInput;
@@ -76,12 +77,13 @@ export async function POST(request: NextRequest) {
   // 1) Raw identify dump -> multiple items
   const cleanedInput = payload?.raw?.trim();
   if (cleanedInput) {
+    const submitter = payload.submittedBy?.trim();
     const parsedItems = parseIdentifyDump(cleanedInput);
     if (parsedItems.length) {
       const overrides = payload.overrides ?? {};
       const merged = parsedItems.map((item) => ({
         ...item,
-        submittedBy: item.submittedBy,
+        submittedBy: submitter ?? item.submittedBy,
         droppedBy: overrides[item.id]?.droppedBy ?? item.droppedBy,
         worn: overrides[item.id]?.worn ?? item.worn,
       }));
