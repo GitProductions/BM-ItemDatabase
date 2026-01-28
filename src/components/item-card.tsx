@@ -38,16 +38,16 @@ const formatValueRange = (
   min?: number,
   max?: number,
   { signed = false }: { signed?: boolean } = {},
-) => {
-  const fmt = (num?: number) => {
-    if (num === undefined || num === null) return undefined;
+): string => {
+  const fmt = (num?: number): string => {
+    if (num === undefined || num === null) return '';
     const rounded = Number.isInteger(num) ? num.toString() : num.toFixed(1);
     if (!signed) return rounded;
     return num > 0 ? `+${rounded}` : rounded;
   };
   const fmin = fmt(min ?? value);
   const fmax = fmt(max ?? value);
-  if (fmin && fmax && fmin !== fmax) return `${fmin} - ${fmax}`;
+  if (fmin && fmax && fmin !== fmax) return `${fmin} / ${fmax}`;
   if (fmin) return fmin;
   return value !== undefined ? fmt(value) : '';
 };

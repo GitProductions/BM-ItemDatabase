@@ -10,6 +10,8 @@ export type SlotKey =
   | 'waist'
   | 'finger1'
   | 'finger2'
+  | 'wrist1'
+  | 'wrist2'
   | 'wield'
   | 'offhand'
   | 'held'
@@ -36,6 +38,8 @@ export const SLOT_CONFIG: SlotConfig[] = [
   { key: 'waist', label: 'Waist', hint: 'belts, sashes' },
   { key: 'finger1', label: 'Ring', hint: 'rings, bands' },
   { key: 'finger2', label: 'Ring', hint: 'rings, bands' },
+  { key: 'wrist1', label: 'Wrist', hint: 'bracelets, cuffs' },
+  { key: 'wrist2', label: 'Wrist', hint: 'bracelets, cuffs' },
   { key: 'wield', label: 'Wield', hint: 'weapons, staves' },
   { key: 'offhand', label: 'Offhand', hint: 'shields, offhand' },
   { key: 'held', label: 'Held', hint: 'lanterns, books' },
@@ -63,6 +67,8 @@ const slotKeywords: Record<SlotKey, string[]> = {
   waist: ['belt', 'sash', 'cord'],
   finger1: ['ring', 'band'],
   finger2: ['ring', 'band'],
+  wrist1: ['bracelet', 'bracer', 'bangle'],
+  wrist2: ['bracelet', 'bracer', 'bangle'],
   wield: ['sword', 'axe', 'mace', 'flail', 'staff', 'club', 'dagger'],
   offhand: ['shield', 'buckler'],
   held: [ 'book', 'tome', 'orb'],
