@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     locale: "en_US",
     images: [
       {
-        url: "/bm-itemdb-ogimage.jpg",
+        url: "https://bm-itemdb.gitago.dev/bm-itemdb-ogimage.jpg",
         width: 1200,
         height: 630,
         alt: "Blackmud Item Database",
@@ -39,7 +39,7 @@ export const metadata: Metadata = {
     description: "An item database and equipment calculator for the BlackMUD.",
     images: [
       {
-        url: "/bm-itemdb-ogimage.jpg",
+        url: "https://bm-itemdb.gitago.dev/bm-itemdb-ogimage.jpg",
         alt: "Blackmud Item Database",
       },
     ],

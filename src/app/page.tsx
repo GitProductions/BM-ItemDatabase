@@ -98,6 +98,22 @@ export default function App() {
     return parseIdentifyDump(rawInput);
   }, [rawInput]);
 
+  const areItemsIdentical = (a: Item, b: Item) => {
+    const normalizeString = (v?: string) => (v ?? '').trim();
+    const normalizeArray = (v?: unknown[]) => v ?? [];
+
+    return (
+      normalizeString(a.name) === normalizeString(b.name) &&
+      normalizeString(a.keywords) === normalizeString(b.keywords) &&
+      normalizeString(a.type) === normalizeString(b.type) &&
+      normalizeString(a.ego) === normalizeString(b.ego) &&
+      Boolean(a.isArtifact) === Boolean(b.isArtifact) &&
+      JSON.stringify(normalizeArray(a.flags)) === JSON.stringify(normalizeArray(b.flags)) &&
+      JSON.stringify(a.stats ?? {}) === JSON.stringify(b.stats ?? {}) &&
+      JSON.stringify(normalizeArray(a.raw)) === JSON.stringify(normalizeArray(b.raw))
+    );
+  };
+
   const handleCheckDuplicates = () => {
     // console.log('handleCheckDuplicates called', { previewItemsCount: previewItems.length, itemsCount: items.length });
     // Store Users Name for Later Recall
@@ -109,6 +125,12 @@ export default function App() {
     previewItems.forEach((item) => {
       const duplicateId = findDuplicate(item, items);
       if (duplicateId) {
+        const existing = items.find((i) => i.id === duplicateId);
+        if (existing && areItemsIdentical(existing, item)) {
+          // Exact match – skip entirely
+          return;
+        }
+
         duplicates.push({
           ...item,
           flaggedForReview: true,
