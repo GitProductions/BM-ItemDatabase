@@ -1,7 +1,7 @@
 import React from 'react';
 import { Database, Feather, Scroll, Shield, Sparkles, Sword } from 'lucide-react';
 import { Item } from '@/types/items';
-import { guessSlot, normalizeWornSlots } from '@/lib/slots';
+import { canonicalizeSlots, guessSlot, normalizeWornSlots, slotLabel } from '@/lib/slots';
 import { StatBadge } from './stat-badge';
 import Button from './ui/Button';
 
@@ -54,7 +54,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item }) => {
   let typeColor = 'text-zinc-400';
 
   const displayWorn = (() => {
-    const slots = normalizeWornSlots(item.worn);
+    const slots = canonicalizeSlots(normalizeWornSlots(item.worn));
 
     // console.log('displayWorn slots:', slots);
     // console.log('item.worn:', item.worn);
@@ -62,7 +62,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item }) => {
     const guessed = guessSlot(item);
 
     console.log('guessed slot:', guessed);
-    return guessed ? [guessed] : [];
+    return guessed ? canonicalizeSlots([guessed]) : [];
   })();
   const displayDroppedBy = item.droppedBy?.trim();
 
@@ -105,7 +105,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item }) => {
                   {' '}
                   •{' '}
                   <span className="capitalize">
-                    {displayWorn.map((slot) => slot.replace('-', ' ')).join(', ')}
+                    {displayWorn.map((slot) => slotLabel(slot)).join(', ')}
                   </span>
                 </>
               ) : (
@@ -223,7 +223,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item }) => {
       <div className="mt-2 flex flex-col gap-1 text-xs text-zinc-500">
         <div className="flex justify-between gap-2">
           <div className="">
-          <span>{displayWorn.length ? `Worn: ${displayWorn.join(', ')}` : ''}</span>
+          <span>{displayWorn.length ? `Worn: ${displayWorn.map((slot) => slotLabel(slot)).join(', ')}` : ''}</span>
            {displayDroppedBy && 
            <p className="text-right italic">Dropped by: {displayDroppedBy}</p>
            }

@@ -33,6 +33,19 @@ export const canonicalSlot = (slot: SlotKey) => {
   return slot;
 };
 
+// Collapse numbered duplicates (finger1/finger2, neck1/neck2, wrist1/wrist2)
+// into a single representative so we can talk about generic slots outside the gear planner.
+export const canonicalizeSlots = (slots: SlotKey[]): SlotKey[] => {
+  return Array.from(new Set(slots.map((slot) => canonicalSlot(slot))));
+};
+
+// Human-friendly label for any slot (numbered duplicates reuse the same label)
+export const slotLabel = (slot: SlotKey): string => {
+  const canonical = canonicalSlot(slot);
+  const config = SLOT_CONFIG.find((s) => s.key === canonical) ?? SLOT_CONFIG.find((s) => s.key === slot);
+  return config?.label ?? canonical;
+};
+
 export const normalizeWornSlots = (worn?: string[] | string | null): SlotKey[] => {
   if (!worn) return [];
   const raw = Array.isArray(worn) ? worn : worn.split(',');
@@ -52,8 +65,8 @@ export const SLOT_CONFIG: SlotConfig[] = [
   { key: 'feet', label: 'Feet', hint: 'boots, shoes' },
   { key: 'hands', label: 'Hands', hint: 'gloves, gauntlets' },
   { key: 'waist', label: 'Waist', hint: 'belts, sashes' },
-  { key: 'finger1', label: 'Ring', hint: 'rings, bands' },
-  { key: 'finger2', label: 'Ring', hint: 'rings, bands' },
+  { key: 'finger1', label: 'Finger', hint: 'rings, bands' },
+  { key: 'finger2', label: 'Finger', hint: 'rings, bands' },
   { key: 'wrist1', label: 'Wrist', hint: 'bracelets, cuffs' },
   { key: 'wrist2', label: 'Wrist', hint: 'bracelets, cuffs' },
   { key: 'wield', label: 'Wield', hint: 'weapons, staves' },
