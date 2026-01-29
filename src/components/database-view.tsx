@@ -131,6 +131,7 @@ export const ItemDB: React.FC<ItemDBProps> = ({ items }) => {
 
             {/* Suggest Edit Button */}
             <Button
+              size="sm"
               onClick={() => {
                 setSuggestItem(item);
                 setSuggestFeedback(null);
@@ -138,10 +139,10 @@ export const ItemDB: React.FC<ItemDBProps> = ({ items }) => {
               className="absolute bottom-2 left-2 inline-flex items-center gap-1 w-auto z-10
               md:top-2 md:right-2 md:left-auto md:bottom-auto
               text-[11px] px-2 py-1 rounded
-              bg-zinc-900/80 border border-zinc-700 text-zinc-300 hover:text-white hover:border-orange-500 
+              bg-zinc-900/80 border border-zinc-700 text-zinc-300 hover:text-white hover:border-orange-500 hover:bg-transparent 
               transition-colors"
             >
-              Suggest edit
+              Edit
             </Button>
 
           </div>
