@@ -6,6 +6,7 @@ import { ItemCard } from './item-card';
 import ComboBox from './ui/comboBox';
 import Input from './ui/Input';
 import Button from './ui/Button';
+import TextArea from './ui/TextArea';
 
 import { Item } from '@/types/items';
 import { SLOT_OPTIONS, guessSlot } from '@/lib/slots';
@@ -157,12 +158,12 @@ export const ImportPanel: React.FC<ImportPanelProps> = ({
             <p className="text-[11px] text-zinc-500">Assigning a name gives you a way to edit this entry later & you get street cred...</p>
           </div>
 
-          <textarea
+          <TextArea
             value={rawInput}
             onChange={(event) => onRawInputChange(event.target.value)}
             spellCheck={false}
             placeholder="Paste content here (e.g. 'a heavy, black flail (excellent)...')"
-            className="w-full h-64 bg-zinc-950 border border-zinc-700 rounded-lg p-4 font-mono text-xs text-zinc-300 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+            // className="w-full h-64 bg-zinc-950 border border-zinc-700 rounded-lg p-4 font-mono text-xs text-zinc-300 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
           />
 
           <div className="flex justify-between items-center">

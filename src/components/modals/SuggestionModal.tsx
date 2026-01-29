@@ -3,6 +3,8 @@ import { Item } from '@/types/items';
 import { Modal } from '../modal';
 import Input from '../ui/Input';
 import Button from '../ui/Button';
+import TextArea from '../ui/TextArea';
+import Checkbox from '../ui/Checkbox';
 import ItemPreviewCard from '../ItemPreviewCard';
 import { useAppData } from '@/components/app-provider';
 
@@ -127,18 +129,18 @@ const SuggestionModal: React.FC<SuggestionModalProps> = ({ item, open, isSubmitt
             className="w-full rounded-md border  px-3 py-2 text-sm"
           />
 
-          <textarea
+          <TextArea
             placeholder="Describe the edit you suggest..."
             value={note}
             onChange={(e) => setNote(e.target.value)}
-            className="w-full min-h-[8rem] rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+            className="w-full h-[4rem] min-h-[4rem] max-h-[10rem] rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
           />
 
           <textarea
             placeholder="Reason (why this change is needed)"
             value={reason}
             onChange={(e) => setReason(e.target.value)}
-            className="w-full min-h-[5rem] rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+            className="w-full h-[4rem] min-h-[6rem] max-h-[10rem] rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
           />
 
           {feedback && <div className="text-sm text-amber-300">{feedback}</div>}
@@ -146,8 +148,7 @@ const SuggestionModal: React.FC<SuggestionModalProps> = ({ item, open, isSubmitt
 
         <div className="sticky bottom-0 left-0 right-0 flex flex-wrap items-center gap-3 py-3 px-1 bg-zinc-950 border-t border-zinc-800">
           <label className="flex items-center gap-2 text-xs text-zinc-300 mr-auto">
-            <Input
-              type="checkbox"
+            <Checkbox
               checked={adminMode}
               onChange={(e) => setAdminMode(e.target.checked)}
               className="h-4 w-4 rounded border-zinc-600 bg-zinc-900"

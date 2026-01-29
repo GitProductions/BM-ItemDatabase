@@ -2,6 +2,7 @@ import React from 'react';
 import ComboBox from './ui/comboBox';
 import Input from './ui/Input';
 import Button from './ui/Button';
+import Checkbox from './ui/Checkbox';
 import { Item, ItemAffect } from '@/types/items';
 
 type ItemPreviewCardProps = {
@@ -235,8 +236,7 @@ function ItemPreviewCard({ item, editable = false, onChange }: ItemPreviewCardPr
           />
         </label>
         <label className="text-[11px] uppercase text-zinc-400 inline-flex items-center gap-2">
-          <Input
-            type="checkbox"
+          <Checkbox
             checked={Boolean(item.isArtifact)}
             onChange={(e) => updateItem({ isArtifact: e.target.checked })}
             className="h-4 w-4 rounded border-zinc-600 bg-zinc-900 text-orange-500 focus:ring-orange-500"
@@ -269,7 +269,7 @@ function ItemPreviewCard({ item, editable = false, onChange }: ItemPreviewCardPr
                 <select
                   value={affect.type}
                   onChange={(e) => updateAffect(idx, { type: e.target.value as ItemAffect['type'] })}
-                  className="rounded border h-8 border-zinc-700 bg-zinc-900 px-2 py-2 text-sm text-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+                  className="rounded border h-8 border-zinc-700 bg-zinc-900 px-2 text-sm text-white leading-8 focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
                 >
                   <option value="stat">Stat</option>
                   <option value="spell">Spell</option>
@@ -317,8 +317,9 @@ function ItemPreviewCard({ item, editable = false, onChange }: ItemPreviewCardPr
 
                 <Button
                   size="sm"
+                  variant="danger"
                   onClick={() => removeAffect(idx)}
-                  className="text-[11px] px-2 py-1 rounded bg-zinc-900 text-zinc-300 border border-zinc-700 hover:border-rose-500 hover:text-white"
+                  className="text-[11px] px-2 py-1 rounded bg-zinc-900 text-zinc-300 border border-zinc-700 "
                 >
                   Remove
                 </Button>
