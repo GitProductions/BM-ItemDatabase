@@ -163,6 +163,7 @@ export const ImportPanel: React.FC<ImportPanelProps> = ({
             onChange={(event) => onRawInputChange(event.target.value)}
             spellCheck={false}
             placeholder="Paste content here (e.g. 'a heavy, black flail (excellent)...')"
+            className="w-full h-64 bg-zinc-950 border border-zinc-700  p-4 text-xs"
             // className="w-full h-64 bg-zinc-950 border border-zinc-700 rounded-lg p-4 font-mono text-xs text-zinc-300 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
           />
 
