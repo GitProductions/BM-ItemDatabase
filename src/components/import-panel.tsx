@@ -3,7 +3,8 @@ import React from 'react';
 import Image from 'next/image';
 import { Save, Terminal, Info, AlertCircle, CheckCircle } from 'lucide-react';
 import { ItemCard } from './item-card';
-import ComboBox from './comboBox';
+import ComboBox from './ui/comboBox';
+import Input from './ui/Input';
 
 import { Item } from '@/types/items';
 import { SLOT_OPTIONS, guessSlot } from '@/lib/slots';
@@ -144,13 +145,13 @@ export const ImportPanel: React.FC<ImportPanelProps> = ({
             <label htmlFor="import-username" className="text-sm font-semibold text-zinc-200">
               User Name
             </label>
-            <input
+            <Input
               id="import-username"
               type="text"
               value={userName}
               onChange={(event) => handleSetUserName(event.target.value)}
               placeholder="e.g. Jaela, Merchants Guild"
-              className="w-full rounded-lg border border-zinc-700 bg-zinc-950/60 px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+              // size="sm"
             />
             <p className="text-[11px] text-zinc-500">Assigning a name gives you a way to edit this entry later & you get street cred...</p>
           </div>
@@ -194,12 +195,12 @@ export const ImportPanel: React.FC<ImportPanelProps> = ({
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-3">
                       <label className="flex flex-col text-xs text-zinc-400">
                         <span className="mb-1">Dropped by</span>
-                        <input
+                        <Input
                           type="text"
                           value={override.droppedBy ?? item.droppedBy ?? ''}
                           onChange={(e) => onOverrideChange(item.id, { droppedBy: e.target.value })}
-                          className="w-full rounded-md border border-zinc-700 bg-zinc-900 px-2 py-1 text-xs text-zinc-100 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
                           placeholder="mob name"
+                          // size="sm"
                         />
                       </label>
                       <label className="flex flex-col text-xs text-zinc-400">
@@ -214,6 +215,7 @@ export const ImportPanel: React.FC<ImportPanelProps> = ({
                             })
                           }
                           placeholder="Select or type worn slots"
+                          size="sm"
                         />
 
                         {/* <span className="mt-1 text-[10px] text-zinc-500">Hold Ctrl (Cmd on Mac) to select multiple slots.</span> */}

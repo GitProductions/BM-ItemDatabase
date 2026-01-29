@@ -1,5 +1,5 @@
 import React from 'react';
-import ComboBox from './comboBox';
+import ComboBox from './ui/comboBox';
 import { Item, ItemAffect } from '@/types/items';
 
 type ItemPreviewCardProps = {
