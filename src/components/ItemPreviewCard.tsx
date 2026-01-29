@@ -1,8 +1,8 @@
 import React from 'react';
-import ComboBox from './ui/comboBox';
+import ComboBox from './ui/ComboBox';
 import Input from './ui/Input';
 import Button from './ui/Button';
-import Checkbox from './ui/Checkbox';
+import Checkbox from './ui/CheckBox';
 import { Item, ItemAffect } from '@/types/items';
 
 type ItemPreviewCardProps = {

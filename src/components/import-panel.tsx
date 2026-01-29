@@ -3,7 +3,7 @@ import React from 'react';
 import Image from 'next/image';
 import { Save, Terminal, Info, AlertCircle, CheckCircle } from 'lucide-react';
 import { ItemCard } from './item-card';
-import ComboBox from './ui/comboBox';
+import ComboBox from './ui/ComboBox';
 import Input from './ui/Input';
 import Button from './ui/Button';
 import TextArea from './ui/TextArea';

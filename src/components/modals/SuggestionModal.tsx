@@ -4,7 +4,7 @@ import { Modal } from '../modal';
 import Input from '../ui/Input';
 import Button from '../ui/Button';
 import TextArea from '../ui/TextArea';
-import Checkbox from '../ui/Checkbox';
+import Checkbox from '../ui/CheckBox';
 import ItemPreviewCard from '../ItemPreviewCard';
 import { useAppData } from '@/components/app-provider';
 
