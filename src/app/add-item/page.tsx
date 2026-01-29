@@ -15,19 +15,13 @@ type DuplicateCheckState = {
 type ItemOverrides = Record<string, { droppedBy?: string; worn?: string[] }>;
 
 export default function AddItemPage() {
-  const { items, refresh } = useAppData();
+  const { items, refresh, userName } = useAppData();
 
   const [rawInput, setRawInput] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
-  const [userName, setUserName] = useState('');
   const [duplicateCheck, setDuplicateCheck] = useState<DuplicateCheckState | null>(null);
   const [itemOverrides, setItemOverrides] = useState<ItemOverrides>({});
-
-  useEffect(() => {
-    const storedUserName = localStorage.getItem('bm-database-userName') || '';
-    setUserName(storedUserName);
-  }, []);
 
   const previewItems = useMemo(() => {
     if (!rawInput.trim()) return [];
@@ -206,8 +200,8 @@ export default function AddItemPage() {
         onCancelDuplicates={handleCancelImport}
         isProcessing={isProcessing}
         previewItems={previewItems}
-        userName={userName}
-        onUserNameChange={setUserName}
+        // userName={userName}
+        // onUserNameChange={setUserName}
         overrides={itemOverrides}
         onOverrideChange={handleOverrideChange}
         duplicateCheck={duplicateCheck}

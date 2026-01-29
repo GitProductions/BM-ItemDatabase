@@ -6,6 +6,7 @@ import { ItemCard } from './item-card';
 import { Item } from '@/types/items';
 import { SLOT_OPTIONS, guessSlot } from '@/lib/slots';
 import { getRandomOrcPhrase } from '@/lib/orc-phrases';
+import { useAppData } from '@/components/app-provider';
 
 type ImportPanelProps = {
   rawInput: string;
@@ -15,8 +16,8 @@ type ImportPanelProps = {
   onCancelDuplicates: () => void;
   isProcessing?: boolean;
   previewItems: Item[];
-  userName: string;
-  onUserNameChange: (value: string) => void;
+  // userName: string;
+  // onUserNameChange: (value: string) => void;
   onOverrideChange: (id: string, overrides: { droppedBy?: string; worn?: string[] }) => void;
   overrides: Record<string, { droppedBy?: string; worn?: string[] }>;
   duplicateCheck?: {
@@ -35,12 +36,13 @@ export const ImportPanel: React.FC<ImportPanelProps> = ({
   onCancelDuplicates,
   isProcessing = false,
   previewItems,
-  userName,
-  onUserNameChange,
+  // userName,
+  // onUserNameChange,
   onOverrideChange,
   overrides = {},
   duplicateCheck,
 }) => {
+  const { userName, handleSetUserName } = useAppData();
 
   // If there are duplicates, show the duplicate review panel
   if (duplicateCheck && duplicateCheck.hasDuplicates) {
@@ -127,7 +129,8 @@ export const ImportPanel: React.FC<ImportPanelProps> = ({
 
       {/* Tips/Notes */}
       <div className="bg-zinc-950/50 rounded-lg p-2 mb-4 border border-zinc-800 text-sm text-zinc-400">
-        <p className="flex gap-2 items-center"> <Info  /> Paste your identify item output directly from the MUD or your doc file below. </p>
+        <p className="flex gap-2 items-center mb-1"> <Info  /> Paste your identify item output directly from the MUD or your doc file below. </p>
+        <p className="mb-1">Enchanted items are stripped of their enchantments during import to maintain database consistency. </p>
       </div>
 
       {/* Username & submission */}
@@ -143,7 +146,7 @@ export const ImportPanel: React.FC<ImportPanelProps> = ({
               id="import-username"
               type="text"
               value={userName}
-              onChange={(event) => onUserNameChange(event.target.value)}
+              onChange={(event) => handleSetUserName(event.target.value)}
               placeholder="e.g. Jaela, Merchants Guild"
               className="w-full rounded-lg border border-zinc-700 bg-zinc-950/60 px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
             />

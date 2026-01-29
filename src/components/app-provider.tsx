@@ -14,6 +14,19 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string>('');
+
+  const handleSetUserName = (name: string) => {
+    setUserName(name);
+    localStorage.setItem('bm-database-userName', name);
+  };
+
+  useEffect(() => {
+    const storedUserName = localStorage.getItem('bm-database-userName') || '';
+    handleSetUserName(storedUserName);
+    }, [handleSetUserName]);
+
+
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -22,6 +35,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
       const response = await fetch('/api/items', { cache: 'no-store' });
       if (!response.ok) throw new Error('Failed to load items');
       const data = await response.json();
+      // setItems(normalizeItems(data.items ?? []));
       setItems(data.items ?? []);
     } catch (err) {
       console.error('Failed to load items', err);
@@ -36,7 +50,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
   }, [refresh]);
 
   return (
-    <AppDataContext.Provider value={{ items, loading, error, refresh }}>
+    <AppDataContext.Provider value={{ items, loading, error, refresh, userName, handleSetUserName   }}>
       {children}
     </AppDataContext.Provider>
   );
