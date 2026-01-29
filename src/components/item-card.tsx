@@ -3,6 +3,7 @@ import { Database, Feather, Scroll, Shield, Sparkles, Sword } from 'lucide-react
 import { Item } from '@/types/items';
 import { guessSlot, normalizeWornSlots } from '@/lib/slots';
 import { StatBadge } from './stat-badge';
+import Button from './ui/Button';
 
 type ItemCardProps = {
   item: Item;

@@ -1,5 +1,6 @@
 import React, { useEffect, useState} from 'react';
 import { Item } from '@/types/items';
+import Input from '../ui/Input';
 
 type SearchItemProps = {
   query: string;
@@ -30,7 +31,7 @@ const SearchItem: React.FC<SearchItemProps> = ({ query, setQuery, filtered, onCh
   }, [open, containerRef]);
   return (
     <div className="relative">
-      <input
+      <Input
         value={query}
         onChange={(e) => {
           setQuery(e.target.value);
@@ -43,7 +44,7 @@ const SearchItem: React.FC<SearchItemProps> = ({ query, setQuery, filtered, onCh
           }
         }}
         placeholder="Search item name, keyword, type"
-        className="w-full rounded-md border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-xs text-zinc-100 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+        className="w-full rounded-md border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-xs  "
       />
 
       {open && (

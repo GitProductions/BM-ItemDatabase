@@ -1,5 +1,7 @@
 import React from 'react';
 import ComboBox from './ui/comboBox';
+import Input from './ui/Input';
+import Button from './ui/Button';
 import { Item, ItemAffect } from '@/types/items';
 
 type ItemPreviewCardProps = {
@@ -131,39 +133,40 @@ function ItemPreviewCard({ item, editable = false, onChange }: ItemPreviewCardPr
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <label className="text-[11px] uppercase text-zinc-400 space-y-1">
           <span>Name</span>
-          <input
+
+          <Input 
             value={item.name}
             onChange={(e) => updateItem({ name: e.target.value })}
-            className="w-full rounded border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+            className="w-full rounded border px-3 py-2 text-sm text-white"
           />
         </label>
         <label className="text-[11px] uppercase text-zinc-400 space-y-1">
           <span>Type</span>
-          <input
+          <Input
             value={item.type}
             onChange={(e) => updateItem({ type: e.target.value })}
-            className="w-full rounded border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+            className="w-full rounded border  px-3 py-2 text-sm text-white"
           />
         </label>
       </div>
 
       <label className="text-[11px] uppercase text-zinc-400 space-y-1 block">
         <span>Keywords</span>
-        <input
+        <Input
           value={item.keywords}
           onChange={(e) => updateItem({ keywords: e.target.value })}
-          className="w-full rounded border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+          className="w-full rounded border px-3 py-2 text-sm text-white"
         />
       </label>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <label className="text-[11px] uppercase text-zinc-400 space-y-1">
           <span>Ego</span>
-          <input
+          <Input
             value={item.ego ?? ''}
             placeholder="optional"
             onChange={(e) => updateItem({ ego: e.target.value || undefined })}
-            className="w-full rounded border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+            className="w-full rounded border px-3 py-2 text-sm text-white"
           />
         </label>
         <label className="text-[11px] uppercase text-zinc-400 space-y-1">
@@ -189,35 +192,35 @@ function ItemPreviewCard({ item, editable = false, onChange }: ItemPreviewCardPr
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <label className="text-[11px] uppercase text-zinc-400 space-y-1">
           <span>Damage</span>
-          <input
+          <Input
             value={stats.damage ?? ''}
             placeholder="e.g. 2d5+3"
             onChange={(e) => updateStats({ damage: e.target.value || undefined })}
-            className="w-full rounded border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+            className="w-full rounded border px-3 py-2 text-sm text-white"
           />
         </label>
         <label className="text-[11px] uppercase text-zinc-400 space-y-1">
           <span>AC</span>
-          <input
+          <Input
             type="number"
             value={stats.ac ?? ''}
             onChange={(e) => {
               const val = e.target.value;
               updateStats({ ac: val === '' ? undefined : Number(val) });
             }}
-            className="w-full rounded border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+            className="w-full rounded border px-3 py-2 text-sm text-white"
           />
         </label>
         <label className="text-[11px] uppercase text-zinc-400 space-y-1">
           <span>Weight</span>
-          <input
+          <Input
             type="number"
             value={stats.weight ?? ''}
             onChange={(e) => {
               const val = e.target.value;
               updateStats({ weight: val === '' ? undefined : Number(val) });
             }}
-            className="w-full rounded border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+            className="w-full rounded border px-3 py-2 text-sm text-white"
           />
         </label>
       </div>
@@ -225,14 +228,14 @@ function ItemPreviewCard({ item, editable = false, onChange }: ItemPreviewCardPr
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <label className="text-[11px] uppercase text-zinc-400 space-y-1">
           <span>Dropped by</span>
-          <input
+          <Input
             value={item.droppedBy ?? ''}
             onChange={(e) => updateItem({ droppedBy: e.target.value || undefined })}
-            className="w-full rounded border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+            className="w-full rounded border px-3 py-2 text-sm text-white"
           />
         </label>
         <label className="text-[11px] uppercase text-zinc-400 inline-flex items-center gap-2">
-          <input
+          <Input
             type="checkbox"
             checked={Boolean(item.isArtifact)}
             onChange={(e) => updateItem({ isArtifact: e.target.checked })}
@@ -245,13 +248,13 @@ function ItemPreviewCard({ item, editable = false, onChange }: ItemPreviewCardPr
       <div className="border border-zinc-800 rounded-lg p-3 space-y-2 bg-zinc-900/40">
         <div className="flex items-center justify-between">
           <span className="text-[11px] uppercase text-zinc-400">Affects</span>
-          <button
-            type="button"
+          <Button
+            size="sm"
             onClick={addAffect}
             className="text-[11px] px-2 py-1 rounded bg-zinc-800 text-zinc-200 border border-zinc-700 hover:border-orange-500"
           >
             Add
-          </button>
+          </Button>
         </div>
 
         {affects.length === 0 ? (
@@ -266,7 +269,7 @@ function ItemPreviewCard({ item, editable = false, onChange }: ItemPreviewCardPr
                 <select
                   value={affect.type}
                   onChange={(e) => updateAffect(idx, { type: e.target.value as ItemAffect['type'] })}
-                  className="rounded border border-zinc-700 bg-zinc-900 px-2 py-2 text-sm text-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+                  className="rounded border h-8 border-zinc-700 bg-zinc-900 px-2 py-2 text-sm text-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
                 >
                   <option value="stat">Stat</option>
                   <option value="spell">Spell</option>
@@ -274,13 +277,13 @@ function ItemPreviewCard({ item, editable = false, onChange }: ItemPreviewCardPr
 
                 {affect.type === 'spell' ? (
                   <>
-                    <input
+                    <Input
                       value={affect.spell ?? ''}
                       placeholder="Spell name"
                       onChange={(e) => updateAffect(idx, { spell: e.target.value })}
-                      className="rounded border border-zinc-700 bg-zinc-900 px-2 py-2 text-sm text-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+                      className="rounded border px-2 py-2 text-sm text-white"
                     />
-                    <input
+                    <Input
                       type="number"
                       value={affect.level ?? ''}
                       placeholder="Level"
@@ -288,18 +291,18 @@ function ItemPreviewCard({ item, editable = false, onChange }: ItemPreviewCardPr
                         const val = e.target.value;
                         updateAffect(idx, { level: val === '' ? undefined : Number(val) });
                       }}
-                      className="rounded border border-zinc-700 bg-zinc-900 px-2 py-2 text-sm text-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+                      className="rounded border px-2 py-2 text-sm text-white"
                     />
                   </>
                 ) : (
                   <>
-                    <input
+                    <Input
                       value={affect.stat ?? ''}
                       placeholder="Stat"
                       onChange={(e) => updateAffect(idx, { stat: e.target.value })}
-                      className="rounded border border-zinc-700 bg-zinc-900 px-2 py-2 text-sm text-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+                      className="rounded border px-2 py-2 text-sm text-white"
                     />
-                    <input
+                    <Input
                       type="number"
                       value={affect.value ?? ''}
                       placeholder="Value"
@@ -307,18 +310,18 @@ function ItemPreviewCard({ item, editable = false, onChange }: ItemPreviewCardPr
                         const val = e.target.value;
                         updateAffect(idx, { value: val === '' ? undefined : Number(val) });
                       }}
-                      className="rounded border border-zinc-700 bg-zinc-900 px-2 py-2 text-sm text-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+                      className="rounded border px-2 py-2 text-sm text-white"
                     />
                   </>
                 )}
 
-                <button
-                  type="button"
+                <Button
+                  size="sm"
                   onClick={() => removeAffect(idx)}
                   className="text-[11px] px-2 py-1 rounded bg-zinc-900 text-zinc-300 border border-zinc-700 hover:border-rose-500 hover:text-white"
                 >
                   Remove
-                </button>
+                </Button>
               </div>
             ))}
           </div>

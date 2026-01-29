@@ -11,7 +11,7 @@ type InputProps = React.InputHTMLAttributes<HTMLInputElement> & {
 
 const Input = forwardRef<HTMLInputElement, InputProps>(({ size = 'sm', className = '', ...props }, ref) => {
   const sizeStyle = SIZE_STYLES[size as keyof typeof SIZE_STYLES] ?? SIZE_STYLES.sm;
-  const base = 'w-full rounded-md border border-zinc-700 bg-zinc-900 text-zinc-100 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500';
+  const base = 'w-full rounded-md border border-zinc-700 bg-zinc-900 text-zinc-100 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 ';
   return <input ref={ref} className={`${base} ${sizeStyle} ${className}`.trim()} {...props} />;
 });
 

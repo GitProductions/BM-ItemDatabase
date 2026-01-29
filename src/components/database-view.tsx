@@ -6,6 +6,8 @@ import Image from 'next/image';
 import SuggestionModal from './modals/SuggestionModal';
 import uFuzzy from '@leeoniya/ufuzzy';
 import { getRandomOrcPhrase } from '@/lib/orc-phrases';
+import Input from './ui/Input';
+import Button from './ui/Button';
 
 // uFuzzy tuned to allow common typos/transpositions while still ranking well.
 const uf = new uFuzzy({
@@ -88,12 +90,13 @@ export const ItemDB: React.FC<ItemDBProps> = ({ items }) => {
         {/* Main Search  */}
         <div className="relative flex-1 ">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
-          <input
+
+          <Input 
             type="text"
+            className="bg-zinc-950 border-zinc-700 rounded-lg pl-10"
             placeholder="Search by name, keywords, or stats (e.g. 'str', 'hit-n-dam')..."
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            className="w-full bg-zinc-950 border border-zinc-700 rounded-lg pl-10 pr-4 py-2 text-sm focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all"
           />
         </div>
 
@@ -101,15 +104,17 @@ export const ItemDB: React.FC<ItemDBProps> = ({ items }) => {
         <div className="flex gap-2 items-center overflow-x-auto pb-3 md:pb-0">
           <Filter size={18} className="text-zinc-500 shrink-0" />
           {uniqueTypes.map((type) => (
-            <button
+            <Button
               key={type}
+              size = 'sm'
               onClick={() => setFilterType(type)}
               className={`px-3 py-1.5 rounded-full text-xs font-medium capitalize whitespace-nowrap transition-colors ${
                 filterType === type ? 'bg-orange-600 text-white' : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
+              
               }`}
             >
               {type}
-            </button>
+            </Button>
           ))}
 
         
@@ -125,7 +130,7 @@ export const ItemDB: React.FC<ItemDBProps> = ({ items }) => {
             <ItemCard item={{ ...item }} />
 
             {/* Suggest Edit Button */}
-            <button
+            <Button
               onClick={() => {
                 setSuggestItem(item);
                 setSuggestFeedback(null);
@@ -137,7 +142,7 @@ export const ItemDB: React.FC<ItemDBProps> = ({ items }) => {
               transition-colors"
             >
               Suggest edit
-            </button>
+            </Button>
 
           </div>
         ))}

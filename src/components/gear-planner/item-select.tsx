@@ -4,6 +4,7 @@ import { Sword, Shield, Weight } from 'lucide-react';
 import SearchItem from './search-item';
 import { normalize } from './util';
 import { SlotConfig } from './types/types';
+import Button from '../ui/Button';
 
 type ItemSelectProps = {
   slot: SlotConfig;
@@ -39,12 +40,13 @@ const ItemSelect: React.FC<ItemSelectProps> = ({ slot, items, value, onChange })
           </div>
         </div>
         {value ? (
-          <button
+          <Button
+            size="sm"
             onClick={() => onChange(null)}
             className="text-[11px] text-rose-300 hover:text-rose-100 transition-colors"
           >
             Clear
-          </button>
+          </Button>
         ) : null}
       </div>
 

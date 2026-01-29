@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Item } from '@/types/items';
 import { Modal } from '../modal';
+import Input from '../ui/Input';
+import Button from '../ui/Button';
 import ItemPreviewCard from '../ItemPreviewCard';
 import { useAppData } from '@/components/app-provider';
 
@@ -118,11 +120,11 @@ const SuggestionModal: React.FC<SuggestionModalProps> = ({ item, open, isSubmitt
           )}
 
           {/* Suggestion form */}
-          <input
+          <Input
             placeholder="Your name (optional)"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+            className="w-full rounded-md border  px-3 py-2 text-sm"
           />
 
           <textarea
@@ -144,11 +146,11 @@ const SuggestionModal: React.FC<SuggestionModalProps> = ({ item, open, isSubmitt
 
         <div className="sticky bottom-0 left-0 right-0 flex flex-wrap items-center gap-3 py-3 px-1 bg-zinc-950 border-t border-zinc-800">
           <label className="flex items-center gap-2 text-xs text-zinc-300 mr-auto">
-            <input
+            <Input
               type="checkbox"
               checked={adminMode}
               onChange={(e) => setAdminMode(e.target.checked)}
-              className="h-4 w-4 rounded border-zinc-600 bg-zinc-900 text-orange-500 focus:ring-orange-500"
+              className="h-4 w-4 rounded border-zinc-600 bg-zinc-900"
             />
             Enable direct edit (admin)
           </label>
@@ -156,11 +158,11 @@ const SuggestionModal: React.FC<SuggestionModalProps> = ({ item, open, isSubmitt
           {adminMode && (
             <>
             <div className="flex-1" >
-              <input
+              <Input
                 value={adminToken}
                 onChange={(e) => setAdminToken(e.target.value)}
                 placeholder="ADMIN_TOKEN"
-                className="max-w-[200px] rounded border border-zinc-700 bg-zinc-900 px-2 py-1.5 text-sm text-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+                className="max-w-[200px] rounded border border-zinc-700 bg-zinc-900 px-2 py-1.5 text-sm text-white"
               />
               {adminStatus && <span className="text-xs text-green-300">{adminStatus}</span>}
               {adminError && <span className="text-xs text-rose-300">{adminError}</span>}
@@ -168,27 +170,27 @@ const SuggestionModal: React.FC<SuggestionModalProps> = ({ item, open, isSubmitt
             </>
           )}
 
-          <button onClick={onClose} className="px-3 py-2 text-sm rounded-md text-zinc-300 hover:text-white">
+          <Button onClick={onClose} className="px-3 py-2 text-sm rounded-md text-zinc-300 hover:text-white " variant="secondary">
             Cancel
-          </button>
+          </Button>
 
           {adminMode ? (
             
-            <button
+            <Button
               onClick={handleDirectSave}
               disabled={adminSaving || !draftItem}
               className="px-4 py-2 text-sm rounded-md bg-orange-600 hover:bg-orange-500 text-white disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {adminSaving ? 'Saving�' : 'Save directly'}
-            </button>
+            </Button>
           ) : (
-            <button
+            <Button
               disabled={isSubmitting || !note.trim()}
               onClick={handleSubmit}
               className="px-4 py-2 text-sm rounded-md bg-orange-600 hover:bg-orange-500 text-white disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Submit
-            </button>
+            </Button>
           )}
         </div>
       </div>

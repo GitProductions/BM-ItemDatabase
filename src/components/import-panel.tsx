@@ -5,6 +5,7 @@ import { Save, Terminal, Info, AlertCircle, CheckCircle } from 'lucide-react';
 import { ItemCard } from './item-card';
 import ComboBox from './ui/comboBox';
 import Input from './ui/Input';
+import Button from './ui/Button';
 
 import { Item } from '@/types/items';
 import { SLOT_OPTIONS, guessSlot } from '@/lib/slots';
@@ -101,20 +102,20 @@ export const ImportPanel: React.FC<ImportPanelProps> = ({
           </div>
 
           <div className="flex justify-between gap-3">
-            <button
+            <Button
               onClick={onCancelDuplicates}
               disabled={isProcessing}
               className="px-4 py-2 rounded-lg text-zinc-300 hover:text-zinc-100 hover:bg-zinc-800 text-sm font-medium transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={onProceedWithDuplicates}
               disabled={isProcessing}
               className="px-6 py-2 rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-bold transition-colors shadow-lg shadow-amber-900/50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               <Save size={18} /> Proceed with Import
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -165,13 +166,13 @@ export const ImportPanel: React.FC<ImportPanelProps> = ({
           />
 
           <div className="flex justify-between items-center">
-            <button
+            <Button
               onClick={onCheckDuplicates}
               disabled={isProcessing || !rawInput.trim()}
               className="px-6 py-2 rounded-lg bg-orange-600 hover:bg-orange-500 text-white font-bold transition-colors shadow-lg shadow-orange-900/50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               <Save size={18} /> Check & Import
-            </button>
+            </Button>
           </div>
         </div>
 
