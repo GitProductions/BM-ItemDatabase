@@ -3,6 +3,8 @@ import React from 'react';
 import Image from 'next/image';
 import { Save, Terminal, Info, AlertCircle, CheckCircle } from 'lucide-react';
 import { ItemCard } from './item-card';
+import ComboBox from './comboBox';
+
 import { Item } from '@/types/items';
 import { SLOT_OPTIONS, guessSlot } from '@/lib/slots';
 import { getRandomOrcPhrase } from '@/lib/orc-phrases';
@@ -189,7 +191,7 @@ export const ImportPanel: React.FC<ImportPanelProps> = ({
                 const selectedWorn = override.worn ?? item.worn ?? (guessedSlot ? [guessedSlot] : []);
                 return (
                   <div key={item.id} className="border border-zinc-800 rounded-lg p-3 bg-zinc-950/60 flex flex-col gap-3">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-3">
                       <label className="flex flex-col text-xs text-zinc-400">
                         <span className="mb-1">Dropped by</span>
                         <input
@@ -202,25 +204,19 @@ export const ImportPanel: React.FC<ImportPanelProps> = ({
                       </label>
                       <label className="flex flex-col text-xs text-zinc-400">
                         <span className="mb-1">Worn slot(s)</span>
-                        <select
-                          multiple
+    
+                        <ComboBox
+                          options={SLOT_OPTIONS.map((slot) => slot.key)}
                           value={selectedWorn}
-                          onChange={(e) =>
+                          onChange={(selected) =>
                             onOverrideChange(item.id, {
-                              worn: Array.from(e.target.selectedOptions)
-                                .map((opt) => opt.value)
-                                .filter(Boolean),
+                              worn: selected,
                             })
                           }
-                          className="w-full rounded-md border border-zinc-700 bg-zinc-900 px-2 py-1 text-xs text-zinc-100 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 min-h-[100px]"
-                        >
-                          {SLOT_OPTIONS.map((slot) => (
-                            <option key={slot.key} value={slot.key}>
-                              {slot.label}
-                            </option>
-                          ))}
-                        </select>
-                        <span className="mt-1 text-[10px] text-zinc-500">Hold Ctrl (Cmd on Mac) to select multiple slots.</span>
+                          placeholder="Select or type worn slots"
+                        />
+
+                        {/* <span className="mt-1 text-[10px] text-zinc-500">Hold Ctrl (Cmd on Mac) to select multiple slots.</span> */}
                       </label>
                     </div>
                     <ItemCard
