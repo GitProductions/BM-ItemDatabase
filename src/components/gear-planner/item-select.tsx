@@ -18,17 +18,30 @@ const ItemSelect: React.FC<ItemSelectProps> = ({ slot, items, value, onChange })
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   const filtered = useMemo(() => {
+    const placeholder: Item = {
+      id: '__search_more__',
+      name: 'Search for more results…',
+      keywords: '',
+      type: '',
+      flags: [],
+      stats: { affects: [] },
+    };
+
     const q = normalize(query);
-    if (!q) return items.slice(0, 12);
-    return items
-      .filter(
-        (item) =>
-          normalize(item.name).includes(q) ||
-          normalize(item.keywords).includes(q) ||
-          normalize(item.type).includes(q) ||
-          normalize((item.worn ?? []).join(' ')).includes(q),
-      )
-      .slice(0, 12);
+    const matches = q
+      ? items.filter(
+          (item) =>
+            normalize(item.name).includes(q) ||
+            normalize(item.keywords).includes(q) ||
+            normalize(item.type).includes(q) ||
+            normalize((item.worn ?? []).join(' ')).includes(q),
+        )
+        
+      : items;
+
+    const limited = matches.slice(0, 20);
+    if (matches.length > 20) limited.push(placeholder);
+    return limited;
   }, [items, query]);
 
   return (

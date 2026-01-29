@@ -140,3 +140,18 @@ export const matchesSlot = (
   if (!guess) return true; // keep unclassified items visible across slots
   return canonicalSlot(guess) === canonicalSlot(target);
 };
+
+// Returns a rank for how strongly an item matches a target slot.
+// Higher is better: 2 = explicit worn match, 1 = guess match, 0 = unknown/other.
+export const slotMatchRank = (
+  item: { keywords?: string; name?: string; worn?: string[] | string | null; type?: string },
+  target: SlotKey,
+): number => {
+  const wornSlots = normalizeWornSlots(item.worn);
+  if (wornSlots.some((slot) => canonicalSlot(slot) === canonicalSlot(target))) return 2;
+
+  const guess = guessSlot(item);
+  if (guess && canonicalSlot(guess) === canonicalSlot(target)) return 1;
+
+  return 0;
+};

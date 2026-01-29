@@ -7,7 +7,7 @@ import Summary from './summary';
 import ItemSelect from './item-select';
 import { computeTotals } from './util';
 import { Selected, SlotKey, GearPlannerProps } from './types/types';
-import { SLOT_CONFIG, isWearable, matchesSlot } from '@/lib/slots';
+import { SLOT_CONFIG, matchesSlot, slotMatchRank } from '@/lib/slots';
 
 const defaultGearState: Selected = {
   head: null,
@@ -69,15 +69,25 @@ export const GearPlanner: React.FC<GearPlannerProps> = ({ items }) => {
     }
   });
 
-  const wearableItems = useMemo(() => items.filter((item) => isWearable(item)), [items]);
+  const candidateItems = useMemo(() => items, [items]);
+
   const itemsBySlot = useMemo(() => {
-    return Object.fromEntries(
-      SLOT_CONFIG.map((slot) => [
-        slot.key,
-        wearableItems.filter((item) => matchesSlot(item, slot.key)),
-      ]),
-    ) as Record<SlotKey, Item[]>;
-  }, [wearableItems]);
+    const bySlot: Record<SlotKey, Item[]> = {} as Record<SlotKey, Item[]>;
+    SLOT_CONFIG.forEach((slot) => {
+      const sorted = [...candidateItems].sort((a, b) => {
+        const rankA = slotMatchRank(a, slot.key);
+        const rankB = slotMatchRank(b, slot.key);
+        if (rankA !== rankB) return rankB - rankA; // higher rank first
+        // fallback: keep broad inclusion behavior but stable-ish ordering
+        const aMatch = matchesSlot(a, slot.key);
+        const bMatch = matchesSlot(b, slot.key);
+        if (aMatch !== bMatch) return aMatch ? -1 : 1;
+        return a.name.localeCompare(b.name);
+      });
+      bySlot[slot.key] = sorted;
+    });
+    return bySlot;
+  }, [candidateItems]);
 
   const selected: Selected = useMemo(() => {
     const mapped: Selected = { ...defaultGearState };
@@ -87,10 +97,10 @@ export const GearPlanner: React.FC<GearPlannerProps> = ({ items }) => {
         mapped[slot] = null;
         return;
       }
-      mapped[slot] = wearableItems.find((item) => item.id === id) ?? null;
+      mapped[slot] = candidateItems.find((item) => item.id === id) ?? null;
     });
     return mapped;
-  }, [wearableItems, slotIds]);
+  }, [candidateItems, slotIds]);
 
   const totals = useMemo(() => computeTotals(selected), [selected]);
 
@@ -123,7 +133,7 @@ export const GearPlanner: React.FC<GearPlannerProps> = ({ items }) => {
           <ItemSelect
             key={slot.key}
             slot={slot}
-            items={itemsBySlot[slot.key] ?? wearableItems}
+            items={itemsBySlot[slot.key] ?? candidateItems}
             value={selected[slot.key]}
             onChange={handleChange(slot.key)}
           />
