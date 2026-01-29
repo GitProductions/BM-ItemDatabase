@@ -109,7 +109,8 @@ const SuggestionModal: React.FC<SuggestionModalProps> = ({ item, open, isSubmitt
           {item && (
             <div className="space-y-3">
               <ItemPreviewCard
-                item={adminMode && draftItem ? draftItem : item}
+                // item={adminMode && draftItem ? draftItem : item}
+                item ={draftItem ? draftItem : item}
                 editable={true}
                 onChange={setDraftItem}
               />

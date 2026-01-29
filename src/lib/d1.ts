@@ -261,7 +261,11 @@ const mergeItems = (existing: Item, incoming: Item): Item => {
 
   return {
     ...existing,
-    flags: existing.flags ?? [],
+    // prefer incoming identity/metadata so edits are applied
+    name: incoming.name ?? existing.name,
+    keywords: incoming.keywords ?? existing.keywords,
+    type: incoming.type ?? existing.type,
+    flags: incoming.flags !== undefined ? incoming.flags : existing.flags ?? [],
     stats: {
       ...existing.stats,
       ...incoming.stats,
@@ -278,6 +282,10 @@ const mergeItems = (existing: Item, incoming: Item): Item => {
     submittedBy: incoming.submittedBy ?? existing.submittedBy,
     droppedBy: incoming.droppedBy ?? existing.droppedBy,
     worn: mergeWorn(existing.worn, incoming.worn),
+    raw: incoming.raw !== undefined ? incoming.raw : existing.raw,
+    flaggedForReview:
+      incoming.flaggedForReview !== undefined ? incoming.flaggedForReview : existing.flaggedForReview,
+    duplicateOf: incoming.duplicateOf ?? existing.duplicateOf,
   };
 };
 
@@ -502,16 +510,71 @@ export const upsertItems = async (items: Item[]) => {
     return row ? decodeItem(row) : undefined;
   };
 
+  // Fetch by primary id; used when an explicit id is sent with the payload.
+  const fetchExistingById = async (id?: string): Promise<Item | undefined> => {
+    if (!id) return undefined;
+    const result = await db.prepare('SELECT * FROM items WHERE id = ?1 LIMIT 1;').bind(id).all<StoredItemRow>();
+    const row = (result.results ?? result.rows ?? [])[0] as StoredItemRow | undefined;
+    return row ? decodeItem(row) : undefined;
+  };
+
+  const ensureId = (id?: string) => id ?? (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2, 11));
+
   const statements = await Promise.all(
     items.map(async (item) => {
-      const existing = await fetchExistingByIdentity(item);
+      const existingById = item.id ? await fetchExistingById(item.id) : undefined;
+      const existingByIdentity = await fetchExistingByIdentity(item);
+      const existing = existingById ?? existingByIdentity;
+
       const merged = existing ? mergeItems(existing, item) : primeRanges(item);
-      const stableId = existing?.id ?? item.id;
+      const stableId = ensureId(existing?.id ?? item.id);
       const values = encodeItem({ ...primeRanges(merged), id: stableId }, now);
 
-    return db
-      .prepare(
-        `
+      // If we found an existing record (by id or identity), perform an update to avoid PK conflicts.
+      if (existing) {
+        return db
+          .prepare(
+            `
+            UPDATE items SET
+              name = ?2,
+              keywords = ?3,
+              type = ?4,
+              flags = ?5,
+              stats = ?6,
+              submittedBy = ?7,
+              droppedBy = ?8,
+              worn = ?9,
+              ego = ?10,
+              isArtifact = ?11,
+              raw = ?12,
+              flaggedForReview = ?13,
+              duplicateOf = ?14,
+              updatedAt = ?15
+            WHERE id = ?1;
+          `,
+          )
+          .bind(
+            values.id,
+            values.name,
+            values.keywords,
+            values.type,
+            values.flags,
+            values.stats,
+            values.submittedBy,
+            values.droppedBy,
+            values.worn,
+            values.ego,
+            values.isArtifact,
+            values.raw,
+            values.flaggedForReview,
+            values.duplicateOf,
+            values.updatedAt,
+          );
+      }
+
+      return db
+        .prepare(
+          `
         INSERT INTO items (
           id, name, keywords, type, flags, stats, submittedBy, droppedBy, worn, ego, isArtifact, raw,
           flaggedForReview, duplicateOf, createdAt, updatedAt

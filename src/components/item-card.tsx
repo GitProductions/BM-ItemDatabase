@@ -55,8 +55,8 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item }) => {
   const displayWorn = (() => {
     const slots = normalizeWornSlots(item.worn);
 
-    console.log('displayWorn slots:', slots);
-    console.log('item.worn:', item.worn);
+    // console.log('displayWorn slots:', slots);
+    // console.log('item.worn:', item.worn);
     if (slots.length) return slots;
     const guessed = guessSlot(item);
 
