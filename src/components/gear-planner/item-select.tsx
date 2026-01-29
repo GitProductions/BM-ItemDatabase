@@ -41,7 +41,7 @@ const ItemSelect: React.FC<ItemSelectProps> = ({ slot, items, value, onChange })
 
     const limited = matches.slice(0, 20);
     if (matches.length > 20) limited.push(placeholder);
-    return limited;
+    return limited.reverse(); // keep the strongest/earliest matches at the top visually
   }, [items, query]);
 
   return (
