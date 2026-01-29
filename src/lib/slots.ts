@@ -26,6 +26,22 @@ export type SlotConfig = {
   hint?: string;
 };
 
+export const canonicalSlot = (slot: SlotKey) => {
+  if (slot.startsWith('neck')) return 'neck1';
+  if (slot.startsWith('finger')) return 'finger1';
+  if (slot.startsWith('wrist')) return 'wrist1';
+  return slot;
+};
+
+export const normalizeWornSlots = (worn?: string[] | string | null): SlotKey[] => {
+  if (!worn) return [];
+  const raw = Array.isArray(worn) ? worn : worn.split(',');
+  const normalized = raw
+    .map((slot) => slot.trim().toLowerCase())
+    .filter((slot) => slot.length > 0) as SlotKey[];
+  return Array.from(new Set(normalized));
+};
+
 export const SLOT_CONFIG: SlotConfig[] = [
   { key: 'head', label: 'Head', hint: 'helms, caps' },
   { key: 'neck1', label: 'Neck', hint: 'amulets, chains' },
@@ -79,8 +95,9 @@ const slotKeywords: Record<SlotKey, string[]> = {
 
 };
 
-export const guessSlot = (item: { keywords?: string; name?: string; worn?: string }): SlotKey | undefined => {
-  if (item.worn) return item.worn as SlotKey;
+export const guessSlot = (item: { keywords?: string; name?: string; worn?: string[] | string | null }): SlotKey | undefined => {
+  const wornSlots = normalizeWornSlots(item.worn);
+  if (wornSlots.length) return wornSlots[0];
 
   const haystack = `${item.name ?? ''} ${item.keywords ?? ''}`.toLowerCase();
   if (haystack.match(/\b(scroll|wand|potion|elixir)\b/)) return 'consumable';
@@ -91,7 +108,22 @@ export const guessSlot = (item: { keywords?: string; name?: string; worn?: strin
 };
 
 const NON_EQUIPPABLE: SlotKey[] = ['consumable'];
-export const isWearable = (item: { worn?: string; type?: string }): boolean => {
-  const haystack = `${item.worn ?? ''} ${item.type ?? ''}`.toLowerCase();
+export const isWearable = (item: { worn?: string[] | string | null; type?: string }): boolean => {
+  const wornSlots = normalizeWornSlots(item.worn);
+  if (wornSlots.length) return wornSlots.some((slot) => !NON_EQUIPPABLE.includes(slot));
+
+  const haystack = `${item.type ?? ''}`.toLowerCase();
   return !NON_EQUIPPABLE.some((slot) => haystack.includes(slot));
+};
+
+export const matchesSlot = (
+  item: { keywords?: string; name?: string; worn?: string[] | string | null; type?: string },
+  target: SlotKey,
+): boolean => {
+  const wornSlots = normalizeWornSlots(item.worn);
+  if (wornSlots.length) return wornSlots.some((slot) => canonicalSlot(slot) === canonicalSlot(target));
+
+  const guess = guessSlot(item);
+  if (!guess) return true; // keep unclassified items visible across slots
+  return canonicalSlot(guess) === canonicalSlot(target);
 };

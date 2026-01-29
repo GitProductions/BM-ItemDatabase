@@ -7,7 +7,7 @@ import Summary from './summary';
 import ItemSelect from './item-select';
 import { computeTotals } from './util';
 import { Selected, SlotKey, GearPlannerProps } from './types/types';
-import { SLOT_CONFIG, guessSlot, isWearable, SlotKey as SlotKeyType } from '@/lib/slots';
+import { SLOT_CONFIG, isWearable, matchesSlot } from '@/lib/slots';
 
 const defaultGearState: Selected = {
   head: null,
@@ -57,13 +57,6 @@ const defaultIdState: Record<SlotKey, string | null> = {
 
 const STORAGE_KEY = 'bm-Equipment';
 
-const canonicalSlot = (slot: SlotKeyType) => {
-  if (slot.startsWith('neck')) return 'neck';
-  if (slot.startsWith('finger')) return 'finger';
-  if (slot.startsWith('wrist')) return 'wrist';
-  return slot;
-};
-
 export const GearPlanner: React.FC<GearPlannerProps> = ({ items }) => {
   const [slotIds, setSlotIds] = useState<Record<SlotKey, string | null>>(() => {
     try {
@@ -81,11 +74,7 @@ export const GearPlanner: React.FC<GearPlannerProps> = ({ items }) => {
     return Object.fromEntries(
       SLOT_CONFIG.map((slot) => [
         slot.key,
-        wearableItems.filter((item) => {
-          const guessed = guessSlot(item);
-          if (!guessed) return true; // keep unclassified items discoverable
-          return canonicalSlot(guessed) === canonicalSlot(slot.key);
-        }),
+        wearableItems.filter((item) => matchesSlot(item, slot.key)),
       ]),
     ) as Record<SlotKey, Item[]>;
   }, [wearableItems]);

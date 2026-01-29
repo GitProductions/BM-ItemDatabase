@@ -64,6 +64,18 @@ const SearchItem: React.FC<SearchItemProps> = ({ query, setQuery, filtered, onCh
                 <div className="text-[11px] text-zinc-500 truncate">
                   {item.keywords} • <span className="uppercase">{item.type}</span>
                 </div>
+                {item.worn && item.worn.length ? (
+                  <div className="mt-1 flex flex-wrap gap-1 text-[10px] text-orange-200">
+                    {item.worn.map((slot) => (
+                      <span
+                        key={slot}
+                        className="rounded border border-orange-800/70 bg-orange-900/30 px-2 py-0.5 uppercase tracking-wide"
+                      >
+                        {slot}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
               </button>
             ))
           )}

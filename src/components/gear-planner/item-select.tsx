@@ -24,7 +24,8 @@ const ItemSelect: React.FC<ItemSelectProps> = ({ slot, items, value, onChange })
         (item) =>
           normalize(item.name).includes(q) ||
           normalize(item.keywords).includes(q) ||
-          normalize(item.type).includes(q),
+          normalize(item.type).includes(q) ||
+          normalize((item.worn ?? []).join(' ')).includes(q),
       )
       .slice(0, 12);
   }, [items, query]);
@@ -34,7 +35,7 @@ const ItemSelect: React.FC<ItemSelectProps> = ({ slot, items, value, onChange })
       <div className="flex items-center justify-between mb-2">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <h3 className="text-sm font-semibold text-white truncate">{slot.label}</h3>
+            <h2 className="text-sm font-semibold text-white truncate">{slot.label}</h2>
           </div>
         </div>
         {value ? (
@@ -63,6 +64,18 @@ const ItemSelect: React.FC<ItemSelectProps> = ({ slot, items, value, onChange })
               <div className="text-[11px] text-zinc-500 truncate">
                 {value.keywords} • <span className="uppercase">{value.type}</span>
               </div>
+              {value.worn && value.worn.length ? (
+                <div className="mt-1 flex flex-wrap gap-1 text-[10px] text-orange-200">
+                  {value.worn.map((slot) => (
+                    <span
+                      key={slot}
+                      className="rounded border border-orange-800/70 bg-orange-900/30 px-2 py-0.5 uppercase tracking-wide"
+                    >
+                      {slot}
+                    </span>
+                  ))}
+                </div>
+              ) : null}
             </div>
             <div className="flex flex-wrap gap-1 justify-end">
               {value.stats?.damage ? (

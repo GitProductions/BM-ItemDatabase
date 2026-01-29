@@ -17,8 +17,8 @@ export const generateId = () => {
   return Math.random().toString(36).slice(2, 11);
 };
 
-// Override flags to allow either CSV string or string[]
-export type ItemInput = Omit<Partial<Item>, 'flags'> & { flags?: string | string[] };
+// Override flags/worn to allow either CSV string or string[]
+export type ItemInput = Omit<Partial<Item>, 'flags' | 'worn'> & { flags?: string | string[]; worn?: string | string[] };
 
 export const normalizeItemInput = (input: ItemInput) => {
   const name = input.name?.trim();
@@ -56,7 +56,13 @@ export const normalizeItemInput = (input: ItemInput) => {
     },
     submittedBy: submittedBy || undefined,
     droppedBy: input.droppedBy?.trim(),
-    worn: input.worn?.trim(),
+    worn: (() => {
+      const raw = input.worn;
+      const asArray = Array.isArray(raw) ? raw : typeof raw === 'string' ? raw.split(',') : [];
+      const normalized = asArray.map((slot) => String(slot).trim().toLowerCase()).filter(Boolean);
+      const unique = Array.from(new Set(normalized));
+      return unique.length ? unique : undefined;
+    })(),
     ego: input.ego,
     isArtifact: Boolean(input.isArtifact),
     raw: input.raw,

@@ -15,6 +15,7 @@ type D1Database = {
   batch: (statements: D1PreparedStatement[]) => Promise<unknown>;
 };
 
+
 type StoredItemRow = {
   id: string;
   name: string;
@@ -40,6 +41,16 @@ type SubmitterRow = {
   submissionCount: number;
   itemIds: string | null; // JSON array of item ids
   lastSubmittedAt: string | null;
+};
+
+export type ItemSearchParams = {
+  q?: string;
+  type?: string;
+  submittedBy?: string;
+  flagged?: boolean;
+  id?: string;
+  limit?: number;
+  offset?: number;
 };
 
 const getDatabase = async () => {
@@ -146,25 +157,44 @@ const ensureSchema = async (db: D1Database) => {
   return schemaReady;
 };
 
-// 
-const decodeItem = (row: StoredItemRow): Item => ({
-  id: row.id,
-  name: row.name,
-  keywords: row.keywords,
-  type: row.type,
-  flags: row.flags ? (JSON.parse(row.flags) as string[]) : [],
-  stats: row.stats ? (JSON.parse(row.stats) as Item['stats']) : { affects: [], weight: 0 },
-  submittedBy: row.submittedBy ?? undefined,
-  droppedBy: row.droppedBy ?? undefined,
-  worn: row.worn ?? undefined,
-  ego: row.ego ?? undefined,
-  isArtifact: row.isArtifact === 1,
-  raw: row.raw ? (JSON.parse(row.raw) as string[]) : undefined,
-  flaggedForReview: row.flaggedForReview === 1,
-  duplicateOf: row.duplicateOf ?? undefined,
-  submissionCount: 0,
-  contributors: [],
-});
+// NOTE: D1 stores JSON in a TEXT column; this parses legacy shapes (string, CSV string, array)
+// into a normalized string[] so the rest of the app can treat worn as an array.
+const normalizeWorn = (input: unknown): string[] | undefined => {
+  if (input === null || input === undefined) return undefined;
+
+  const toArray = (value: unknown) => {
+    if (Array.isArray(value)) return value;
+    if (typeof value === 'string') {
+      // support comma-delimited fallback
+      return value.includes(',') ? value.split(',') : [value];
+    }
+    return [];
+  };
+
+  try {
+    const parsed = typeof input === 'string' ? JSON.parse(input) : input;
+    const normalized = toArray(parsed)
+      .map((entry) => String(entry).trim().toLowerCase())
+      .filter(Boolean);
+    const unique = Array.from(new Set(normalized));
+    return unique.length ? unique : undefined;
+  } catch {
+    const normalized = toArray(input)
+      .map((entry) => String(entry).trim().toLowerCase())
+      .filter(Boolean);
+    const unique = Array.from(new Set(normalized));
+    return unique.length ? unique : undefined;
+  }
+};
+
+// NOTE: Despite the name, this is effectively a parse-and-union helper to avoid dropping slots
+// when upserting rows that might already contain worn data.
+const mergeWorn = (existing?: string[], incoming?: string[]): string[] | undefined => {
+  const current = normalizeWorn(existing) ?? [];
+  const next = normalizeWorn(incoming) ?? [];
+  const combined = Array.from(new Set([...current, ...next]));
+  return combined.length ? combined : undefined;
+};
 
 
 // Merge Ranges for weight, ac, etc upon new submission
@@ -247,14 +277,36 @@ const mergeItems = (existing: Item, incoming: Item): Item => {
     isArtifact: Boolean(existing.isArtifact || incoming.isArtifact),
     submittedBy: incoming.submittedBy ?? existing.submittedBy,
     droppedBy: incoming.droppedBy ?? existing.droppedBy,
-    worn: incoming.worn ?? existing.worn,
+    worn: mergeWorn(existing.worn, incoming.worn),
   };
 };
+
+
+// Parse database row into Item object
+const decodeItem = (row: StoredItemRow): Item => ({
+  id: row.id,
+  name: row.name,
+  keywords: row.keywords,
+  type: row.type,
+  flags: row.flags ? (JSON.parse(row.flags) as string[]) : [],
+  stats: row.stats ? (JSON.parse(row.stats) as Item['stats']) : { affects: [], weight: 0 },
+  submittedBy: row.submittedBy ?? undefined,
+  droppedBy: row.droppedBy ?? undefined,
+  worn: normalizeWorn(row.worn),
+  ego: row.ego ?? undefined,
+  isArtifact: row.isArtifact === 1,
+  raw: row.raw ? (JSON.parse(row.raw) as string[]) : undefined,
+  flaggedForReview: row.flaggedForReview === 1,
+  duplicateOf: row.duplicateOf ?? undefined,
+  submissionCount: 0,
+  contributors: [],
+});
 
 
 // The unique identity key for submissions to prevent duplicates
 const submissionIdentity = (item: Item) =>
   `${item.name.toLowerCase().trim()}|${item.keywords.toLowerCase().trim()}|${item.type.toLowerCase().trim()}`;
+
 
 // Decode and encode submitter rows
 const decodeSubmitter = (row: SubmitterRow): { name: string; submissionCount: number; itemIds: Set<string>; lastSubmittedAt?: string } => ({
@@ -263,6 +315,35 @@ const decodeSubmitter = (row: SubmitterRow): { name: string; submissionCount: nu
   itemIds: new Set<string>((row.itemIds ? (JSON.parse(row.itemIds) as string[]) : []) ?? []),
   lastSubmittedAt: row.lastSubmittedAt ?? undefined,
 });
+
+
+// Prepare item for storage in the database
+const encodeItem = (item: Item, timestamp?: string) => {
+  const now = timestamp ?? new Date().toISOString();
+
+  return {
+    id: item.id,
+    name: item.name,
+    keywords: item.keywords,
+    type: item.type,
+    flags: JSON.stringify(item.flags ?? []),
+    stats: JSON.stringify(item.stats ?? { affects: [], weight: 0 }),
+    submittedBy: item.submittedBy ?? null,
+    droppedBy: item.droppedBy ?? null,
+    worn: (() => {
+      const worn = normalizeWorn(item.worn);
+      return worn && worn.length ? JSON.stringify(worn) : null;
+    })(),
+    ego: item.ego ?? null,
+    isArtifact: item.isArtifact ? 1 : 0,
+    raw: item.raw ? JSON.stringify(item.raw) : JSON.stringify([]),
+    flaggedForReview: item.flaggedForReview ? 1 : 0,
+    duplicateOf: item.duplicateOf ?? null,
+    createdAt: now,
+    updatedAt: now,
+  };
+};
+
 
 const encodeSubmitter = (id: string, data: { name: string; submissionCount: number; itemIds: Set<string>; lastSubmittedAt?: string }) => ({
   id,
@@ -292,41 +373,10 @@ const primeRanges = (item: Item): Item => ({
 });
 
 
-// Prepare item for storage in the database
-const encodeItem = (item: Item, timestamp?: string) => {
-  const now = timestamp ?? new Date().toISOString();
-
-  return {
-    id: item.id,
-    name: item.name,
-    keywords: item.keywords,
-    type: item.type,
-    flags: JSON.stringify(item.flags ?? []),
-    stats: JSON.stringify(item.stats ?? { affects: [], weight: 0 }),
-    submittedBy: item.submittedBy ?? null,
-    droppedBy: item.droppedBy ?? null,
-    worn: item.worn ?? null,
-    ego: item.ego ?? null,
-    isArtifact: item.isArtifact ? 1 : 0,
-    raw: item.raw ? JSON.stringify(item.raw) : JSON.stringify([]),
-    flaggedForReview: item.flaggedForReview ? 1 : 0,
-    duplicateOf: item.duplicateOf ?? null,
-    createdAt: now,
-    updatedAt: now,
-  };
-};
 
 
 
-export type ItemSearchParams = {
-  q?: string;
-  type?: string;
-  submittedBy?: string;
-  flagged?: boolean;
-  id?: string;
-  limit?: number;
-  offset?: number;
-};
+
 
 // Sanitize limit to be within reasonable bounds
 const sanitizeLimit = (value?: number) => {
@@ -335,6 +385,7 @@ const sanitizeLimit = (value?: number) => {
 };
 
 
+// Search items with optional filters
 export const searchItems = async (params: ItemSearchParams = {}): Promise<Item[]> => {
   const db = await getDatabase();
   await ensureSchema(db);
@@ -415,6 +466,8 @@ export const searchItems = async (params: ItemSearchParams = {}): Promise<Item[]
   return items;
 };
 
+
+// Fetch all items (for app initialization, caching, etc)
 export const fetchItems = async (): Promise<Item[]> => searchItems();
 
 
@@ -560,12 +613,15 @@ export const upsertItems = async (items: Item[]) => {
   await db.batch([...statements, ...submissionPrep, ...submitterStatements]);
 };
 
+
+// Delete all items from the database
 export const deleteAllItems = async () => {
   const db = await getDatabase();
   await ensureSchema(db);
   await db.prepare('DELETE FROM items;').run();
 };
 
+// Delete a single item by ID
 export const deleteItem = async (id: string) => {
   if (!id) return;
   const db = await getDatabase();
@@ -573,6 +629,7 @@ export const deleteItem = async (id: string) => {
   await db.prepare('DELETE FROM items WHERE id = ?1;').bind(id).run();
 };
 
+// Add a suggestion for an item aka, an edit proposal
 export const addSuggestion = async (suggestion: Suggestion) => {
   const db = await getDatabase();
   await ensureSchema(db);

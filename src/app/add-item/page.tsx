@@ -12,7 +12,7 @@ type DuplicateCheckState = {
   newItems: Item[];
 };
 
-type ItemOverrides = Record<string, { droppedBy?: string; worn?: string }>;
+type ItemOverrides = Record<string, { droppedBy?: string; worn?: string[] }>;
 
 export default function AddItemPage() {
   const { items, refresh } = useAppData();
@@ -45,17 +45,42 @@ export default function AddItemPage() {
       normalizeString(a.ego) === normalizeString(b.ego) &&
       Boolean(a.isArtifact) === Boolean(b.isArtifact) &&
       JSON.stringify(normalizeArray(a.flags)) === JSON.stringify(normalizeArray(b.flags)) &&
+      JSON.stringify(normalizeArray(a.worn)) === JSON.stringify(normalizeArray(b.worn)) &&
       JSON.stringify(a.stats ?? {}) === JSON.stringify(b.stats ?? {}) &&
       JSON.stringify(normalizeArray(a.raw)) === JSON.stringify(normalizeArray(b.raw))
     );
   };
 
-  const handleOverrideChange = (id: string, overrides: { droppedBy?: string; worn?: string }) => {
+  const handleOverrideChange = (id: string, overrides: { droppedBy?: string; worn?: string[] }) => {
     setItemOverrides((prev) => ({
       ...prev,
       [id]: { ...(prev[id] ?? {}), ...overrides },
     }));
   };
+
+  const buildPayloadItems = useCallback(
+    (submitter?: string) =>
+      previewItems.map((item) => {
+        const override = itemOverrides[item.id] ?? {};
+        const mergedWorn = (() => {
+          const base = Array.isArray(item.worn) ? item.worn : [];
+          const over = Array.isArray(override.worn)
+            ? override.worn
+            : typeof override.worn === 'string'
+              ? [override.worn]
+              : [];
+          const combined = Array.from(new Set([...base, ...over].map((s) => s.trim().toLowerCase()).filter(Boolean)));
+          return combined.length ? combined : undefined;
+        })();
+        return {
+          ...item,
+          submittedBy: submitter || item.submittedBy,
+          droppedBy: override.droppedBy?.trim() ?? item.droppedBy,
+          worn: mergedWorn,
+        };
+      }),
+    [itemOverrides, previewItems],
+  );
 
   const handleImport = useCallback(async () => {
     if (!rawInput.trim()) return;
@@ -65,9 +90,10 @@ export default function AddItemPage() {
 
     try {
       const trimmedUserName = userName.trim();
-      const payload: { raw: string; submittedBy?: string; overrides?: ItemOverrides } = {
-        raw: rawInput,
-        overrides: itemOverrides,
+      const mergedItems = buildPayloadItems(trimmedUserName);
+
+      const payload: { items: typeof mergedItems; submittedBy?: string } = {
+        items: mergedItems,
       };
       if (trimmedUserName) payload.submittedBy = trimmedUserName;
 
@@ -90,7 +116,7 @@ export default function AddItemPage() {
     } finally {
       setIsProcessing(false);
     }
-  }, [rawInput, userName, itemOverrides, refresh]);
+  }, [rawInput, userName, buildPayloadItems, refresh]);
 
   const handleCheckDuplicates = () => {
     const duplicates: Item[] = [];
@@ -134,10 +160,9 @@ export default function AddItemPage() {
 
     try {
       const trimmedUserName = userName.trim();
-      const payload: { raw: string; submittedBy?: string; overrides?: ItemOverrides } = {
-        raw: rawInput,
-        overrides: itemOverrides,
-      };
+      const mergedItems = buildPayloadItems(trimmedUserName);
+
+      const payload: { items: typeof mergedItems; submittedBy?: string } = { items: mergedItems };
       if (trimmedUserName) payload.submittedBy = trimmedUserName;
 
       const response = await fetch('/api/items', {
