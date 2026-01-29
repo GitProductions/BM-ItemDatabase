@@ -3,8 +3,9 @@ import { Item } from '@/types/items';
 
 export const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET,POST,DELETE,OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
+  'Access-Control-Allow-Methods': 'GET,POST,DELETE,OPTIONS,PATCH',
+  // Allow Authorization so admin token can be sent from the client when editing directly
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
 
 export const withCors = (response: NextResponse) => {

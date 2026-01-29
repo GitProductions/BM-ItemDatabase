@@ -82,7 +82,7 @@ export const ItemDB: React.FC<ItemDBProps> = ({ items }) => {
   }, [items, search, filterType]);
 
   return (
-    <div className="space-y-6">
+    <div className="">
       <div className="bg-zinc-900 p-4 rounded-xl border border-zinc-800 shadow-sm flex flex-col md:flex-row gap-4">
        
         {/* Main Search  */}
@@ -119,7 +119,7 @@ export const ItemDB: React.FC<ItemDBProps> = ({ items }) => {
 
       {/* Items Grid */}
       {filteredItems.length > 0 ? (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4 pt-4">
         {filteredItems.map((item) => (
           <div key={item.id} className="relative">
             <ItemCard item={{ ...item }} />

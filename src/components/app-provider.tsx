@@ -8,6 +8,8 @@ const AppDataContext = createContext<{
   loading: boolean;
   error: string | null;
   refresh: () => Promise<void>;
+  userName: string;
+  handleSetUserName: (name: string) => void;
 } | null>(null);
 
 export function AppDataProvider({ children }: { children: React.ReactNode }) {
@@ -16,10 +18,10 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const [userName, setUserName] = useState<string>('');
 
-  const handleSetUserName = (name: string) => {
+  const handleSetUserName = useCallback((name: string) => {
     setUserName(name);
     localStorage.setItem('bm-database-userName', name);
-  };
+  }, []);
 
   useEffect(() => {
     const storedUserName = localStorage.getItem('bm-database-userName') || '';

@@ -160,6 +160,40 @@ export async function POST(request: NextRequest) {
   return withCors(NextResponse.json({ item: saved ?? normalized.item }, { status: 201 }));
 }
 
+export async function PATCH(request: NextRequest) {
+  // Only admins can directly overwrite items via the PATCH endpoint
+  if (!isAuthorized(request)) {
+    return withCors(NextResponse.json({ message: 'Unauthorized' }, { status: 401 }));
+  }
+
+  let payload: { items?: ItemInput[]; item?: ItemInput } & ItemInput;
+
+  try {
+    payload = (await request.json()) as typeof payload;
+  } catch {
+    return withCors(NextResponse.json({ message: 'Invalid request payload' }, { status: 400 }));
+  }
+
+  const incomingItems = payload.items ?? (payload.item ? [payload.item] : [payload]);
+  const normalizedItems: Item[] = [];
+
+  for (const incoming of incomingItems) {
+    const normalized = normalizeItemInput(incoming);
+    if (!normalized.ok) {
+      return withCors(NextResponse.json({ message: normalized.message }, { status: 400 }));
+    }
+    normalizedItems.push(normalized.item);
+  }
+
+  await upsertItems(normalizedItems);
+  clearCache();
+
+  const saved = normalizedItems.length === 1 ? await searchItems({ id: normalizedItems[0].id }) : null;
+  const body = normalizedItems.length === 1 ? { item: saved?.[0] ?? normalizedItems[0] } : { updated: normalizedItems.length };
+
+  return withCors(NextResponse.json(body, { status: 200 }));
+}
+
 export async function DELETE(request: NextRequest) {
   // Require admin token to clear the database
   // Note: returning 401 rather than 403 to avoid leaking existence of the endpoint

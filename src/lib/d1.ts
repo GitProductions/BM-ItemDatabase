@@ -568,7 +568,7 @@ export const upsertItems = async (items: Item[]) => {
       submitter.lastSubmittedAt = now;
 
       // Use merged identity fetch to get current id
-      const existing = await fetchExistingByIdentity(item);
+      const existing = await fetchExistingByIdentity(item) ?? (item.id ? await fetchExistingById(item.id) : undefined);
       const mergedId = existing?.id ?? item.id;
       submitter.itemIds.add(mergedId);
 
