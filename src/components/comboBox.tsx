@@ -50,7 +50,7 @@ const ComboBox: React.FC<ComboBoxProps> = ({
     () =>
       options
         .filter(Boolean)
-        .map((opt) => opt.trim())
+        .map((opt) => String(opt).trim())
         .filter((opt, idx, arr) => arr.indexOf(opt) === idx)
         .filter((option) => option.toLowerCase().includes(searchTerm.toLowerCase())),
     [options, searchTerm],
@@ -82,9 +82,9 @@ const ComboBox: React.FC<ComboBoxProps> = ({
         tabIndex={0}
         onClick={handleToggle}
         onKeyDown={(e) => e.key === 'Enter' && handleToggle()}
-        className={`min-h-[42px] px-3 py-2 border rounded-lg cursor-pointer transition-colors flex flex-wrap gap-2 items-center ${
+        className={`min-h-[25px] px-3 py-2 border rounded-md cursor-pointer transition-colors flex flex-wrap gap-2 items-center ${
           disabled ? 'opacity-60 cursor-not-allowed' : 'hover:border-orange-500'
-        } bg-zinc-950 border-zinc-700 text-sm text-zinc-100`}
+        } bg-zinc-900 border-zinc-700 text-sm text-zinc-100`}
       >
         {value.length === 0 ? (
           <span className="text-zinc-500">{placeholder}</span>
