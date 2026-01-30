@@ -1,5 +1,5 @@
 import React from 'react';
-import { RefreshCcw, Shield, Weight, Zap, Save, FolderOpen, ChevronDown } from 'lucide-react';
+import { RefreshCcw, Shield, Weight, Zap } from 'lucide-react';
 import Button from '../../ui/Button';
 import ProfileManager from './profile-manager';
 

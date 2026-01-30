@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Search, RefreshCcw, X } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import { Item } from '@/types/items';
 import { SLOT_CONFIG } from '@/lib/slots';
 import Input from '../../ui/Input';
@@ -14,7 +14,6 @@ interface ItemSelectionPanelProps {
   candidateItems: Item[];
   selected: Selected;
   onSelect: (item: Item | null) => void;
-  onReset: () => void;
 }
 
 const ItemSelectionPanel: React.FC<ItemSelectionPanelProps> = ({
@@ -24,7 +23,6 @@ const ItemSelectionPanel: React.FC<ItemSelectionPanelProps> = ({
   candidateItems,
   selected,
   onSelect,
-  onReset,
 }) => {
   const [query, setQuery] = useState('');
 

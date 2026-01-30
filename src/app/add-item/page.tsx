@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { ImportPanel } from '@/components/import-panel';
 import { Item } from '@/types/items';
 import { parseIdentifyDump, findDuplicate } from '@/lib/parse-identify-dump';

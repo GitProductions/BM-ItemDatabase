@@ -183,7 +183,7 @@ export const GearPlanner: React.FC<GearPlannerProps> = ({ items }) => {
   const initial = (() => {
     const legacyDefault = readLegacyDefault();
     const storedSets = readStoredSets();
-    const sets =
+    const sets: Record<string, Record<SlotKey, string | null>> =
       storedSets && Object.keys(storedSets).length
         ? { Default: legacyDefault, ...storedSets }
         : { Default: legacyDefault };
@@ -559,7 +559,6 @@ export const GearPlanner: React.FC<GearPlannerProps> = ({ items }) => {
             candidateItems={candidateItems}
             selected={selected}
             onSelect={handleChange(activeSlot)}
-            onReset={reset}
           />
         </div>
       </div>
