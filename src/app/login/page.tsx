@@ -75,6 +75,7 @@ export default function LoginPage() {
             Use your account to auto-fill submissions, manage items, and get API tokens.
           </p>
         </div>
+
         <Button
           type="button"
           className="text-xs px-3 py-2"
@@ -85,6 +86,20 @@ export default function LoginPage() {
         >
           {mode === 'login' ? 'Need an account?' : 'Already registered?'}
         </Button>
+      </div>
+
+
+      <div className="mb-4">
+        <Button
+          type="button"
+          variant="secondary"
+          fullWidth
+          onClick={() => signIn('discord', { callbackUrl: '/' })}
+          className="justify-center bg-[#5865F2] hover:bg-[#4854c7] text-white"
+        >
+          Continue with Discord
+        </Button>
+        <div className="text-center text-xs text-zinc-500 mt-2">We never see your Discord password.</div>
       </div>
 
       <form className="space-y-4" onSubmit={handleSubmit}>

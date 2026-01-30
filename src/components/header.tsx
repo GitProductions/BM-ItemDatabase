@@ -67,15 +67,17 @@ function Header({ items, loading = false }: { items: Item[]; loading?: boolean }
       <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded text-white">
+
+            <Link href="/" className="flex items-center gap-2">
             <Image
               priority
-              sizes="24px"
-              className="shadow-lg shadow-orange-900/50"
+              sizes="30px"
               src="/bm-logo.webp"
               alt="Logo"
-              width={24}
-              height={24}
+              width={30}
+              height={30}
             />
+            </Link>
           </div>
           <div>
             <h1 className="font-bold text-xl tracking-tight text-white">BlackMUD Item DB</h1>

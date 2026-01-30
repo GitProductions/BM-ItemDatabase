@@ -88,7 +88,7 @@ const hashToken = (token: string) => createHash('sha256').update(token).digest('
 
 const generateId = () => (crypto.randomUUID ? crypto.randomUUID() : randomBytes(16).toString('hex'));
 
-export const createUser = async (params: { email: string; name: string; password: string }) => {
+export const createUser = async (params: { email: string; name: string; password: string; id?: string }) => {
   const db = await getDatabase();
   await ensureSchema(db);
 
@@ -102,7 +102,7 @@ export const createUser = async (params: { email: string; name: string; password
 
   const now = new Date().toISOString();
   const passwordHash = await bcrypt.hash(params.password, 12);
-  const id = generateId();
+  const id = params.id ?? generateId();
 
   await db
     .prepare(
@@ -115,6 +115,38 @@ export const createUser = async (params: { email: string; name: string; password
     .run();
 
   return { id, email, name, passwordHash, createdAt: now, updatedAt: now } satisfies UserRecord;
+};
+
+export const ensureOAuthUser = async (provider: string, profile: { id: string; email?: string | null; name?: string | null }) => {
+  const db = await getDatabase();
+  await ensureSchema(db);
+
+  const userId = `${provider}:${profile.id}`;
+  const existing = await findUserById(userId);
+  if (existing) return existing;
+
+  const email = (profile.email ?? `${userId}@${provider}.local`).toLowerCase();
+  const name = profile.name?.trim() || `${provider} user`;
+  const randomPassword = randomBytes(24).toString('hex');
+
+  // Avoid duplicate email constraint by reusing existing row if same email already registered
+  const byEmail = await findUserByEmail(email);
+  if (byEmail) return byEmail;
+
+  const now = new Date().toISOString();
+  const passwordHash = await bcrypt.hash(randomPassword, 12);
+
+  await db
+    .prepare(
+      `
+      INSERT INTO users (id, email, name, passwordHash, createdAt, updatedAt)
+      VALUES (?1, ?2, ?3, ?4, ?5, ?6);
+    `,
+    )
+    .bind(userId, email, name, passwordHash, now, now)
+    .run();
+
+  return { id: userId, email, name, passwordHash, createdAt: now, updatedAt: now } satisfies UserRecord;
 };
 
 export const findUserByEmail = async (email: string): Promise<UserRecord | null> => {
@@ -134,6 +166,16 @@ export const findUserById = async (id: string): Promise<UserRecord | null> => {
 };
 
 export const verifyPassword = async (password: string, passwordHash: string) => bcrypt.compare(password, passwordHash);
+
+export const updateUserName = async (userId: string, name: string) => {
+  const db = await getDatabase();
+  await ensureSchema(db);
+  const trimmed = name.trim();
+  if (!trimmed) throw new Error('Name is required');
+  const now = new Date().toISOString();
+  await db.prepare('UPDATE users SET name = ?1, updatedAt = ?2 WHERE id = ?3;').bind(trimmed, now, userId).run();
+  return trimmed;
+};
 
 export const createApiToken = async (params: { userId: string; label?: string }) => {
   const db = await getDatabase();

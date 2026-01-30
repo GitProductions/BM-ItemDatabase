@@ -5,21 +5,33 @@ import { useSession, signIn, signOut } from 'next-auth/react';
 import Button from '@/components/ui/Button';
 import { Item } from '@/types/items';
 import EditModal from '@/components/modals/EditModal';
+import UserIcon from '@/components/ui/UserIcon';
 
 type Token = { id: string; label: string | null; createdAt: string; lastUsedAt: string | null };
 
 export default function AccountPage() {
-  const { data: session, status } = useSession();
-  const [tokens, setTokens] = useState<Token[]>([]);
+  const { data: session, status, update } = useSession();
   const [items, setItems] = useState<Item[]>([]);
-  const [tokenLabel, setTokenLabel] = useState('');
-  const [newToken, setNewToken] = useState<string | null>(null);
+  const [displayName, setDisplayName] = useState('');
+
+  // Loading and error states
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // User Tokens
+  const [tokens, setTokens] = useState<Token[]>([]);
+  const [tokenLabel, setTokenLabel] = useState('');
+  const [newToken, setNewToken] = useState<string | null>(null);
+
+  // Edit Item Modal state
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
   const [submitFeedback, setSubmitFeedback] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  // Name Change state
+  const [nameSaving, setNameSaving] = useState(false);
+  const [nameStatus, setNameStatus] = useState<string | null>(null);
 
   // Load user's API tokens
   const loadTokens = async () => {
@@ -40,9 +52,10 @@ export default function AccountPage() {
   // Load User data on session change
   useEffect(() => {
     if (status !== 'authenticated') return;
+    setDisplayName(session?.user?.name ?? '');
     setError(null);
     Promise.all([loadTokens(), loadItems()]).catch((err) => setError(err instanceof Error ? err.message : 'Failed to load account data'));
-  }, [status]);
+  }, [status, session?.user?.name]);
 
   // create new auth token for user
   const handleCreateToken = async () => {
@@ -83,6 +96,35 @@ export default function AccountPage() {
       await loadTokens();
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Handle saving display name change
+  const handleNameSave = async () => {
+    if (!displayName.trim()) {
+      setNameStatus('Name cannot be empty.');
+      return;
+    }
+    setNameSaving(true);
+    setNameStatus(null);
+    try {
+      const res = await fetch('/api/user/profile', {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ name: displayName }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.message ?? 'Unable to update name');
+      }
+      setNameStatus('Display name updated.');
+      if (update) {
+        await update({ name: displayName });
+      }
+    } catch (err) {
+      setNameStatus(err instanceof Error ? err.message : 'Unable to update name');
+    } finally {
+      setNameSaving(false);
     }
   };
 
@@ -141,16 +183,55 @@ export default function AccountPage() {
 
   return (
     <div className="space-y-8">
+
       <div className="flex items-center justify-between bg-zinc-900 border border-zinc-800 rounded-xl p-5">
         <div>
           <p className="text-sm text-zinc-400">Signed in as</p>
-          <p className="text-xl font-semibold text-white">{session.user?.name}</p>
-          <p className="text-sm text-zinc-500">{session.user?.email}</p>
+          <div className="mt-1 mb-3 grid grid-cols-[auto,1fr] items-center gap-4">
+            <UserIcon session={session} />
+            {/* <div className="mt-3">
+              {session.user?.image ? (
+                <img
+                  src={session.user.image}
+                  alt="User Avatar"
+                  className="w-16 h-16 rounded-full border border-zinc-700"
+                />
+              ) : (
+                <div className="w-16 h-16 rounded-full border border-zinc-700 bg-zinc-800 flex items-center justify-center text-zinc-500">
+                  No Image
+                </div>
+              )}
+            </div> */}
+            <div>
+              <p className="text-xl font-semibold text-white">{session.user?.name}</p>
+              <p className="text-sm text-zinc-500">{session.user?.email}</p>
+            </div>
+          </div>
         </div>
         <Button onClick={() => signOut({ callbackUrl: '/' })} className="bg-zinc-800 hover:bg-zinc-700">
           Sign out
         </Button>
       </div>
+
+
+      <section className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 space-y-3">
+        <h2 className="text-lg font-semibold text-white">Display name</h2>
+        <p className="text-sm text-zinc-400">
+          Shown on your submissions. Set this to your in-game name if you like.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <input
+            className="flex-1 rounded-md bg-zinc-950 border border-zinc-800 px-3 py-2 text-sm"
+            value={displayName}
+            onChange={(e) => setDisplayName(e.target.value)}
+            disabled={nameSaving}
+          />
+          <Button onClick={handleNameSave} disabled={nameSaving} variant="primary">
+            {nameSaving ? 'Saving…' : 'Save'}
+          </Button>
+        </div>
+        {nameStatus ? <p className="text-xs text-amber-300">{nameStatus}</p> : null}
+      </section>
 
       {error ? <div className="text-sm text-rose-400 bg-rose-900/20 border border-rose-800 rounded-md px-3 py-2">{error}</div> : null}
 

@@ -1,12 +1,17 @@
 import type { NextAuthOptions, User } from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
+import Discord from 'next-auth/providers/discord';
 import { getServerSession } from 'next-auth';
-import { findUserByEmail, verifyPassword } from './auth-store';
+import { ensureOAuthUser, findUserByEmail, verifyPassword } from './auth-store';
 
 export const authOptions: NextAuthOptions = {
   session: { strategy: 'jwt' },
   pages: { signIn: '/login' },
   providers: [
+    Discord({
+      clientId: process.env.DISCORD_CLIENT_ID ?? '',
+      clientSecret: process.env.DISCORD_CLIENT_SECRET ?? '',
+    }),
     Credentials({
       name: 'Email and Password',
       credentials: {
@@ -27,6 +32,24 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
+    async signIn({ account, profile }) {
+      if (account?.provider === 'discord' && profile) {
+        try {
+          await ensureOAuthUser('discord', {
+            id: String(profile.id ?? account.providerAccountId),
+            email: (profile as { email?: string }).email,
+            name: (profile as { global_name?: string; username?: string; name?: string }).global_name
+              ?? (profile as { username?: string }).username
+              ?? (profile as { name?: string }).name
+              ?? undefined,
+          });
+        } catch (error) {
+          console.error('Failed to upsert discord user', error);
+          return false;
+        }
+      }
+      return true;
+    },
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
