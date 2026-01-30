@@ -65,13 +65,13 @@ const ItemSelectionPanel: React.FC<ItemSelectionPanelProps> = ({
         </div>
         <div className="flex items-center gap-2">
           {activeSelected ? (
-            <Button size="sm" variant="secondary" onClick={() => onSelect(null)} className="text-xs">
+            <Button size="sm" variant="secondary" onClick={() => onSelect(null)} className="text-xs rounded-md gap-1.5">
               <X size={14} /> Clear
             </Button>
           ) : null}
-          <Button size="sm" variant="ghost" onClick={onReset} className="text-xs text-orange-300 hover:text-orange-100">
+          {/* <Button size="sm" variant="ghost" onClick={onReset} className="text-xs text-orange-300 hover:text-orange-100 rounded-md gap-1.5">
             <RefreshCcw size={14} /> Reset
-          </Button>
+          </Button> */}
         </div>
       </div>
 

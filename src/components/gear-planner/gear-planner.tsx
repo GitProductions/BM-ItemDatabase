@@ -189,7 +189,17 @@ export const GearPlanner: React.FC<GearPlannerProps> = ({ items }) => {
   const handleChange = (slot: SlotKey) => (item: Item | null) =>
     setSlotIds((prev) => ({ ...prev, [slot]: item?.id ?? null }));
 
-  const reset = () => setSlotIds(defaultIdState);
+  // const reset = () => setSlotIds(defaultIdState);
+
+  const reset = () => {
+    // Todo: make a custom confirmation dialog that showcases the half-orc... 
+    // as seen in other places where we use no-results.png and randomOrcPhrase 
+    if (confirm('Are you sure you want to reset all equipment selections?')) {
+      setSlotIds(defaultIdState);
+    }
+  };
+  
+
 
   const handleSlotClick = (slot: SlotKey) => {
     setActiveSlot(slot);
@@ -197,6 +207,7 @@ export const GearPlanner: React.FC<GearPlannerProps> = ({ items }) => {
 
   return (
     <section className="space-y-4">
+      
       <div className="flex items-center gap-3">
         <Sparkles className="text-orange-400" />
         <div>
@@ -207,6 +218,7 @@ export const GearPlanner: React.FC<GearPlannerProps> = ({ items }) => {
         </div>
       </div>
 
+      {/* Summary Panel */}
       <Summary totals={totals} reset={reset} />
 
       <div className="rounded-2xl border border-zinc-800 bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950 shadow-2xl p-4">
@@ -359,6 +371,7 @@ export const GearPlanner: React.FC<GearPlannerProps> = ({ items }) => {
                   variant="compact"
                 />
               </div>
+
             </div>
           </div>
 

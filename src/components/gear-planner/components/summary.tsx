@@ -1,5 +1,7 @@
 import React from 'react';
 import { RefreshCcw, Shield, Weight, Zap, Save, FolderOpen, ChevronDown } from 'lucide-react';
+import Button from '../../ui/Button';
+import ProfileManager from './profile-manager';
 
 interface SummaryProps {
   totals: {
@@ -17,64 +19,31 @@ interface SummaryProps {
   onNewSet?: () => void;
 }
 
-function Summary({
-  totals,
-  reset,
-  currentSetName = "Default",
-  gearSets = [],
-  onLoadSet,
-  onSaveSet,
-  onNewSet,
-}: SummaryProps) {
+function Summary({ totals, reset, currentSetName = "Default", gearSets = [], onLoadSet, onSaveSet, onNewSet }: SummaryProps) {
   return (
     <div className="rounded-xl border border-zinc-800 bg-zinc-900/80 p-3 shadow-inner">
 
       {/* Header: Set selector + Reset button & Profile Selection */}
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 mb-3 pb-2.5 border-b border-zinc-800/60">
-        <div className="flex items-center gap-3">
-          <h3 className="text-sm font-semibold text-zinc-100">Gear Summary</h3>
-          <div className="h-5 w-px bg-zinc-700" aria-hidden="true" />
 
-          <div className="flex items-center gap-2 text-xs">
-            <FolderOpen size={13} className="text-zinc-400" />
-            <span className="text-zinc-400 font-medium">Set:</span>
+        {/* Equipment Profile Manager */}
+        <ProfileManager
+          currentSetName={currentSetName}
+          gearSets={gearSets}
+          onLoadSet={onLoadSet}
+          onSaveSet={onSaveSet}
+          onNewSet={onNewSet}
+        />
 
-            <div className="relative min-w-[100px]">
-              <select
-                value={currentSetName}
-                onChange={(e) => onLoadSet?.(e.target.value)}
-                className="w-full bg-zinc-950 border border-zinc-700 rounded-md px-2 py-1 text-xs text-white appearance-none pr-7 focus:outline-none focus:ring-1 focus:ring-zinc-500"
-              >
-                {gearSets.map(name => (
-                  <option key={name} value={name}>{name}</option>
-                ))}
-                {!gearSets.length && <option value="Default">Default</option>}
-              </select>
-              <ChevronDown size={12} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none" />
-            </div>
 
-            <button
-              onClick={onSaveSet}
-              className="p-1.5 rounded-md bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition-colors"
-              title="Save set"
-            >
-              <Save size={13} />
-            </button>
-            <button
-              onClick={onNewSet}
-              className="px-2.5 py-1 rounded-md bg-zinc-800 hover:bg-zinc-700 text-xs text-zinc-200 transition-colors"
-            >
-              New
-            </button>
-          </div>
-        </div>
-
-        <button
+        <Button
+          variant="ghost"
           onClick={reset}
-          className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-zinc-200 px-2.5 py-1.5 rounded-md hover:bg-zinc-800/80 transition-colors"
+          className="flex items-center gap-1.5 text-xs rounded-md px-2.5 py-1.5"
         >
           <RefreshCcw size={13} /> Reset
-        </button>
+        </Button>
+
       </div>
 
 
