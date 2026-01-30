@@ -10,7 +10,7 @@ type SearchItemProps = {
   containerRef: React.RefObject<HTMLDivElement | null>;
 };
 
-const SearchItem: React.FC<SearchItemProps> = ({ query, setQuery, filtered, onChange, containerRef }) => {
+const SearchBox: React.FC<SearchItemProps> = ({ query, setQuery, filtered, onChange, containerRef }) => {
   const [open, setOpen] = useState(false);
 
   // Close dropdown when clicking outside
@@ -96,4 +96,4 @@ const SearchItem: React.FC<SearchItemProps> = ({ query, setQuery, filtered, onCh
   );
 };
 
-export default SearchItem;
+export default SearchBox;

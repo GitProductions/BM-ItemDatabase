@@ -1,9 +1,9 @@
 import React, { useMemo, useState, useRef } from 'react';
-import { Item } from '@/types/items';
 import { Sword, Shield, Weight } from 'lucide-react';
-import SearchItem from './search-item';
-import { normalize } from './util';
+import { Item } from '@/types/items';
 import { SlotConfig } from './types/types';
+import SearchBox from './search-item';
+import { normalize } from './util';
 import Button from '../ui/Button';
 
 type ItemSelectProps = {
@@ -64,7 +64,7 @@ const ItemSelect: React.FC<ItemSelectProps> = ({ slot, items, value, onChange })
         ) : null}
       </div>
 
-      <SearchItem
+      <SearchBox
         query={query}
         setQuery={setQuery}
         filtered={filtered}

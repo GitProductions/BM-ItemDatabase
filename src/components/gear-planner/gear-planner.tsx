@@ -9,29 +9,7 @@ import { computeTotals } from './util';
 import { Selected, SlotKey, GearPlannerProps } from './types/types';
 import { SLOT_CONFIG, matchesSlot, slotMatchRank } from '@/lib/slots';
 
-// const defaultGearState: Selected = {
-//   head: null,
-//   neck1: null,
-//   neck2: null,
-//   body: null,
-//   'about-legs': null,
-//   legs: null,
-//   feet: null,
-//   hands: null,
-//   arms: null,
-//   waist: null,
-//   finger1: null,
-//   finger2: null,
-//   wrist1: null,
-//   wrist2: null,
-//   wield: null,
-//   offhand: null,
-//   held: null,
-//   'two-handed': null,
-//   back: null,
-//   light: null,
-//   consumable: null,
-// };
+
 const defaultGearState: Selected = SLOT_CONFIG.reduce((acc, slot) => { {
   acc[slot.key] = null;
   return acc;
@@ -42,30 +20,6 @@ const defaultIdState: Record<SlotKey, string | null> = SLOT_CONFIG.reduce((acc, 
   return acc;
 } }, {} as Record<SlotKey, string | null>);
 
-
-// const defaultIdState: Record<SlotKey, string | null> = {
-//   head: null,
-//   neck1: null,
-//   neck2: null,
-//   body: null,
-//   'about-legs': null,
-//   legs: null,
-//   feet: null,
-//   hands: null,
-//   arms: null,
-//   waist: null,
-//   wrist1: null,
-//   wrist2: null,
-//   finger1: null,
-//   finger2: null,
-//   wield: null,
-//   offhand: null,
-//   held: null,
-//   'two-handed': null,
-//   back: null,
-//   light: null,
-//   consumable: null,
-// };
 
 const STORAGE_KEY = 'bm-Equipment';
 
@@ -140,7 +94,7 @@ export const GearPlanner: React.FC<GearPlannerProps> = ({ items }) => {
 
       <Summary totals={totals} reset={reset} />
 
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-2">
         {SLOT_CONFIG.map((slot) => (
           <ItemSelect
             key={slot.key}
