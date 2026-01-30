@@ -4,6 +4,7 @@ import Input from './ui/Input';
 import Button from './ui/Button';
 import Checkbox from './ui/CheckBox';
 import { Item, ItemAffect } from '@/types/items';
+import {SLOT_CONFIG } from '@/lib/slots';
 
 type ItemPreviewCardProps = {
   item: Item;
@@ -182,7 +183,7 @@ function ItemPreviewCard({ item, editable = false, onChange }: ItemPreviewCardPr
         <label className="text-[11px] uppercase text-zinc-400 space-y-1">
           <span>Worn slots</span>
           <ComboBox
-            options={['head', 'neck', 'body', 'arms', 'hands', 'finger', 'waist', 'legs', 'feet', 'wrist']}
+            options={SLOT_CONFIG.map(slot => slot.key)}
             value={item.worn || []}
             onChange={(selected) => updateItem({ worn: selected.length ? selected : undefined })}
             placeholder="Choose worn slots"

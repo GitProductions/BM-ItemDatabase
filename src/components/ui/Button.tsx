@@ -5,7 +5,7 @@ const VARIANT_STYLES = {
   secondary: 'bg-zinc-800 text-zinc-100 hover:bg-zinc-700 focus:ring-zinc-600',
   outline: 'border border-zinc-700 text-zinc-100 hover:border-orange-500 hover:text-orange-100 focus:ring-orange-500',
   ghost: 'text-zinc-200 hover:bg-zinc-800 focus:ring-zinc-700',
-  danger: 'bg-red-500 text-white hover:bg-red-700 focus:ring-red-500',
+  danger: 'bg-red-600 text-white hover:bg-red-500 focus:ring-red-500',
   link: 'text-orange-400 underline-offset-4 hover:underline focus:ring-orange-500',
   subtle: 'bg-zinc-900 text-zinc-100 border border-zinc-800 hover:border-orange-500/60 focus:ring-orange-500/50',
 } as const;
@@ -52,8 +52,11 @@ const Button = forwardRef<HTMLButtonElement, PolymorphicProps<'button'>>(
     ref,
   ) => {
     const Component = (as ?? 'button') as ElementType;
-    const base =
-      'inline-flex items-center justify-center whitespace-nowrap  font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-zinc-900 disabled:opacity-60 disabled:cursor-not-allowed';
+    const base =`
+      inline-flex items-center justify-center whitespace-nowrap  font-semibold transition-colors 
+      focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-zinc-900
+       disabled:opacity-60 disabled:cursor-not-allowed
+      `;
     const variantStyle = VARIANT_STYLES[variant] ?? VARIANT_STYLES.primary;
     const sizeStyle = SIZE_STYLES[size] ?? SIZE_STYLES.md;
     const widthStyle = fullWidth ? 'w-full' : '';

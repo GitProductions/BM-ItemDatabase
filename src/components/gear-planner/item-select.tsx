@@ -55,8 +55,9 @@ const ItemSelect: React.FC<ItemSelectProps> = ({ slot, items, value, onChange })
         {value ? (
           <Button
             size="sm"
+            variant="danger"
             onClick={() => onChange(null)}
-            className="text-[11px] text-rose-300 hover:text-rose-100 transition-colors"
+            className="text-[11px] text-black transition-colors"
           >
             Clear
           </Button>

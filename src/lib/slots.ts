@@ -7,6 +7,7 @@ export type SlotKey =
   | 'legs'
   | 'feet'
   | 'hands'
+  | 'arms'
   | 'waist'
   | 'finger1'
   | 'finger2'
@@ -64,6 +65,7 @@ export const SLOT_CONFIG: SlotConfig[] = [
   { key: 'legs', label: 'Legs', hint: 'greaves, leggings' },
   { key: 'feet', label: 'Feet', hint: 'boots, shoes' },
   { key: 'hands', label: 'Hands', hint: 'gloves, gauntlets' },
+  { key: 'arms', label: 'Arms', hint: 'sleeves' },
   { key: 'waist', label: 'Waist', hint: 'belts, sashes' },
   { key: 'finger1', label: 'Finger', hint: 'rings, bands' },
   { key: 'finger2', label: 'Finger', hint: 'rings, bands' },
@@ -93,6 +95,7 @@ const slotKeywords: Record<SlotKey, string[]> = {
   legs: ['greaves', 'leggings', 'pants'],
   feet: ['boots', 'shoes', 'slippers'],
   hands: ['gloves', 'gauntlets'],
+  arms: ['sleeves'],
   waist: ['belt', 'sash', 'cord'],
   finger1: ['ring', 'band'],
   finger2: ['ring', 'band'],

@@ -23,8 +23,8 @@ type ImportPanelProps = {
   previewItems: Item[];
   // userName: string;
   // onUserNameChange: (value: string) => void;
-  onOverrideChange: (id: string, overrides: { droppedBy?: string; worn?: string[] }) => void;
-  overrides: Record<string, { droppedBy?: string; worn?: string[] }>;
+  onOverrideChange: (id: string, overrides: { name?: string; droppedBy?: string; worn?: string[] }) => void;
+  overrides: Record<string, { name?: string; droppedBy?: string; worn?: string[] }>;
   duplicateCheck?: {
     hasDuplicates: boolean;
     duplicateItems: Item[];
@@ -48,6 +48,13 @@ export const ImportPanel: React.FC<ImportPanelProps> = ({
   duplicateCheck,
 }) => {
   const { userName, handleSetUserName } = useAppData();
+
+  const resolveName = (item: Item) => {
+    const override = overrides[item.id] ?? {};
+    return override.name?.trim() || (item.nameMissing ? '' : item.name);
+  };
+
+  const hasMissingNames = previewItems.some((item) => !resolveName(item));
 
   // If there are duplicates, show the duplicate review panel
   if (duplicateCheck && duplicateCheck.hasDuplicates) {
@@ -170,11 +177,14 @@ export const ImportPanel: React.FC<ImportPanelProps> = ({
           <div className="flex justify-between items-center">
             <Button
               onClick={onCheckDuplicates}
-              disabled={isProcessing || !rawInput.trim()}
+              disabled={isProcessing || !rawInput.trim() || hasMissingNames}
               className="px-6 py-2 rounded-lg bg-orange-600 hover:bg-orange-500 text-white font-bold transition-colors shadow-lg shadow-orange-900/50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               <Save size={18} /> Check & Import
             </Button>
+            {hasMissingNames ? (
+              <p className="text-[11px] text-amber-400">Add a name for every item before continuing.</p>
+            ) : null}
           </div>
         </div>
 
@@ -193,8 +203,25 @@ export const ImportPanel: React.FC<ImportPanelProps> = ({
                 const override = overrides[item.id] ?? {};
                 const guessedSlot = guessSlot(item);
                 const selectedWorn = override.worn ?? item.worn ?? (guessedSlot ? [guessedSlot] : []);
+                const resolvedName = resolveName(item);
+                const needsName = item.nameMissing && !resolvedName;
                 return (
                   <div key={item.id} className="border border-zinc-800 rounded-lg p-3 bg-zinc-950/60 flex flex-col gap-3">
+                    <label className="flex flex-col text-xs text-zinc-400">
+                      <span className="mb-1">
+                        Item name {needsName ? <span className="text-amber-400">(needed)</span> : null}
+                      </span>
+                      <Input
+                        type="text"
+                        value={resolvedName}
+                        onChange={(e) => onOverrideChange(item.id, { name: e.target.value })}
+                        placeholder={item.nameMissing ? 'Name not provided in dump' : 'Item name'}
+                      />
+                      {needsName ? (
+                        <span className="mt-1 text-[11px] text-amber-400">Dump started with "Object" so please supply a name.</span>
+                      ) : null}
+                    </label>
+
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-3">
                       <label className="flex flex-col text-xs text-zinc-400">
                         <span className="mb-1">Dropped by</span>
@@ -227,6 +254,7 @@ export const ImportPanel: React.FC<ImportPanelProps> = ({
                     <ItemCard
                       item={{
                         ...item,
+                        name: resolvedName || item.name,
                         submittedBy: userName,
                         droppedBy: override.droppedBy ?? item.droppedBy,
                         worn: override.worn ?? item.worn,

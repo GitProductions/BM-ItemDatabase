@@ -12,7 +12,7 @@ type DuplicateCheckState = {
   newItems: Item[];
 };
 
-type ItemOverrides = Record<string, { droppedBy?: string; worn?: string[] }>;
+type ItemOverrides = Record<string, { name?: string; droppedBy?: string; worn?: string[] }>;
 
 export default function AddItemPage() {
   const { items, refresh, userName } = useAppData();
@@ -45,7 +45,7 @@ export default function AddItemPage() {
     );
   };
 
-  const handleOverrideChange = (id: string, overrides: { droppedBy?: string; worn?: string[] }) => {
+  const handleOverrideChange = (id: string, overrides: { name?: string; droppedBy?: string; worn?: string[] }) => {
     setItemOverrides((prev) => ({
       ...prev,
       [id]: { ...(prev[id] ?? {}), ...overrides },
@@ -56,6 +56,7 @@ export default function AddItemPage() {
     (submitter?: string) =>
       previewItems.map((item) => {
         const override = itemOverrides[item.id] ?? {};
+        const resolvedName = override.name?.trim() || item.name;
         const mergedWorn = (() => {
           const base = Array.isArray(item.worn) ? item.worn : [];
           const over = Array.isArray(override.worn)
@@ -68,6 +69,7 @@ export default function AddItemPage() {
         })();
         return {
           ...item,
+          name: resolvedName,
           submittedBy: submitter || item.submittedBy,
           droppedBy: override.droppedBy?.trim() ?? item.droppedBy,
           worn: mergedWorn,
@@ -115,8 +117,15 @@ export default function AddItemPage() {
   const handleCheckDuplicates = () => {
     const duplicates: Item[] = [];
     const newItems: Item[] = [];
+    const candidates = buildPayloadItems();
 
-    previewItems.forEach((item) => {
+    const missingNames = candidates.some((item) => !item.name?.trim());
+    if (missingNames) {
+      setStatusMessage('Please add a name for every item before importing.');
+      return;
+    }
+
+    candidates.forEach((item) => {
       const duplicateId = findDuplicate(item, items);
       if (duplicateId) {
         const existing = items.find((i) => i.id === duplicateId);
