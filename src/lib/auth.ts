@@ -2,7 +2,7 @@ import type { NextAuthOptions, User } from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import Discord from 'next-auth/providers/discord';
 import { getServerSession } from 'next-auth';
-import { ensureOAuthUser, findUserByEmail, verifyPassword } from './auth-store';
+import { ensureOAuthUser, findUserByEmail, findUserById, verifyPassword } from './auth-store';
 
 export const authOptions: NextAuthOptions = {
   session: { strategy: 'jwt' },
@@ -50,19 +50,26 @@ export const authOptions: NextAuthOptions = {
       }
       return true;
     },
-    async jwt({ token, user }) {
+    
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id;
         token.name = user.name;
         token.email = user.email;
+      }
+      if (trigger === 'update' && session?.name) {
+        token.name = session.name as string;
       }
       return token;
     },
     async session({ session, token }) {
       if (token && session.user) {
         session.user.id = String(token.id);
-        session.user.name = token.name ?? session.user.name;
         session.user.email = token.email ?? session.user.email;
+
+        // Refresh latest name from DB to reflect profile edits
+        const dbUser = token.id ? await findUserById(String(token.id)) : null;
+        session.user.name = dbUser?.name ?? (token.name ?? session.user.name);
       }
       return session;
     },
