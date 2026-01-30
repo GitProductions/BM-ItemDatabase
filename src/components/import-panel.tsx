@@ -218,7 +218,7 @@ export const ImportPanel: React.FC<ImportPanelProps> = ({
                         placeholder={item.nameMissing ? 'Name not provided in dump' : 'Item name'}
                       />
                       {needsName ? (
-                        <span className="mt-1 text-[11px] text-amber-400">Dump started with "Object" so please supply a name.</span>
+                        <span className="mt-1 text-[11px] text-amber-400">Dump started with &quot;Object&quot; so please supply a name.</span>
                       ) : null}
                     </label>
 

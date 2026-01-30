@@ -77,6 +77,51 @@ const orcPhrases = {
     ],
   },
 
+  // Reset confirmation dialog phrases
+  resetConfirmation: {
+    mild: [
+      "Half-orc grunts: 'You really mean to burn it all down, eh?'",
+      "The half-orc asks: 'This gonna wipe everything? You sure?'",
+      "Half-orc mutters: 'This is serious. You sure about reset?'",
+    ],
+    medium: [
+      "A half-orc snarls: 'You really wanna scrap all that work? Think twice!'",
+      "The half-orc growls: 'Resettin' means losin' it all! You sure about that?'",
+      "Half-orc barks: 'This ain't no joke! You sure you wanna reset everything?'",
+    ],
+    high: [
+      "The half-orc roars: 'You wanna throw it all away?! You better be damn sure!'",
+      "Half-orc spits: 'Resettin' means startin' from scratch! You sure you want that?'",
+      "A furious half-orc bellows: 'You wanna lose it all?! You better be real sure!'",
+    ],
+    savage: [
+      "The half-orc slams his fist: 'You wanna erase everythin'?! You better be damn well sure!'",
+      "Half-orc screams: 'You wanna wipe the slate clean?! You better be REALLY sure!'",
+    ],
+  },
+
+  // create new gear profile dialog phrases
+  newProfilePrompt: {
+    mild: [
+      "Half-orc grunts: 'Gonna name this new thing, eh?'",
+      "The half-orc asks: 'What you callin' this new set?'",
+      "Half-orc mutters: 'New profile needs a name. What is it?'",
+    ],
+    medium: [
+      "A half-orc snarls: 'You makin' a new set? Better give it a name!'",
+      "The half-orc growls: 'New gear profile needs a name! What you pickin?'",
+      "Half-orc barks: 'You creatin' a new set? You better name it!'",
+    ],
+    high: [
+      "Half-orc spits: 'New gear set needs a name! What you callin' it?'",
+      "A furious half-orc bellows: 'You creatin' a new set?! You better name it right!'",
+    ],
+    savage: [
+      "The half-orc slams his fist: 'You makin' a new profile?! You better give it a name or I'll name it for ya!'",
+      "Half-orc screams: 'New gear set needs a name! You better pick somethin' good or else!'",
+    ],
+  },
+
   genericGrumpy: {
     // Random fallback or loading states
     allLevels: [

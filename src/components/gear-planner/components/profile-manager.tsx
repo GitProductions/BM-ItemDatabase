@@ -1,8 +1,8 @@
 import React from 'react';
 import { Save, FolderOpen, ChevronDown } from 'lucide-react';
-import ProfileManager from './profile-manager';
 
-function ProfileManager({ currentSetName, gearSets, onLoadSet, onSaveSet, onNewSet }: { currentSetName?: string; gearSets?: string[]; onLoadSet?: (name: string) => void; onSaveSet?: () => void; onNewSet?: () => void }) {
+
+function ProfileManager({ currentSetName, gearSets = [], onLoadSet, onSaveSet, onNewSet }: { currentSetName?: string; gearSets?: string[]; onLoadSet?: (name: string) => void; onSaveSet?: () => void; onNewSet?: () => void }) {
   return (
             <div className="flex items-center gap-3">
           <h3 className="text-sm font-semibold text-zinc-100">Gear Summary</h3>

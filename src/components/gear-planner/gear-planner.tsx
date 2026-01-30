@@ -23,6 +23,8 @@ const defaultIdState: Record<SlotKey, string | null> = SLOT_CONFIG.reduce((acc, 
 }, {} as Record<SlotKey, string | null>);
 
 const STORAGE_KEY = 'bm-Equipment';
+const STORAGE_SETS_KEY = 'bm-EquipmentSets';
+const STORAGE_ACTIVE_KEY = 'bm-EquipmentActiveSet';
 
 // Designated Icons / Glyphs for Equipment Slots
 const slotGlyph: Record<SlotKey, string> = {
@@ -56,6 +58,14 @@ interface EquipmentSlotProps {
   onClick: () => void;
   variant?: 'default' | 'compact';
 }
+
+
+// ToDo: Create a tooltip or section to explain to user what this is for - maybe a question mark by reset button, and click it and the modal appears?
+// purpose is to create a loadout for your character based on what you have in game, and then calculacte estimated stats based on it
+// this will hopefully allow newer players to narrow down their gear, figrue out what they can change and maybe even find new items via suggestions
+// Theres character profiles to help manage 'sets' of gear, aka Regen, Damroll or Hitroll sets..
+// In the future this can sync baased on in game data by parsing the equipment list from the game client directly.
+// We can hopefully scan the entire characters inventory and auto populate the gear planner with what they have on them.
 
 const EquipmentSlot: React.FC<EquipmentSlotProps> = ({ slot, isActive, equipped, onClick, variant = 'default' }) => {
   const slotConfig = SLOT_CONFIG.find((s) => s.key === slot);
@@ -134,19 +144,73 @@ const EquipmentGroup: React.FC<EquipmentGroupProps> = ({
 export const GearPlanner: React.FC<GearPlannerProps> = ({ items }) => {
   const [activeSlot, setActiveSlot] = useState<SlotKey>('head');
   const [showResetConfirm, setShowResetConfirm] = useState(false);
-  const [resetOrcLine, setResetOrcLine] = useState(() => getRandomOrcPhrase('noSearchResults', 'random'));
+  const [resetOrcLine, setResetOrcLine] = useState(() => getRandomOrcPhrase('resetConfirmation', 'random'));
+  const [showNewSetDialog, setShowNewSetDialog] = useState(false);
+  const [newSetName, setNewSetName] = useState('');
+  const [newSetError, setNewSetError] = useState('');
 
-  // State management for selected item IDs per slot
-  const [slotIds, setSlotIds] = useState<Record<SlotKey, string | null>>(() => {
+  const normalizeSlots = (payload?: Partial<Record<SlotKey, string | null>>): Record<SlotKey, string | null> => ({
+    ...defaultIdState,
+    ...(payload ?? {}),
+  });
+
+  const readLegacyDefault = () => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (!saved) return defaultIdState;
       const parsed = JSON.parse(saved) as Partial<Record<SlotKey, string | null>>;
-      return { ...defaultIdState, ...parsed };
+      return normalizeSlots(parsed);
     } catch {
       return defaultIdState;
     }
-  });
+  };
+
+  const readStoredSets = () => {
+    try {
+      const raw = localStorage.getItem(STORAGE_SETS_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw) as Record<string, Partial<Record<SlotKey, string | null>>>;
+      const normalized: Record<string, Record<SlotKey, string | null>> = {};
+      Object.entries(parsed).forEach(([name, slots]) => {
+        normalized[name] = normalizeSlots(slots);
+      });
+      return normalized;
+    } catch {
+      return null;
+    }
+  };
+
+  const initial = (() => {
+    const legacyDefault = readLegacyDefault();
+    const storedSets = readStoredSets();
+    const sets =
+      storedSets && Object.keys(storedSets).length
+        ? { Default: legacyDefault, ...storedSets }
+        : { Default: legacyDefault };
+
+    const savedActive = (() => {
+      try {
+        return localStorage.getItem(STORAGE_ACTIVE_KEY) ?? 'Default';
+      } catch {
+        return 'Default';
+      }
+    })();
+
+    const activeSet = sets[savedActive] ? savedActive : 'Default';
+
+    return {
+      sets,
+      activeSet,
+      slotIds: sets[activeSet] ?? legacyDefault,
+    };
+  })();
+
+  const [sets, setSets] = useState<Record<string, Record<SlotKey, string | null>>>(initial.sets);
+
+  // State management for selected item IDs per slot
+  const [slotIds, setSlotIds] = useState<Record<SlotKey, string | null>>(initial.slotIds);
+
+  const [currentSetName, setCurrentSetName] = useState<string>(initial.activeSet);
 
   const candidateItems = useMemo(() => items, [items]);
 
@@ -189,10 +253,67 @@ export const GearPlanner: React.FC<GearPlannerProps> = ({ items }) => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(slotIds));
   }, [slotIds]);
 
+  // Persist named sets
+  useEffect(() => {
+    localStorage.setItem(STORAGE_SETS_KEY, JSON.stringify(sets));
+  }, [sets]);
+
+  // Remember last active set
+  useEffect(() => {
+    localStorage.setItem(STORAGE_ACTIVE_KEY, currentSetName);
+  }, [currentSetName]);
+
   // Handlers
   const handleChange = (slot: SlotKey) => (item: Item | null) =>
     setSlotIds((prev) => ({ ...prev, [slot]: item?.id ?? null }));
 
+
+  // Saving Profile Set
+  const handleSaveSet = () => {
+    if (!currentSetName) return;
+    setSets((prev) => ({
+      ...prev,
+      [currentSetName]: { ...slotIds },
+    }));
+  };
+
+  // Loading Profile Set
+  const handleLoadSet = (name: string) => {
+    if (!name || !sets[name]) return;
+    setCurrentSetName(name);
+    setSlotIds({ ...sets[name] });
+  };
+
+  // Creating New Profile Set
+  const handleNewSet = () => {
+    setNewSetName('');
+    setNewSetError('');
+    setShowNewSetDialog(true);
+  };
+
+  // Confirm / Submit New Profile Set Creation
+  const confirmNewSet = () => {
+    const proposed = newSetName.trim();
+    if (!proposed) {
+      setNewSetError('Please enter a name for the profile.');
+      return;
+    }
+    if (sets[proposed]) {
+      setNewSetError('A profile with that name already exists.');
+      return;
+    }
+    const blank = { ...defaultIdState };
+    setSets((prev) => ({ ...prev, [proposed]: blank }));
+    setCurrentSetName(proposed);
+    setSlotIds(blank);
+    setShowNewSetDialog(false);
+  };
+
+  // List of available gear set names for dropdown
+  const gearSetNames = useMemo(
+    () => Object.keys(sets).sort((a, b) => a.localeCompare(b)),
+    [sets],
+  );
 
   const reset = () => {
     setResetOrcLine(getRandomOrcPhrase('noSearchResults', 'random'));
@@ -200,7 +321,7 @@ export const GearPlanner: React.FC<GearPlannerProps> = ({ items }) => {
   };
 
   const confirmReset = () => {
-    setSlotIds(defaultIdState);
+    setSlotIds({ ...defaultIdState });
     setShowResetConfirm(false);
   };
 
@@ -216,9 +337,40 @@ export const GearPlanner: React.FC<GearPlannerProps> = ({ items }) => {
 
       {showResetConfirm ? (
         <ConfirmDialog
-          resetOrcLine={resetOrcLine}
-          confirmReset={confirmReset}
-          cancelReset={cancelReset}
+          title="Reset gear?"
+          message={resetOrcLine}
+          subMessage="Reset all equipped items and start fresh?"
+
+          // Buttons
+          confirmText="Yes, reset"
+          cancelText="Keep my gear"
+          onConfirm={confirmReset}
+          onCancel={cancelReset}
+        />
+      ) : null}
+
+      {showNewSetDialog ? (
+        <ConfirmDialog
+          // Details
+          title="Create new profile"
+          message={getRandomOrcPhrase('newProfilePrompt', 'random')}
+          subMessage="Examples: Tank set, Regen, PvP, Hitroll"
+          
+          // Buttons
+          confirmText="Create profile"
+          cancelText="Cancel"
+          onConfirm={confirmNewSet}
+          onCancel={() => setShowNewSetDialog(false)}
+
+          // Input Labels
+          inputLabel="Profile name"
+          inputPlaceholder="e.g. Regen Set"
+          inputValue={newSetName}
+          onInputChange={(value) => {
+            setNewSetName(value);
+            if (newSetError) setNewSetError('');
+          }}
+          inputError={newSetError}
         />
       ) : null}
 
@@ -234,7 +386,15 @@ export const GearPlanner: React.FC<GearPlannerProps> = ({ items }) => {
       </div>
 
       {/* Summary Panel */}
-      <Summary totals={totals} reset={reset} />
+      <Summary
+        totals={totals}
+        reset={reset}
+        currentSetName={currentSetName}
+        gearSets={gearSetNames}
+        onLoadSet={handleLoadSet}
+        onSaveSet={handleSaveSet}
+        onNewSet={handleNewSet}
+      />
 
       <div className="rounded-2xl border border-zinc-800 bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950 shadow-2xl p-4">
         <div className="grid items-start gap-6 lg:grid-cols-[1.35fr,0.9fr]">
@@ -245,8 +405,9 @@ export const GearPlanner: React.FC<GearPlannerProps> = ({ items }) => {
 
           {/* Equipment Layout Panel */}
           <div className="relative overflow-hidden rounded-xl border border-zinc-800 bg-gradient-to-b from-orange-900/10 via-zinc-900/40 to-zinc-950/80 p-5">
-            {/* Responsive Grid Layout with Logical Grouping */}
+
             <div className="relative z-10 space-y-3">
+             
               {/* Head & Accessories */}
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <EquipmentGroup
@@ -273,6 +434,7 @@ export const GearPlanner: React.FC<GearPlannerProps> = ({ items }) => {
 
               {/* Main Body - Three Columns */}
               <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+               
                 {/* Left Side - Arms & Hands */}
                 <div className="space-y-3">
                   <EquipmentGroup
