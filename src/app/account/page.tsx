@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useSession, signIn, signOut } from 'next-auth/react';
 import Button from '@/components/ui/Button';
 import { Item } from '@/types/items';
-import SuggestionModal from '@/components/modals/SuggestionModal';
+import EditModal from '@/components/modals/EditModal';
 
 type Token = { id: string; label: string | null; createdAt: string; lastUsedAt: string | null };
 
@@ -241,7 +241,7 @@ export default function AccountPage() {
         )}
       </section>
 
-      <SuggestionModal
+      <EditModal
         item={selectedItem}
         open={modalOpen}
         feedback={submitFeedback}

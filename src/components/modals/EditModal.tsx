@@ -26,7 +26,7 @@ type SuggestionModalProps = {
   proposerLocked?: string;
 };
 
-const SuggestionModal: React.FC<SuggestionModalProps> = ({ item, open, isSubmitting, feedback, onSubmit, onClose, hideAdminControls = false, hideNameInput = false, proposerLocked }) => {
+const EditModal: React.FC<SuggestionModalProps> = ({ item, open, isSubmitting, feedback, onSubmit, onClose, hideAdminControls = false, hideNameInput = false, proposerLocked }) => {
   const { userName, handleSetUserName, refresh } = useAppData();
   const [name, setName] = useState(proposerLocked ?? userName);
   const [note, setNote] = useState('');
@@ -221,4 +221,4 @@ const SuggestionModal: React.FC<SuggestionModalProps> = ({ item, open, isSubmitt
   );
 };
 
-export default SuggestionModal;
+export default EditModal;

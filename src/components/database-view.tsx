@@ -3,7 +3,7 @@ import { Filter, Search } from 'lucide-react';
 import { Item } from '@/types/items';
 import { ItemCard } from './item-card';
 import Image from 'next/image';
-import SuggestionModal from './modals/SuggestionModal';
+import EditModal from './modals/EditModal';
 import uFuzzy from '@leeoniya/ufuzzy';
 import { getRandomOrcPhrase } from '@/lib/orc-phrases';
 import Input from './ui/Input';
@@ -161,7 +161,7 @@ export const ItemDB: React.FC<ItemDBProps> = ({ items }) => {
       )}
 
       {/* Suggest Edit Modal */}
-      <SuggestionModal
+      <EditModal
         item={suggestItem}
         open={Boolean(suggestItem)}
         isSubmitting={isSubmitting}
