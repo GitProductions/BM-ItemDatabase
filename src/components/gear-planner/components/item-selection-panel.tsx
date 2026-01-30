@@ -69,9 +69,7 @@ const ItemSelectionPanel: React.FC<ItemSelectionPanelProps> = ({
               <X size={14} /> Clear
             </Button>
           ) : null}
-          {/* <Button size="sm" variant="ghost" onClick={onReset} className="text-xs text-orange-300 hover:text-orange-100 rounded-md gap-1.5">
-            <RefreshCcw size={14} /> Reset
-          </Button> */}
+
         </div>
       </div>
 

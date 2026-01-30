@@ -4,11 +4,13 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Item } from '@/types/items';
 import { Sparkles } from 'lucide-react';
 import Summary from './components/summary';
+import ConfirmDialog from './../ui/ConfirmDialog';
 import ItemSelectionPanel from './components/item-selection-panel';
 import { computeTotals } from './util';
 import { Selected, SlotKey, GearPlannerProps } from './types/types';
 import { SLOT_CONFIG, matchesSlot, slotMatchRank } from '@/lib/slots';
 import Image from 'next/image';
+import { getRandomOrcPhrase } from '@/lib/orc-phrases';
 
 const defaultGearState: Selected = SLOT_CONFIG.reduce((acc, slot) => {
   acc[slot.key] = null;
@@ -131,6 +133,8 @@ const EquipmentGroup: React.FC<EquipmentGroupProps> = ({
 // Main Gear Planner Component
 export const GearPlanner: React.FC<GearPlannerProps> = ({ items }) => {
   const [activeSlot, setActiveSlot] = useState<SlotKey>('head');
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [resetOrcLine, setResetOrcLine] = useState(() => getRandomOrcPhrase('noSearchResults', 'random'));
 
   // State management for selected item IDs per slot
   const [slotIds, setSlotIds] = useState<Record<SlotKey, string | null>>(() => {
@@ -189,16 +193,18 @@ export const GearPlanner: React.FC<GearPlannerProps> = ({ items }) => {
   const handleChange = (slot: SlotKey) => (item: Item | null) =>
     setSlotIds((prev) => ({ ...prev, [slot]: item?.id ?? null }));
 
-  // const reset = () => setSlotIds(defaultIdState);
 
   const reset = () => {
-    // Todo: make a custom confirmation dialog that showcases the half-orc... 
-    // as seen in other places where we use no-results.png and randomOrcPhrase 
-    if (confirm('Are you sure you want to reset all equipment selections?')) {
-      setSlotIds(defaultIdState);
-    }
+    setResetOrcLine(getRandomOrcPhrase('noSearchResults', 'random'));
+    setShowResetConfirm(true);
   };
-  
+
+  const confirmReset = () => {
+    setSlotIds(defaultIdState);
+    setShowResetConfirm(false);
+  };
+
+  const cancelReset = () => setShowResetConfirm(false);
 
 
   const handleSlotClick = (slot: SlotKey) => {
@@ -207,6 +213,15 @@ export const GearPlanner: React.FC<GearPlannerProps> = ({ items }) => {
 
   return (
     <section className="space-y-4">
+
+      {showResetConfirm ? (
+        <ConfirmDialog
+          resetOrcLine={resetOrcLine}
+          confirmReset={confirmReset}
+          cancelReset={cancelReset}
+        />
+      ) : null}
+
       
       <div className="flex items-center gap-3">
         <Sparkles className="text-orange-400" />
