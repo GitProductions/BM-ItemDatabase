@@ -2,14 +2,12 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { Item } from '@/types/items';
-import { Sparkles, RefreshCcw, X, Search } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 import Summary from './components/summary';
+import ItemSelectionPanel from './components/item-selection-panel';
 import { computeTotals } from './util';
 import { Selected, SlotKey, GearPlannerProps } from './types/types';
 import { SLOT_CONFIG, matchesSlot, slotMatchRank } from '@/lib/slots';
-import Input from '../ui/Input';
-import Button from '../ui/Button';
-import { normalize } from './util';
 import Image from 'next/image';
 
 const defaultGearState: Selected = SLOT_CONFIG.reduce((acc, slot) => {
@@ -24,14 +22,13 @@ const defaultIdState: Record<SlotKey, string | null> = SLOT_CONFIG.reduce((acc, 
 
 const STORAGE_KEY = 'bm-Equipment';
 
-
 // Designated Icons / Glyphs for Equipment Slots
 const slotGlyph: Record<SlotKey, string> = {
   head: '🪖',
   neck1: '🧿',
   neck2: '🧿',
   body: '🥋',
-  'about-legs': '🩳',
+  'about-legs': '🧳',
   legs: '🦵',
   feet: '🥾',
   hands: '🧤',
@@ -43,7 +40,7 @@ const slotGlyph: Record<SlotKey, string> = {
   wrist2: '📿',
   wield: '⚔️',
   offhand: '🛡️',
-  held: '📜',
+  held: '📝',
   'two-handed': '🪓',
   back: '🎒',
   light: '💡',
@@ -60,15 +57,15 @@ interface EquipmentSlotProps {
 
 const EquipmentSlot: React.FC<EquipmentSlotProps> = ({ slot, isActive, equipped, onClick, variant = 'default' }) => {
   const slotConfig = SLOT_CONFIG.find((s) => s.key === slot);
-  
+
   return (
     <button
       type="button"
       onClick={onClick}
       className={`w-full px-3 rounded-lg border backdrop-blur-md transition
         ${variant === 'compact' ? 'py-1.5' : 'py-2'}
-        ${isActive 
-          ? 'border-orange-400 bg-orange-400/15 shadow-lg shadow-orange-900/40' 
+        ${isActive
+          ? 'border-orange-400 bg-orange-400/15 shadow-lg shadow-orange-900/40'
           : 'border-zinc-700/70 bg-zinc-900/70 hover:border-orange-500/60'}
       `}
     >
@@ -102,14 +99,19 @@ interface EquipmentGroupProps {
   variant?: 'default' | 'compact';
 }
 
-
 //  Template for Item Selections / Groups
-const EquipmentGroup: React.FC<EquipmentGroupProps> = ({  title,  slots,  columns = 1,  activeSlot,  selected,  onSlotClick, variant = 'default' }) => {
+const EquipmentGroup: React.FC<EquipmentGroupProps> = ({
+  title,
+  slots,
+  columns = 1,
+  activeSlot,
+  selected,
+  onSlotClick,
+  variant = 'default',
+}) => {
   return (
     <div>
-      <div className="text-xs uppercase tracking-wider text-zinc-500 font-semibold mb-2 px-1">
-        {title}
-      </div>
+      <div className="mb-2 px-1 text-xs font-semibold uppercase tracking-wider text-zinc-500">{title}</div>
       <div className={`grid gap-2 ${columns === 2 ? 'grid-cols-2' : 'grid-cols-1'}`}>
         {slots.map((slot) => (
           <EquipmentSlot
@@ -126,11 +128,9 @@ const EquipmentGroup: React.FC<EquipmentGroupProps> = ({  title,  slots,  column
   );
 };
 
-
 // Main Gear Planner Component
 export const GearPlanner: React.FC<GearPlannerProps> = ({ items }) => {
   const [activeSlot, setActiveSlot] = useState<SlotKey>('head');
-  const [query, setQuery] = useState('');
 
   // State management for selected item IDs per slot
   const [slotIds, setSlotIds] = useState<Record<SlotKey, string | null>>(() => {
@@ -164,7 +164,6 @@ export const GearPlanner: React.FC<GearPlannerProps> = ({ items }) => {
     return bySlot;
   }, [candidateItems]);
 
-
   // Selected items mapped from IDs
   const selected: Selected = useMemo(() => {
     const mapped: Selected = { ...defaultGearState };
@@ -194,28 +193,7 @@ export const GearPlanner: React.FC<GearPlannerProps> = ({ items }) => {
 
   const handleSlotClick = (slot: SlotKey) => {
     setActiveSlot(slot);
-    setQuery('');
   };
-
-
-  // Filtered items based on search query and active slot
-  const filtered = useMemo(() => {
-    const source = itemsBySlot[activeSlot] ?? candidateItems;
-    const q = normalize(query.trim());
-    if (!q) return source.slice(0, 40);
-    return source
-      .filter(
-        (item) =>
-          normalize(item.name).includes(q) ||
-          normalize(item.keywords).includes(q) ||
-          normalize(item.type).includes(q) ||
-          normalize((item.worn ?? []).join(' ')).includes(q),
-      )
-      .slice(0, 60);
-  }, [activeSlot, candidateItems, itemsBySlot, query]);
-
-  // Currently selected item for the active slot for our Item Selection Panel
-  const activeSelected = selected[activeSlot];
 
   return (
     <section className="space-y-4">
@@ -232,35 +210,25 @@ export const GearPlanner: React.FC<GearPlannerProps> = ({ items }) => {
       <Summary totals={totals} reset={reset} />
 
       <div className="rounded-2xl border border-zinc-800 bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950 shadow-2xl p-4">
-        <div className="grid lg:grid-cols-[1.35fr,0.9fr] gap-6 items-start">
-
-
+        <div className="grid items-start gap-6 lg:grid-cols-[1.35fr,0.9fr]">
           {/* Image backdrop */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] pointer-events-none opacity-[0.03]">
-            <Image 
-              src="/bm-logo.webp"
-              alt="Background Logo"
-              width={800}
-              height={800}
-              loading="eager"    
-            />
+          <div className="pointer-events-none absolute left-1/2 top-1/2 h-[300px] w-[600px] -translate-x-1/2 -translate-y-1/2 opacity-[0.03]">
+            <Image src="/bm-logo.webp" alt="Background Logo" width={800} height={800} loading="eager" />
           </div>
 
-        
           {/* Equipment Layout Panel */}
-          <div className="relative rounded-xl border border-zinc-800 bg-gradient-to-b from-orange-900/10 via-zinc-900/40 to-zinc-950/80 p-5 overflow-hidden">
-                   
+          <div className="relative overflow-hidden rounded-xl border border-zinc-800 bg-gradient-to-b from-orange-900/10 via-zinc-900/40 to-zinc-950/80 p-5">
             {/* Responsive Grid Layout with Logical Grouping */}
             <div className="relative z-10 space-y-3">
               {/* Head & Accessories */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <EquipmentGroup
                   title="Head"
                   slots={['head']}
                   activeSlot={activeSlot}
                   selected={selected}
                   onSlotClick={handleSlotClick}
-                    variant="compact"
+                  variant="compact"
                 />
 
                 <EquipmentGroup
@@ -277,7 +245,7 @@ export const GearPlanner: React.FC<GearPlannerProps> = ({ items }) => {
               <div className="border-t border-zinc-800/50" />
 
               {/* Main Body - Three Columns */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                 {/* Left Side - Arms & Hands */}
                 <div className="space-y-3">
                   <EquipmentGroup
@@ -297,7 +265,6 @@ export const GearPlanner: React.FC<GearPlannerProps> = ({ items }) => {
                     onSlotClick={handleSlotClick}
                     variant="compact"
                   />
-                
                 </div>
 
                 {/* Center Column - Torso, Legs, Waist, Feet */}
@@ -348,7 +315,7 @@ export const GearPlanner: React.FC<GearPlannerProps> = ({ items }) => {
                     variant="compact"
                   />
 
-                    <EquipmentGroup
+                  <EquipmentGroup
                     title="Hands"
                     slots={['hands']}
                     activeSlot={activeSlot}
@@ -365,136 +332,45 @@ export const GearPlanner: React.FC<GearPlannerProps> = ({ items }) => {
                     onSlotClick={handleSlotClick}
                     variant="compact"
                   />
-                
                 </div>
               </div>
 
               {/* Divider */}
-              <div className=" border-t border-zinc-800/50" />
+              <div className="border-t border-zinc-800/50" />
 
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {/* Weapons / Held Items */}
-               <EquipmentGroup
-                    title="Weapons"
-                    slots={['wield', 'offhand', 'two-handed',]}
-                    activeSlot={activeSlot}
-                    selected={selected}
-                    onSlotClick={handleSlotClick}
-                    columns={2}
-
-                    variant="compact"
-                  />
-                  <EquipmentGroup
-                    title="Held"
-                    slots={['offhand', 'held', 'light']}
-                    activeSlot={activeSlot}
-                    selected={selected}
-                    onSlotClick={handleSlotClick}
-                    columns={2}
-                    variant="compact"
-                  />
-                  </div>
-
-              {/* Bottom Row - Consumable */}
-              {/* <EquipmentGroup
-                title="Consumable"
-                slots={['consumable']}
-                activeSlot={activeSlot}
-                selected={selected}
-                onSlotClick={handleSlotClick}
-              /> */}
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                {/* Weapons / Held Items */}
+                <EquipmentGroup
+                  title="Weapons"
+                  slots={['wield', 'offhand', 'two-handed']}
+                  activeSlot={activeSlot}
+                  selected={selected}
+                  onSlotClick={handleSlotClick}
+                  columns={2}
+                  variant="compact"
+                />
+                <EquipmentGroup
+                  title="Held"
+                  slots={['offhand', 'held', 'light']}
+                  activeSlot={activeSlot}
+                  selected={selected}
+                  onSlotClick={handleSlotClick}
+                  columns={2}
+                  variant="compact"
+                />
+              </div>
             </div>
           </div>
 
-
-          {/* When an item is selected, populate Item Selection Panel */}
-          {/* Perhaps we can make this show only when an item is hovered over or clicked on? */}
-
-
-
-          {/* Item Selection Panel */}
-          <div className="space-y-3 rounded-xl border border-zinc-800 bg-zinc-950/80 p-4 shadow-inner">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <div className="text-xs uppercase text-zinc-500">Active Slot</div>
-                <div className="text-lg font-semibold text-white flex items-center gap-2">
-                  {slotGlyph[activeSlot]} {SLOT_CONFIG.find((s) => s.key === activeSlot)?.label}
-                </div>
-                <div className="text-[11px] text-zinc-500">
-                  {itemsBySlot[activeSlot]?.length ?? candidateItems.length} items available
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                {activeSelected ? (
-                  <Button size="sm" variant="secondary" onClick={() => handleChange(activeSlot)(null)} className="text-xs">
-                    <X size={14} /> Clear
-                  </Button>
-                ) : null}
-                <Button size="sm" variant="ghost" onClick={reset} className="text-xs text-orange-300 hover:text-orange-100">
-                  <RefreshCcw size={14} /> Reset
-                </Button>
-              </div>
-            </div>
-
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={16} />
-              <Input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search item name, keyword, type"
-                className="pl-10 pr-3 py-2 bg-zinc-900 border-zinc-800 text-sm"
-              />
-            </div>
-
-            <div className="max-h-[520px] overflow-y-auto space-y-2 pr-1">
-              {filtered.length === 0 ? (
-                <div className="text-center py-12 text-zinc-600 text-sm border border-dashed border-zinc-800 rounded-lg">
-                  No items match this slot.
-                </div>
-              ) : (
-                filtered.map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => handleChange(activeSlot)(item)}
-                    className={`w-full text-left rounded-lg border px-3 py-2 transition ${
-                      selected[activeSlot]?.id === item.id
-                        ? 'border-orange-500 bg-orange-500/15 text-white'
-                        : 'border-zinc-800 bg-zinc-950 hover:border-orange-500/60'
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <div className="font-semibold text-sm text-white truncate">{item.name}</div>
-                        <div className="text-[11px] text-zinc-500 truncate">
-                          {item.keywords} • <span className="uppercase">{item.type}</span>
-                        </div>
-                        {item.worn && item.worn.length ? (
-                          <div className="mt-1 flex flex-wrap gap-1 text-[10px] text-orange-200">
-                            {item.worn.map((slot) => (
-                              <span
-                                key={slot}
-                                className="rounded border border-orange-800/70 bg-orange-900/30 px-2 py-0.5 uppercase tracking-wide"
-                              >
-                                {slot}
-                              </span>
-                            ))}
-                          </div>
-                        ) : null}
-                      </div>
-                      <div className="flex flex-col items-end gap-1 text-[11px] text-zinc-300">
-                        {item.stats?.damage ? <span className="text-red-200">{item.stats.damage}</span> : null}
-                        {item.stats?.ac !== undefined ? <span className="text-blue-200">AC {item.stats.ac}</span> : null}
-                        <span className="text-amber-200">Wt {item.stats?.weight ?? 0}</span>
-                      </div>
-                    </div>
-                  </button>
-                ))
-              )}
-            </div>
-          </div>
-
-
+          <ItemSelectionPanel
+            activeSlot={activeSlot}
+            slotGlyph={slotGlyph}
+            itemsBySlot={itemsBySlot}
+            candidateItems={candidateItems}
+            selected={selected}
+            onSelect={handleChange(activeSlot)}
+            onReset={reset}
+          />
         </div>
       </div>
     </section>
