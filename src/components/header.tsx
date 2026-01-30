@@ -37,7 +37,7 @@ function NavButtons({ onDone }: { onDone?: () => void }) {
   );
 }
 
-function Header({ items }: { items: Item[] }) {
+function Header({ items, loading = false }: { items: Item[]; loading?: boolean }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement | null>(null);
 
@@ -64,11 +64,21 @@ function Header({ items }: { items: Item[] }) {
       <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded text-white">
-            <Image className="shadow-lg shadow-orange-900/50" src="/bm-logo.png" alt="Logo" width={24} height={24} />
+            <Image
+              priority
+              sizes="24px"
+              className="shadow-lg shadow-orange-900/50"
+              src="/bm-logo.webp"
+              alt="Logo"
+              width={24}
+              height={24}
+            />
           </div>
           <div>
             <h1 className="font-bold text-xl tracking-tight text-white">BlackMUD Item DB</h1>
-            <p className="text-xs text-zinc-400 font-mono">{items.length} items indexed</p>
+            <p className="text-xs text-zinc-400 font-mono min-w-[12ch]" aria-busy={loading}>
+              {loading ? 'Loading…' : `${items.length} items indexed`}
+            </p>
           </div>
         </div>
 
