@@ -208,7 +208,7 @@ export default function AccountPage() {
             </div>
           </div>
         </div>
-        <Button onClick={() => signOut({ callbackUrl: '/' })} className="bg-zinc-800 hover:bg-zinc-700">
+        <Button variant="danger" onClick={() => signOut({ callbackUrl: '/' })} >
           Sign out
         </Button>
       </div>
@@ -259,7 +259,7 @@ export default function AccountPage() {
               disabled={loading}
             />
           </div>
-          <Button onClick={handleCreateToken} disabled={loading}>
+          <Button onClick={handleCreateToken} disabled={loading} variant="primary">
             {loading ? 'Working…' : 'Create token'}
           </Button>
         </div>
@@ -292,7 +292,7 @@ export default function AccountPage() {
       <section className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-white">Your submissions</h2>
-          <Button variant="secondary" onClick={loadItems} disabled={loading}>
+          <Button variant="primary" onClick={loadItems} disabled={loading}>
             Refresh
           </Button>
         </div>
@@ -311,7 +311,7 @@ export default function AccountPage() {
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="text-[11px] text-zinc-400">Updated {item.submissionCount ?? ''}</span>
-                    <Button size="sm" variant="secondary" onClick={() => openSuggestion(item)}>
+                    <Button size="sm" variant="primary" onClick={() => openSuggestion(item)}>
                       Edit
                     </Button>
                   </div>

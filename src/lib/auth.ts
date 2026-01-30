@@ -36,7 +36,7 @@ export const authOptions: NextAuthOptions = {
       if (account?.provider === 'discord' && profile) {
         try {
           await ensureOAuthUser('discord', {
-            id: String(profile.id ?? account.providerAccountId),
+            id: String(account.providerAccountId),
             email: (profile as { email?: string }).email,
             name: (profile as { global_name?: string; username?: string; name?: string }).global_name
               ?? (profile as { username?: string }).username
