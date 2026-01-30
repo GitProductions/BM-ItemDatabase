@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Item } from '@/types/items';
 import { Sparkles, RefreshCcw, X, Search } from 'lucide-react';
-import Summary from './summary';
+import Summary from './components/summary';
 import { computeTotals } from './util';
 import { Selected, SlotKey, GearPlannerProps } from './types/types';
 import { SLOT_CONFIG, matchesSlot, slotMatchRank } from '@/lib/slots';
