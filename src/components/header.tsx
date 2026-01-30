@@ -4,7 +4,9 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
+import { useSession } from 'next-auth/react';
 import { Item } from '@/types/items';
+import Button from './ui/Button';
 
 const navLinks = [
   { href: '/', label: 'Items', icon: Search },
@@ -38,6 +40,7 @@ function NavButtons({ onDone }: { onDone?: () => void }) {
 }
 
 function Header({ items, loading = false }: { items: Item[]; loading?: boolean }) {
+  const { data: session, status } = useSession();
   const [mobileOpen, setMobileOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement | null>(null);
 
@@ -82,24 +85,62 @@ function Header({ items, loading = false }: { items: Item[]; loading?: boolean }
           </div>
         </div>
 
+
+   
         <div className="hidden md:flex gap-2">
           <NavButtons />
+
+          {/* User Login  */}
+          {session?.user ? (
+            <Link
+              href="/account"
+              className="px-3 py-2 rounded-md border border-zinc-800 text-sm text-zinc-100 hover:border-orange-500 transition-colors"
+            >
+              {session.user.name ? `Hi, ${session.user.name}` : 'Account'}
+            </Link>
+          ) : (
+            <Link
+              href="/login"
+              className="px-3 py-2 rounded-md border border-zinc-800 text-sm text-zinc-100 hover:border-orange-500 transition-colors"
+            >
+              {status === 'loading' ? 'Checking…' : 'Sign in'}
+            </Link>
+          )}
         </div>
 
-        <button
+        <Button
           onClick={() => setMobileOpen((v) => !v)}
+          variant="ghost"
           className="md:hidden text-zinc-100 p-2 rounded hover:bg-zinc-800 transition-colors"
           aria-label="Toggle menu"
         >
           {mobileOpen ? <X size={22} /> : <Menu size={22} />}
-        </button>
+        </Button>
       </div>
 
+      {/* Should we move the user info outside of the hamburg menu for mobile users? */}
       {/* Mobile sheet */}
       {mobileOpen && (
         <div className="md:hidden border-t border-zinc-800 bg-zinc-950/95 backdrop-blur supports-[backdrop-filter]:backdrop-blur-md">
           <div ref={panelRef} className="max-w-7xl mx-auto px-4 py-3 flex flex-col gap-2">
             <NavButtons onDone={() => setMobileOpen(false)} />
+            {session?.user ? (
+              <Link
+                href="/account"
+                onClick={() => setMobileOpen(false)}
+                className="px-4 py-2 rounded-md text-sm font-medium text-zinc-200 hover:bg-zinc-800 transition-colors"
+              >
+                Account
+              </Link>
+            ) : (
+              <Link
+                href="/login"
+                onClick={() => setMobileOpen(false)}
+                className="px-4 py-2 rounded-md text-sm font-medium text-zinc-200 hover:bg-zinc-800 transition-colors"
+              >
+                Sign in
+              </Link>
+            )}
           </div>
         </div>
       )}

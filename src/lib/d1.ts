@@ -24,6 +24,7 @@ type StoredItemRow = {
   flags: string | null;
   stats: string | null;
   submittedBy: string | null;
+  submittedByUserId: string | null;
   droppedBy: string | null;
   worn: string | null;
   ego: string | null;
@@ -47,6 +48,7 @@ export type ItemSearchParams = {
   q?: string;
   type?: string;
   submittedBy?: string;
+  submittedByUserId?: string;
   flagged?: boolean;
   id?: string;
   limit?: number;
@@ -80,6 +82,7 @@ const ensureSchema = async (db: D1Database) => {
             flags TEXT NOT NULL,
             stats TEXT NOT NULL,
             submittedBy TEXT,
+            submittedByUserId TEXT,
             droppedBy TEXT,
             worn TEXT,
             ego TEXT,
@@ -106,6 +109,7 @@ const ensureSchema = async (db: D1Database) => {
             itemId TEXT NOT NULL,
             identityKey TEXT NOT NULL,
             submittedBy TEXT,
+            submittedByUserId TEXT,
             submittedAt TEXT NOT NULL,
             delta TEXT,
             raw TEXT
@@ -130,8 +134,10 @@ const ensureSchema = async (db: D1Database) => {
 
       // Backfill newly added columns if the table already exists
       await db.prepare('ALTER TABLE items ADD COLUMN submittedBy TEXT;').run().catch(() => {});
+      await db.prepare('ALTER TABLE items ADD COLUMN submittedByUserId TEXT;').run().catch(() => {});
       await db.prepare('ALTER TABLE items ADD COLUMN droppedBy TEXT;').run().catch(() => {});
       await db.prepare('ALTER TABLE items ADD COLUMN worn TEXT;').run().catch(() => {});
+      await db.prepare('ALTER TABLE submissions ADD COLUMN submittedByUserId TEXT;').run().catch(() => {});
 
       await db
         .prepare(
@@ -280,6 +286,7 @@ const mergeItems = (existing: Item, incoming: Item): Item => {
     ego: incoming.ego ?? existing.ego,
     isArtifact: Boolean(existing.isArtifact || incoming.isArtifact),
     submittedBy: incoming.submittedBy ?? existing.submittedBy,
+    submittedByUserId: incoming.submittedByUserId ?? existing.submittedByUserId,
     droppedBy: incoming.droppedBy ?? existing.droppedBy,
     worn: mergeWorn(existing.worn, incoming.worn),
     raw: incoming.raw !== undefined ? incoming.raw : existing.raw,
@@ -299,6 +306,7 @@ const decodeItem = (row: StoredItemRow): Item => ({
   flags: row.flags ? (JSON.parse(row.flags) as string[]) : [],
   stats: row.stats ? (JSON.parse(row.stats) as Item['stats']) : { affects: [], weight: 0 },
   submittedBy: row.submittedBy ?? undefined,
+  submittedByUserId: row.submittedByUserId ?? undefined,
   droppedBy: row.droppedBy ?? undefined,
   worn: normalizeWorn(row.worn),
   ego: row.ego ?? undefined,
@@ -337,6 +345,7 @@ const encodeItem = (item: Item, timestamp?: string) => {
     flags: JSON.stringify(item.flags ?? []),
     stats: JSON.stringify(item.stats ?? { affects: [], weight: 0 }),
     submittedBy: item.submittedBy ?? null,
+    submittedByUserId: item.submittedByUserId ?? null,
     droppedBy: item.droppedBy ?? null,
     worn: (() => {
       const worn = normalizeWorn(item.worn);
@@ -415,6 +424,11 @@ export const searchItems = async (params: ItemSearchParams = {}): Promise<Item[]
   if (params.type) {
     where.push('LOWER(type) LIKE ?');
     values.push(`%${params.type.toLowerCase()}%`);
+  }
+
+  if (params.submittedByUserId) {
+    where.push('submittedByUserId = ?');
+    values.push(params.submittedByUserId);
   }
 
 
@@ -542,14 +556,15 @@ export const upsertItems = async (items: Item[]) => {
               flags = ?5,
               stats = ?6,
               submittedBy = ?7,
-              droppedBy = ?8,
-              worn = ?9,
-              ego = ?10,
-              isArtifact = ?11,
-              raw = ?12,
-              flaggedForReview = ?13,
-              duplicateOf = ?14,
-              updatedAt = ?15
+              submittedByUserId = ?8,
+              droppedBy = ?9,
+              worn = ?10,
+              ego = ?11,
+              isArtifact = ?12,
+              raw = ?13,
+              flaggedForReview = ?14,
+              duplicateOf = ?15,
+              updatedAt = ?16
             WHERE id = ?1;
           `,
           )
@@ -561,6 +576,7 @@ export const upsertItems = async (items: Item[]) => {
             values.flags,
             values.stats,
             values.submittedBy,
+            values.submittedByUserId,
             values.droppedBy,
             values.worn,
             values.ego,
@@ -576,10 +592,10 @@ export const upsertItems = async (items: Item[]) => {
         .prepare(
           `
         INSERT INTO items (
-          id, name, keywords, type, flags, stats, submittedBy, droppedBy, worn, ego, isArtifact, raw,
+          id, name, keywords, type, flags, stats, submittedBy, submittedByUserId, droppedBy, worn, ego, isArtifact, raw,
           flaggedForReview, duplicateOf, createdAt, updatedAt
         )
-        VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16)
+        VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17)
         ON CONFLICT(name, keywords, type) DO UPDATE SET
           name=excluded.name,
           keywords=excluded.keywords,
@@ -587,6 +603,7 @@ export const upsertItems = async (items: Item[]) => {
           flags=excluded.flags,
           stats=excluded.stats,
           submittedBy=excluded.submittedBy,
+          submittedByUserId=excluded.submittedByUserId,
           droppedBy=excluded.droppedBy,
           worn=excluded.worn,
           ego=excluded.ego,
@@ -605,6 +622,7 @@ export const upsertItems = async (items: Item[]) => {
         values.flags,
         values.stats,
         values.submittedBy,
+        values.submittedByUserId,
         values.droppedBy,
         values.worn,
         values.ego,
@@ -621,25 +639,28 @@ export const upsertItems = async (items: Item[]) => {
   const submissionStatements = await Promise.all(
     items.map(async (item) => {
       const submitterName = item.submittedBy?.trim();
-      if (!submitterName) return null;
+      const submitterId = item.submittedByUserId?.trim();
+      if (!submitterName && !submitterId) return null;
 
       const identityKey = submissionIdentity(item);
       const submissionId = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2, 11);
 
-      const submitter = await loadSubmitter(submitterName);
-      submitter.submissionCount += 1;
-      submitter.lastSubmittedAt = now;
-
-      // Use merged identity fetch to get current id
       const existing = await fetchExistingByIdentity(item) ?? (item.id ? await fetchExistingById(item.id) : undefined);
       const mergedId = existing?.id ?? item.id;
-      submitter.itemIds.add(mergedId);
+
+      if (submitterName) {
+        const submitter = await loadSubmitter(submitterName);
+        submitter.submissionCount += 1;
+        submitter.lastSubmittedAt = now;
+
+        submitter.itemIds.add(mergedId);
+      }
 
       return db
         .prepare(
           `
-          INSERT INTO submissions (id, itemId, identityKey, submittedBy, submittedAt, delta, raw)
-          VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7);
+          INSERT INTO submissions (id, itemId, identityKey, submittedBy, submittedByUserId, submittedAt, delta, raw)
+          VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8);
         `,
         )
         .bind(
@@ -647,6 +668,7 @@ export const upsertItems = async (items: Item[]) => {
           mergedId,
           identityKey,
           submitterName,
+          submitterId ?? null,
           now,
           null,
           item.raw ? JSON.stringify(item.raw) : null,

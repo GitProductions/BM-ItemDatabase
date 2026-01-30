@@ -30,6 +30,7 @@ export interface Item {
   type: string;
   flags: string[];
   submittedBy?: string;
+  submittedByUserId?: string;
   droppedBy?: string;
   worn?: string[];
   stats: ItemStats;

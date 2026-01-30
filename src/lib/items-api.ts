@@ -43,6 +43,7 @@ export const normalizeItemInput = (input: ItemInput) => {
   const affects = Array.isArray(rawStats.affects) ? rawStats.affects.filter(Boolean) : [];
 
   const submittedBy = input.submittedBy?.trim();
+  const submittedByUserId = input.submittedByUserId?.trim();
 
   const item: Item = {
     id: input.id ?? generateId(),
@@ -56,6 +57,7 @@ export const normalizeItemInput = (input: ItemInput) => {
       weight: rawStats.weight ?? 0,
     },
     submittedBy: submittedBy || undefined,
+    submittedByUserId: submittedByUserId || undefined,
     droppedBy: input.droppedBy?.trim(),
     worn: (() => {
       const raw = input.worn;

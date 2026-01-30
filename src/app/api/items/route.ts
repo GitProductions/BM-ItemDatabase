@@ -4,12 +4,39 @@ import { deleteAllItems, deleteItem, searchItems, upsertItems } from '@/lib/d1';
 import { ItemInput, normalizeItemInput, parseBooleanParam, withCors } from '@/lib/items-api';
 import { Item } from '@/types/items';
 import { clearCache, getCached, setCached } from '@/lib/memory-cache';
+import { getAuthSession } from '@/lib/auth';
+import { verifyApiToken } from '@/lib/auth-store';
 
-const isAuthorized = (request: NextRequest) => {
+const getBearer = (request: NextRequest) => {
   const header = request.headers.get('authorization');
-  const token = header?.startsWith('Bearer ') ? header.slice(7) : null;
+  return header?.startsWith('Bearer ') ? header.slice(7).trim() : null;
+};
+
+const isAdminRequest = (request: NextRequest) => {
+  const token = getBearer(request);
   const secret = process.env.ADMIN_TOKEN;
   return Boolean(secret && token && token === secret);
+};
+
+const resolveRequester = async (request: NextRequest) => {
+  const bearer = getBearer(request);
+  if (bearer) {
+    if (isAdminRequest(request)) return { isAdmin: true };
+    const apiUser = await verifyApiToken(bearer);
+    if (apiUser) return { isAdmin: false, userId: apiUser.id, name: apiUser.name, email: apiUser.email };
+  }
+
+  const session = await getAuthSession();
+  if (session?.user?.id) {
+    return {
+      isAdmin: false,
+      userId: session.user.id,
+      name: session.user.name ?? undefined,
+      email: session.user.email ?? undefined,
+    };
+  }
+
+  return null;
 };
 
 export async function GET(request: NextRequest) {
@@ -62,12 +89,23 @@ export async function GET(request: NextRequest) {
 type PostBody = {
   raw?: string;
   submittedBy?: string;
+  submittedByUserId?: string;
   item?: ItemInput;
   items?: ItemInput[];
   overrides?: Record<string, Partial<ItemInput>>;
 } & ItemInput;
 
+const applyRequester = (item: ItemInput, requester: Awaited<ReturnType<typeof resolveRequester>>): ItemInput => {
+  if (!requester?.userId) return item;
+  return {
+    ...item,
+    submittedByUserId: requester.userId,
+    submittedBy: requester.name ?? item.submittedBy ?? requester.email ?? undefined,
+  };
+};
+
 export async function POST(request: NextRequest) {
+  const requester = await resolveRequester(request);
   let payload: PostBody;
 
   try {
@@ -79,11 +117,14 @@ export async function POST(request: NextRequest) {
   // 1) Client-supplied parsed items (keeps IDs/overrides intact)
   if (Array.isArray(payload.items) && payload.items.length) {
     const normalizedItems: Item[] = [];
-    const submitter = payload.submittedBy?.trim();
+    const submitter = requester?.userId
+      ? requester.name ?? payload.submittedBy?.trim() ?? requester.email ?? 'Unnamed'
+      : payload.submittedBy?.trim();
     const overrides = payload.overrides ?? {};
 
     for (const incoming of payload.items) {
-      const normalized = normalizeItemInput(incoming);
+      const incomingWithSubmitter = applyRequester({ ...incoming, submittedBy: submitter ?? incoming.submittedBy }, requester);
+      const normalized = normalizeItemInput(incomingWithSubmitter);
       if (!normalized.ok) {
         return withCors(NextResponse.json({ message: normalized.message }, { status: 400 }));
       }
@@ -99,6 +140,7 @@ export async function POST(request: NextRequest) {
       normalizedItems.push({
         ...item,
         submittedBy: submitter ?? item.submittedBy,
+        submittedByUserId: requester?.userId ?? item.submittedByUserId,
         droppedBy: override.droppedBy?.trim() ?? item.droppedBy?.trim(),
         worn: mergedWorn,
       });
@@ -113,7 +155,9 @@ export async function POST(request: NextRequest) {
   // 2) Raw identify dump -> multiple items (fallback path)
   const cleanedInput = payload?.raw?.trim();
   if (cleanedInput) {
-    const submitter = payload.submittedBy?.trim();
+    const submitter = requester?.userId
+      ? requester.name ?? payload.submittedBy?.trim() ?? requester.email ?? 'Unnamed'
+      : payload.submittedBy?.trim();
     const parsedItems = parseIdentifyDump(cleanedInput);
     if (parsedItems.length) {
       const overrides = payload.overrides ?? {};
@@ -133,6 +177,7 @@ export async function POST(request: NextRequest) {
         return {
           ...item,
           submittedBy: submitter ?? item.submittedBy,
+          submittedByUserId: requester?.userId ?? item.submittedByUserId,
           droppedBy: override.droppedBy?.trim() ?? item.droppedBy?.trim(),
           worn: mergedWorn,
         };
@@ -147,7 +192,7 @@ export async function POST(request: NextRequest) {
   }
 
   // 2) Direct single-item submission
-  const candidateItem = payload.item ?? payload;
+  const candidateItem = applyRequester(payload.item ?? payload, requester);
   const normalized = normalizeItemInput(candidateItem);
   if (!normalized.ok) {
     return withCors(NextResponse.json({ message: normalized.message }, { status: 400 }));
@@ -162,7 +207,7 @@ export async function POST(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   // Only admins can directly overwrite items via the PATCH endpoint
-  if (!isAuthorized(request)) {
+  if (!isAdminRequest(request)) {
     return withCors(NextResponse.json({ message: 'Unauthorized' }, { status: 401 }));
   }
 
@@ -197,7 +242,7 @@ export async function PATCH(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   // Require admin token to clear the database
   // Note: returning 401 rather than 403 to avoid leaking existence of the endpoint
-  if (!isAuthorized(request)) {
+  if (!isAdminRequest(request)) {
     return withCors(NextResponse.json({ message: 'Unauthorized' }, { status: 401 }));
   }
 

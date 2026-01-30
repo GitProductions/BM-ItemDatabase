@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { useSession } from 'next-auth/react';
 import { Item } from '@/types/items';
 
 const AppDataContext = createContext<{
@@ -13,20 +14,34 @@ const AppDataContext = createContext<{
 } | null>(null);
 
 export function AppDataProvider({ children }: { children: React.ReactNode }) {
+  const { data: session } = useSession();
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [userName, setUserName] = useState<string>('');
 
-  const handleSetUserName = useCallback((name: string) => {
-    setUserName(name);
-    localStorage.setItem('bm-database-userName', name);
-  }, []);
+  const handleSetUserName = useCallback(
+    (name: string) => {
+      if (session?.user?.name) {
+        setUserName(session.user.name);
+        return;
+      }
+      setUserName(name);
+      localStorage.setItem('bm-database-userName', name);
+    },
+    [session?.user?.name],
+  );
 
   useEffect(() => {
+    const sessionName = session?.user?.name;
+    if (sessionName) {
+      setUserName(sessionName);
+      localStorage.setItem('bm-database-userName', sessionName);
+      return;
+    }
     const storedUserName = localStorage.getItem('bm-database-userName') || '';
-    handleSetUserName(storedUserName);
-    }, [handleSetUserName]);
+    setUserName(storedUserName);
+  }, [session?.user?.name]);
 
 
 

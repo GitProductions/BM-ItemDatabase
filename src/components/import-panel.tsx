@@ -12,6 +12,7 @@ import { Item } from '@/types/items';
 import { SLOT_OPTIONS, guessSlot } from '@/lib/slots';
 import { getRandomOrcPhrase } from '@/lib/orc-phrases';
 import { useAppData } from '@/components/app-provider';
+import { useSession } from 'next-auth/react';
 
 type ImportPanelProps = {
   rawInput: string;
@@ -47,7 +48,9 @@ export const ImportPanel: React.FC<ImportPanelProps> = ({
   overrides = {},
   duplicateCheck,
 }) => {
+  const { data: session } = useSession();
   const { userName, handleSetUserName } = useAppData();
+  const lockedName = Boolean(session?.user?.name);
 
   const resolveName = (item: Item) => {
     const override = overrides[item.id] ?? {};
@@ -160,9 +163,14 @@ export const ImportPanel: React.FC<ImportPanelProps> = ({
               value={userName}
               onChange={(event) => handleSetUserName(event.target.value)}
               placeholder="e.g. Jaela, Merchants Guild"
+              disabled={lockedName}
               // size="sm"
             />
-            <p className="text-[11px] text-zinc-500">Assigning a name gives you a way to edit this entry later & you get street cred...</p>
+            <p className="text-[11px] text-zinc-500">
+              {lockedName
+                ? 'Using your account name for submissions.'
+                : 'Assigning a name gives you a way to edit this entry later & you get street cred...'}
+            </p>
           </div>
 
           <TextArea
