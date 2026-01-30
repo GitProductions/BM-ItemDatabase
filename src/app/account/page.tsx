@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useSession, signIn, signOut } from 'next-auth/react';
 import Button from '@/components/ui/Button';
 import { Item } from '@/types/items';
+import SuggestionModal from '@/components/modals/SuggestionModal';
 
 type Token = { id: string; label: string | null; createdAt: string; lastUsedAt: string | null };
 
@@ -15,7 +16,12 @@ export default function AccountPage() {
   const [newToken, setNewToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<Item | null>(null);
+  const [submitFeedback, setSubmitFeedback] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
+  // Load user's API tokens
   const loadTokens = async () => {
     const res = await fetch('/api/tokens', { cache: 'no-store' });
     if (!res.ok) throw new Error('Unable to load tokens');
@@ -23,6 +29,7 @@ export default function AccountPage() {
     setTokens(data.tokens);
   };
 
+  // Load user's submitted items
   const loadItems = async () => {
     const res = await fetch('/api/user/items', { cache: 'no-store' });
     if (!res.ok) throw new Error('Unable to load your items');
@@ -30,12 +37,14 @@ export default function AccountPage() {
     setItems(data.items);
   };
 
+  // Load User data on session change
   useEffect(() => {
     if (status !== 'authenticated') return;
     setError(null);
     Promise.all([loadTokens(), loadItems()]).catch((err) => setError(err instanceof Error ? err.message : 'Failed to load account data'));
   }, [status]);
 
+  // create new auth token for user
   const handleCreateToken = async () => {
     setLoading(true);
     setError(null);
@@ -49,10 +58,12 @@ export default function AccountPage() {
         const body = await res.json().catch(() => ({}));
         throw new Error(body.message ?? 'Unable to create token');
       }
+
       const data = (await res.json()) as { token: string };
       setNewToken(data.token);
       setTokenLabel('');
       await loadTokens();
+
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to create token');
     } finally {
@@ -60,6 +71,7 @@ export default function AccountPage() {
     }
   };
 
+  // revoke auth tokens for user
   const handleRevoke = async (id: string) => {
     setLoading(true);
     try {
@@ -74,6 +86,46 @@ export default function AccountPage() {
     }
   };
 
+  // Handle opening suggestion modal for item
+  const openSuggestion = (item: Item) => {
+    setSelectedItem(item);
+    setSubmitFeedback(null);
+    setModalOpen(true);
+  };
+
+
+  // Handling suggestion aka item edit submission
+  const handleSuggestionSubmit = async (payload: { proposer?: string; note: string; reason?: string }) => {
+    if (!selectedItem) return;
+    setSubmitting(true);
+    setSubmitFeedback(null);
+    try {
+      const res = await fetch('/api/suggestions', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          itemId: selectedItem.id,
+          note: payload.note,
+          proposer: payload.proposer,
+          reason: payload.reason,
+        }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.message ?? 'Failed to submit suggestion');
+      }
+      setSubmitFeedback('Suggestion sent for review. Thanks!');
+      await loadItems();
+      setModalOpen(false);
+    } catch (err) {
+      setSubmitFeedback(err instanceof Error ? err.message : 'Could not submit suggestion.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+
+  // Check session status
   if (status === 'loading') {
     return <p className="text-center text-zinc-400">Checking your session…</p>;
   }
@@ -176,13 +228,30 @@ export default function AccountPage() {
                       {item.type} • keywords: {item.keywords || 'n/a'}
                     </p>
                   </div>
-                  <span className="text-[11px] text-zinc-400">Updated {item.submissionCount ?? ''}</span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-[11px] text-zinc-400">Updated {item.submissionCount ?? ''}</span>
+                    <Button size="sm" variant="secondary" onClick={() => openSuggestion(item)}>
+                      Edit
+                    </Button>
+                  </div>
                 </div>
               </div>
             ))}
           </div>
         )}
       </section>
+
+      <SuggestionModal
+        item={selectedItem}
+        open={modalOpen}
+        feedback={submitFeedback}
+        isSubmitting={submitting}
+        onClose={() => setModalOpen(false)}
+        onSubmit={handleSuggestionSubmit}
+        hideAdminControls
+        hideNameInput
+        proposerLocked={session.user?.name ?? session.user?.email ?? undefined}
+      />
     </div>
   );
 }
