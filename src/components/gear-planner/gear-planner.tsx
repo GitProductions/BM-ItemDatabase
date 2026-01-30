@@ -10,6 +10,7 @@ import { SLOT_CONFIG, matchesSlot, slotMatchRank } from '@/lib/slots';
 import Input from '../ui/Input';
 import Button from '../ui/Button';
 import { normalize } from './util';
+import Image from 'next/image';
 
 const defaultGearState: Selected = SLOT_CONFIG.reduce((acc, slot) => {
   acc[slot.key] = null;
@@ -223,7 +224,7 @@ export const GearPlanner: React.FC<GearPlannerProps> = ({ items }) => {
         <div>
           <h2 className="text-xl font-bold text-white">Equipment & Stats</h2>
           <p className="text-sm text-zinc-400">
-            Assign gear from the Item-DB and see a compact rollup of AC, damage, and weight.
+            Assign gear from the Item-DB and see a compact rollup of AC, damage, item-stats, and weight.
           </p>
         </div>
       </div>
@@ -232,6 +233,19 @@ export const GearPlanner: React.FC<GearPlannerProps> = ({ items }) => {
 
       <div className="rounded-2xl border border-zinc-800 bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950 shadow-2xl p-4">
         <div className="grid lg:grid-cols-[1.35fr,0.9fr] gap-6 items-start">
+
+
+          {/* Image backdrop */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] pointer-events-none opacity-[0.03]">
+            <Image 
+              src="/bm-logo.webp"
+              alt="Background Logo"
+              width={800}
+              height={800}
+              loading="eager"    
+            />
+          </div>
+
         
           {/* Equipment Layout Panel */}
           <div className="relative rounded-xl border border-zinc-800 bg-gradient-to-b from-orange-900/10 via-zinc-900/40 to-zinc-950/80 p-5 overflow-hidden">
@@ -396,7 +410,9 @@ export const GearPlanner: React.FC<GearPlannerProps> = ({ items }) => {
 
           {/* When an item is selected, populate Item Selection Panel */}
           {/* Perhaps we can make this show only when an item is hovered over or clicked on? */}
-          
+
+
+
           {/* Item Selection Panel */}
           <div className="space-y-3 rounded-xl border border-zinc-800 bg-zinc-950/80 p-4 shadow-inner">
             <div className="flex items-center justify-between gap-3">
