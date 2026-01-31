@@ -2,6 +2,7 @@ import type { NextAuthOptions, User } from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import Discord from 'next-auth/providers/discord';
 import { getServerSession } from 'next-auth';
+import { headers } from 'next/headers';
 import { ensureOAuthUser, findUserByEmail, findUserById, updateUserIp, verifyPassword } from './auth-store';
 import { hashIp } from './ip-hash';
 
@@ -33,8 +34,15 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async signIn({ account, profile, req }) {
+    async signIn({ account, profile }) {
       if (account?.provider === 'discord' && profile) {
+        const ipHeader = await headers();
+        const ip =
+          ipHeader.get('x-real-ip')
+          ?? ipHeader.get('cf-connecting-ip')
+          ?? '0.0.0.0';
+        const ipHash = hashIp(ip);
+
         try {
           await ensureOAuthUser('discord', {
             id: String(account.providerAccountId),
@@ -43,10 +51,9 @@ export const authOptions: NextAuthOptions = {
               ?? (profile as { username?: string }).username
               ?? (profile as { name?: string }).name
               ?? undefined,
-            lastIpHash: hashIp(req?.headers?.get('x-real-ip') ?? '0.0.0.0'),
+            lastIpHash: ipHash,
           });
           if (account.providerAccountId) {
-            const ipHash = hashIp(req?.headers?.get('x-real-ip') ?? '0.0.0.0');
             await updateUserIp(`discord:${account.providerAccountId}`, ipHash);
           }
         } catch (error) {

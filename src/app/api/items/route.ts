@@ -232,6 +232,7 @@ export async function PATCH(request: NextRequest) {
     normalizedItems.push(normalized.item);
   }
 
+  const ipHash = hashIp(request.headers.get('x-real-ip') ?? '0.0.0.0');
   await upsertItems(normalizedItems, { submissionIpHash: ipHash });
   clearCache();
 

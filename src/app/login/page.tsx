@@ -71,9 +71,9 @@ export default function LoginPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-white">{mode === 'login' ? 'Sign in' : 'Create account'}</h1>
-          <p className="text-sm text-zinc-400">
+          {/* <p className="text-sm text-zinc-400">
             Use your account to auto-fill submissions, manage items, and get API tokens.
-          </p>
+          </p> */}
         </div>
 
         <Button
@@ -84,7 +84,7 @@ export default function LoginPage() {
             setStatus(null);
           }}
         >
-          {mode === 'login' ? 'Need an account?' : 'Already registered?'}
+          {mode === 'login' ? 'Create Account' : 'Already registered?'}
         </Button>
       </div>
 
