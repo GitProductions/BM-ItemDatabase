@@ -1,0 +1,23 @@
+[
+       {
+              "name": "ITEM-DB - Search",
+              "isActive": "yes",
+              "regex": "^search-db\\s+(.+)$",
+              "script": "",
+              "isFolder": "no"
+       },
+       {
+              "name": "ITEM-DB capture-item-button",
+              "isActive": "yes",
+              "regex": "itemdbcapture",
+              "script": "",
+              "isFolder": "no"
+       },
+       {
+              "name": "ITEM-DB token setter",
+              "isActive": "yes",
+              "regex": "^item-db-token\\s+(.+)$",
+              "script": "",
+              "isFolder": "no"
+       }
+]
