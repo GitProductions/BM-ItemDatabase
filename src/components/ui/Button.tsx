@@ -1,4 +1,5 @@
 import React, { ComponentPropsWithoutRef, ElementType, forwardRef } from 'react';
+import { twMerge } from 'tailwind-merge';
 
 const VARIANT_STYLES = {
   primary: 'bg-orange-500 text-black hover:bg-orange-400 hover:text-black focus:ring-orange-500',
@@ -30,9 +31,8 @@ type PolymorphicProps<C extends ElementType> = {
   endIcon?: React.ReactNode;
 } & Omit<ComponentPropsWithoutRef<C>, 'as' | 'size'>;
 
-function cn(...parts: Array<string | undefined | false>) {
-  return parts.filter(Boolean).join(' ');
-}
+const cn = (...parts: Array<string | undefined | false>) =>
+  twMerge(...parts.filter(Boolean));
 
 const Button = forwardRef<HTMLButtonElement, PolymorphicProps<'button'>>(
   (

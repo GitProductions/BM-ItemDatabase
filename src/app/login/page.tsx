@@ -67,103 +67,113 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="max-w-xl mx-auto bg-zinc-900 border border-zinc-800 rounded-xl p-8 shadow-xl">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-white">{mode === 'login' ? 'Sign in' : 'Create account'}</h1>
-          {/* <p className="text-sm text-zinc-400">
-            Use your account to auto-fill submissions, manage items, and get API tokens.
-          </p> */}
-        </div>
-
-        <Button
-          type="button"
-          className="text-xs px-3 py-2"
-          onClick={() => {
-            setMode(mode === 'login' ? 'register' : 'login');
-            setStatus(null);
-          }}
-        >
-          {mode === 'login' ? 'Create Account' : 'Already registered?'}
-        </Button>
-      </div>
+    <div className="flex items-center justify-center px-4 py-12">
+      <div className="w-full max-w-3xl ">
 
 
-      <div className="mb-4">
-        <Button
-          type="button"
-          variant="secondary"
-          fullWidth
-          onClick={() => signIn('discord', { callbackUrl: '/' })}
-          className="justify-center bg-[#5865F2] hover:bg-[#4854c7] text-white"
-        >
-          Continue with Discord
-        </Button>
-        <div className="text-center text-xs text-zinc-500 mt-2">We never see your Discord password.</div>
-      </div>
+        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 shadow-xl shadow-black/40 backdrop-blur-sm">
+          <div className="flex items-start justify-between gap-4 mb-6">
+            <div>
+              <h1 className="text-2xl font-bold text-white">{mode === 'login' ? 'Sign in' : 'Create account'}</h1>
+              <p className="text-sm text-zinc-400">
+                Use your email or continue with Discord.
+              </p>
+            </div>
 
-      <form className="space-y-4" onSubmit={handleSubmit}>
-        {mode === 'register' && (
-          <div className="space-y-1">
-            <label className="text-sm text-zinc-200">Display name</label>
-            <Input
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              placeholder="e.g. Jaela"
-              required
-              disabled={busy}
-            />
+            <button
+              type="button"
+              className="text-xs font-semibold text-indigo-300 hover:text-indigo-200 underline underline-offset-4"
+              onClick={() => {
+                setMode(mode === 'login' ? 'register' : 'login');
+                setStatus(null);
+              }}
+            >
+              {mode === 'login' ? 'Need an account?' : 'Have an account?'}
+            </button>
           </div>
-        )}
 
-        <div className="space-y-1">
-          <label className="text-sm text-zinc-200">Email</label>
-          <Input
-            type="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            placeholder="you@example.com"
-            required
-            disabled={busy}
-          />
-        </div>
-
-        <div className="space-y-1">
-          <label className="text-sm text-zinc-200">Password</label>
-          <Input
-            type="password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            placeholder="••••••••"
-            required
-            disabled={busy}
-            minLength={8}
-          />
-        </div>
-
-        {status ? (
-          <div className="rounded-lg border border-rose-800 bg-rose-900/30 px-4 py-3 space-y-2">
-            <div className="flex items-start gap-3">
-              <Image
-                src="/no-results.png"
-                alt="Half-orc disapproves"
-                width={64}
-                height={64}
-                className="rounded-md border border-rose-800/60 bg-rose-950"
-              />
-              <div className="space-y-1">
-                <p className="text-sm text-rose-200 font-semibold">Login failed</p>
-                <p className="text-sm text-rose-300">{status}</p>
-                {orcLine ? <p className="text-xs text-rose-200/90 font-mono">{orcLine}</p> : null}
-              </div>
+          <div className="space-y-3 mb-6">
+            <Button
+              fullWidth
+              onClick={() => signIn('discord', { callbackUrl: '/' })}
+              className="justify-center bg-indigo-500 hover:bg-indigo-600 hover:text-white text-white"
+            >
+              Continue with Discord
+            </Button>
+            <div className="flex items-center gap-3 text-zinc-500 text-xs">
+              <div className="h-px flex-1 bg-zinc-800" />
+              <span>or</span>
+              <div className="h-px flex-1 bg-zinc-800" />
             </div>
           </div>
-        ) : null}
 
-        <Button type="submit" disabled={busy} className="w-full justify-center">
-          {busy ? 'Working...' : mode === 'login' ? 'Sign in' : 'Create account & sign in'}
-        </Button>
-      </form>
+          <form className="space-y-4" onSubmit={handleSubmit}>
+            {mode === 'register' && (
+              <div className="space-y-1">
+                <label className="text-sm text-zinc-200">Display name</label>
+                <Input
+                  value={name}
+                  onChange={(event) => setName(event.target.value)}
+                  placeholder="e.g. Jaela"
+                  required
+                  disabled={busy}
+                />
+              </div>
+            )}
+
+            <div className="space-y-1">
+              <label className="text-sm text-zinc-200">Email</label>
+              <Input
+                type="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                placeholder="you@example.com"
+                required
+                disabled={busy}
+              />
+            </div>
+
+            <div className="space-y-1">
+              <div className="flex items-center justify-between text-sm">
+                <label className="text-zinc-200">Password</label>
+                <span className="text-xs text-zinc-500">Min 8 characters</span>
+              </div>
+              <Input
+                type="password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                placeholder="••••••••"
+                required
+                disabled={busy}
+                minLength={8}
+              />
+            </div>
+
+            {status ? (
+              <div className="rounded-lg border border-rose-800 bg-rose-900/30 px-4 py-3 space-y-2">
+                <div className="flex items-start gap-3">
+                  <Image
+                    src="/no-results.png"
+                    alt="Half-orc disapproves"
+                    width={64}
+                    height={64}
+                    className="rounded-md border border-rose-800/60 bg-rose-950"
+                  />
+                  <div className="space-y-1">
+                    <p className="text-sm text-rose-200 font-semibold">Login failed</p>
+                    <p className="text-sm text-rose-300">{status}</p>
+                    {orcLine ? <p className="text-xs text-rose-200/90 font-mono">{orcLine}</p> : null}
+                  </div>
+                </div>
+              </div>
+            ) : null}
+
+            <Button type="submit" disabled={busy} className="w-full justify-center">
+              {busy ? 'Working...' : mode === 'login' ? 'Sign in' : 'Create account & sign in'}
+            </Button>
+          </form>
+        </div>
+      </div>
     </div>
   );
 }
