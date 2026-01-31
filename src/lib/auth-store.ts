@@ -239,9 +239,19 @@ export const createApiToken = async (params: { userId: string; label?: string })
   const db = await getDatabase();
   await ensureSchema(db);
 
+  // Ensure user exists to satisfy FK constraint
+  const user = await findUserById(params.userId);
+  if (!user) {
+    throw new Error('Cannot create token: user not found');
+  }
+
+  // Enforce single active token per user: revoke any existing active tokens
+  const now = new Date().toISOString();
+  await db.prepare('UPDATE api_tokens SET revokedAt = ?1 WHERE userId = ?2 AND revokedAt IS NULL;').bind(now, params.userId).run();
+
   const token = randomBytes(32).toString('hex');
   const tokenHash = hashToken(token);
-  const now = new Date().toISOString();
+
   const id = generateId();
 
   await db

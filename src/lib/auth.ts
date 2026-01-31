@@ -64,12 +64,40 @@ export const authOptions: NextAuthOptions = {
       return true;
     },
     
-    async jwt({ token, user, trigger, session }) {
+    async jwt({ token, user, account, profile, trigger, session }) {
       if (user) {
+        // Credentials flow provides a full user record
         token.id = user.id;
         token.name = user.name;
         token.email = user.email;
       }
+
+      // OAuth flow (e.g., Discord) may not populate user.id; derive a stable id
+      if (!token.id && account?.provider === 'discord' && account.providerAccountId) {
+        const discordId = `discord:${account.providerAccountId}`;
+        const profileEmail = (profile as { email?: string })?.email?.toLowerCase();
+
+        // Try to reuse existing user (email-linked or discord-linked) to keep IDs consistent
+        const dbUser =
+          (profileEmail ? await findUserByEmail(profileEmail) : null) ??
+          (await findUserById(discordId));
+
+        if (dbUser) {
+          token.id = dbUser.id;
+          token.email = dbUser.email ?? token.email ?? profileEmail;
+          token.name = dbUser.name ?? token.name;
+        } else {
+          // Fall back to deterministic discord-based id if nothing exists yet
+          token.id = discordId;
+          token.email = token.email ?? profileEmail;
+          token.name =
+            token.name ??
+            (profile as { global_name?: string; username?: string; name?: string })?.global_name ??
+            (profile as { username?: string })?.username ??
+            (profile as { name?: string })?.name;
+        }
+      }
+
       if (trigger === 'update' && session?.name) {
         token.name = session.name as string;
       }

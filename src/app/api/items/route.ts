@@ -107,6 +107,17 @@ const applyRequester = (item: ItemInput, requester: Awaited<ReturnType<typeof re
 
 export async function POST(request: NextRequest) {
   const requester = await resolveRequester(request);
+  if (!requester) {
+    return withCors(
+      NextResponse.json(
+        {
+          message: 'Authentication required: provide a valid API token in Authorization: Bearer <token> or sign in with a session',
+        },
+        { status: 401 },
+      ),
+    );
+  }
+
   const ipHash = hashIp(request.headers.get('x-real-ip') ?? '0.0.0.0');
   let payload: PostBody;
 

@@ -7,6 +7,7 @@ import { Item } from '@/types/items';
 import EditModal from '@/components/modals/EditModal';
 import UserIcon from '@/components/ui/UserIcon';
 import Pagination from '@/components/ui/Pagination';
+import { Pencil } from 'lucide-react';
 
 type Token = { id: string; label: string | null; createdAt: string; lastUsedAt: string | null };
 
@@ -23,8 +24,9 @@ export default function AccountPage() {
   
   // User Tokens
   const [tokens, setTokens] = useState<Token[]>([]);
-  const [tokenLabel, setTokenLabel] = useState('');
   const [newToken, setNewToken] = useState<string | null>(null);
+  const [showToken, setShowToken] = useState(true);
+  const [copyStatus, setCopyStatus] = useState<string | null>(null);
 
   // Edit Item Modal state
   const [modalOpen, setModalOpen] = useState(false);
@@ -33,6 +35,7 @@ export default function AccountPage() {
   const [submitting, setSubmitting] = useState(false);
 
   // Name Change state
+  const [nameEditing, setNameEditing] = useState(false);
   const [nameSaving, setNameSaving] = useState(false);
   const [nameStatus, setNameStatus] = useState<string | null>(null);
 
@@ -73,7 +76,7 @@ export default function AccountPage() {
       const res = await fetch('/api/tokens', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ label: tokenLabel || undefined }),
+        body: JSON.stringify({ label: 'mudlet' }),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
@@ -82,7 +85,9 @@ export default function AccountPage() {
 
       const data = (await res.json()) as { token: string };
       setNewToken(data.token);
-      setTokenLabel('');
+      setShowToken(true);
+      setCopyStatus(null);
+      // setTokenLabel('');
       await loadTokens();
 
     } catch (err) {
@@ -113,6 +118,7 @@ export default function AccountPage() {
       setNameStatus('Name cannot be empty.');
       return;
     }
+    setNameEditing(false);
     setNameSaving(true);
     setNameStatus(null);
     try {
@@ -197,23 +203,42 @@ export default function AccountPage() {
           <p className="text-sm text-zinc-400">Signed in as</p>
           <div className="mt-1 mb-3 grid grid-cols-[auto,1fr] items-center gap-4">
             <UserIcon session={session} />
-            {/* <div className="mt-3">
-              {session.user?.image ? (
-                <img
-                  src={session.user.image}
-                  alt="User Avatar"
-                  className="w-16 h-16 rounded-full border border-zinc-700"
-                />
-              ) : (
-                <div className="w-16 h-16 rounded-full border border-zinc-700 bg-zinc-800 flex items-center justify-center text-zinc-500">
-                  No Image
-                </div>
-              )}
-            </div> */}
+
             <div>
-              <p className="text-xl font-semibold text-white">{session.user?.name}</p>
+
+              {/* <p className="text-xl font-semibold text-white">{session.user?.name}</p> */}
+          
+
+                {/* Showing input when user wants to change display name */}
+
+                {nameEditing ? (
+                  <div className="flex flex-col sm:flex-row gap-2">
+                      <input
+                        className="flex-1 rounded-md bg-zinc-950 border border-zinc-800 px-3 py-2 text-sm"
+                        value={displayName}
+                        onChange={(e) => setDisplayName(e.target.value)}
+                        disabled={nameSaving}
+                      />
+                      <Button onClick={handleNameSave} disabled={nameSaving} variant="primary">
+                        {nameSaving ? 'Saving…' : 'Save'}
+                      </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <p className="text-xl font-semibold text-white">{session.user?.name || session.user?.email}</p>
+                  <Button 
+                    variant="secondary" 
+                    className="ms-2 p-1 text-sm rounded-md text-zinc-400 hover:underline" 
+                    onClick={() => setNameEditing(true)}
+                  >
+                    <Pencil size={12} className="inline mb-0.5 " /> 
+                  </Button>
+                  </div>
+                )}
+
               <p className="text-sm text-zinc-500">{session.user?.email}</p>
             </div>
+
           </div>
         </div>
         <Button variant="danger" onClick={() => signOut({ callbackUrl: '/' })} >
@@ -221,11 +246,11 @@ export default function AccountPage() {
         </Button>
       </div>
 
-
-      <section className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 space-y-3">
+      {/* User Name change (OLD) */}
+      {/* <section className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 space-y-3">
         <h2 className="text-lg font-semibold text-white">Display name</h2>
         <p className="text-sm text-zinc-400">
-          Shown on your submissions. Set this to your in-game name if you like.
+          Shown on your submissions. Set this to your in-game name.
         </p>
         <div className="flex flex-col sm:flex-row gap-2">
           <input
@@ -239,10 +264,11 @@ export default function AccountPage() {
           </Button>
         </div>
         {nameStatus ? <p className="text-xs text-amber-300">{nameStatus}</p> : null}
-      </section>
+      </section> */}
 
       {error ? <div className="text-sm text-rose-400 bg-rose-900/20 border border-rose-800 rounded-md px-3 py-2">{error}</div> : null}
 
+      {/* API Token Section */}
       <section className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 space-y-4">
         <div className="flex items-center justify-between">
           <div>
@@ -251,27 +277,53 @@ export default function AccountPage() {
           </div>
         </div>
 
+        {/*  When new token is created */}
         {newToken ? (
-          <div className="rounded-md border border-emerald-700 bg-emerald-900/20 px-3 py-2 text-sm text-emerald-200">
-            Copy this token now: <span className="font-mono">{newToken}</span>
+          <div className="rounded-md border border-emerald-700 bg-emerald-900/20 px-3 py-2 text-sm text-emerald-200 flex items-center justify-between gap-3">
+            <div>
+              Copy this token now:{' '}
+              <span className="font-mono">
+                {showToken ? newToken : '••••••••••••••••••••••••••••••••'}
+              </span>
+              {copyStatus ? <span className="ml-2 text-emerald-300">{copyStatus}</span> : null}
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={async () => {
+                  if (!newToken) return;
+                  try {
+                    await navigator.clipboard.writeText(newToken);
+                    setCopyStatus('Copied');
+                    setTimeout(() => setCopyStatus(null), 2000);
+                  } catch (err) {
+                    setCopyStatus('Copy failed');
+                    setTimeout(() => setCopyStatus(null), 2000);
+                  }
+                }}
+              >
+                Copy
+              </Button>
+              <Button size="sm" variant="secondary" onClick={() => setShowToken((s) => !s)}>
+                {showToken ? 'Hide' : 'Show'}
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => setNewToken(null)}>
+                Dismiss
+              </Button>
+            </div>
           </div>
         ) : null}
 
         <div className="flex gap-2 items-end">
-          <div className="flex-1">
-            <label className="text-sm text-zinc-300">Label (optional)</label>
-            <input
-              className="w-full rounded-md bg-zinc-950 border border-zinc-800 px-3 py-2 text-sm"
-              value={tokenLabel}
-              onChange={(event) => setTokenLabel(event.target.value)}
-              disabled={loading}
-            />
-          </div>
-          <Button onClick={handleCreateToken} disabled={loading} variant="primary">
-            {loading ? 'Working…' : 'Create token'}
-          </Button>
+          {tokens.length === 0 && (
+            <Button onClick={handleCreateToken} disabled={loading} variant="primary">
+              {loading ? 'Working…' : 'Create token'}
+            </Button>
+          )}
         </div>
 
+        {/* Active token display */}
         <div className="space-y-2">
           {tokens.length === 0 ? (
             <p className="text-sm text-zinc-500">No active tokens yet.</p>
@@ -295,15 +347,21 @@ export default function AccountPage() {
             ))
           )}
         </div>
+
       </section>
 
+
+      {/* User's submitted items */}
       <section className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-white">Your submissions</h2>
+
           <Button variant="primary" onClick={loadItems} disabled={loading}>
             Refresh
           </Button>
+
         </div>
+        
         {items.length === 0 ? (
           <p className="text-sm text-zinc-500">Nothing yet. Add items to see them here.</p>
         ) : (
@@ -333,6 +391,8 @@ export default function AccountPage() {
         </div>
       </section>
 
+
+      {/* Edit modal for submitted items */}
       <EditModal
         item={selectedItem}
         open={modalOpen}
