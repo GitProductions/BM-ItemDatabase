@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createUser, findUserByEmail } from '@/lib/auth-store';
 import { withCors } from '@/lib/items-api';
+import { hashIp } from '@/lib/ip-hash';
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,7 +24,10 @@ export async function POST(request: NextRequest) {
       return withCors(NextResponse.json({ message: 'That email is already registered.' }, { status: 409 }));
     }
 
-    const user = await createUser({ email, name, password });
+    const ip = request.headers.get('x-real-ip') ?? '0.0.0.0';
+    const ipHash = hashIp(ip);
+
+    const user = await createUser({ email, name, password, lastIpHash: ipHash });
     return withCors(NextResponse.json({ user: { id: user.id, email: user.email, name: user.name } }, { status: 201 }));
   } catch (error) {
     console.error('Register error', error);

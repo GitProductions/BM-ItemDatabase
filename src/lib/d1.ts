@@ -112,7 +112,8 @@ const ensureSchema = async (db: D1Database) => {
             submittedByUserId TEXT,
             submittedAt TEXT NOT NULL,
             delta TEXT,
-            raw TEXT
+            raw TEXT,
+            ipHash TEXT
           );
         `,
         )
@@ -138,6 +139,7 @@ const ensureSchema = async (db: D1Database) => {
       await db.prepare('ALTER TABLE items ADD COLUMN droppedBy TEXT;').run().catch(() => {});
       await db.prepare('ALTER TABLE items ADD COLUMN worn TEXT;').run().catch(() => {});
       await db.prepare('ALTER TABLE submissions ADD COLUMN submittedByUserId TEXT;').run().catch(() => {});
+      await db.prepare('ALTER TABLE submissions ADD COLUMN ipHash TEXT;').run().catch(() => {});
 
       await db
         .prepare(
@@ -496,7 +498,7 @@ export const fetchItems = async (): Promise<Item[]> => searchItems();
 // Insert into Items table with upsert on unique identity (name, keywords, type)
 // We update all fields on conflict to ensure latest data is stored
 // including flags, stats, ego, isArtifact, raw, flaggedForReview, duplicateOf, and updatedAt
-export const upsertItems = async (items: Item[]) => {
+export const upsertItems = async (items: Item[], context?: { submissionIpHash?: string | null }) => {
   if (!items.length) return;
 
   const db = await getDatabase();
@@ -659,8 +661,8 @@ export const upsertItems = async (items: Item[]) => {
       return db
         .prepare(
           `
-          INSERT INTO submissions (id, itemId, identityKey, submittedBy, submittedByUserId, submittedAt, delta, raw)
-          VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8);
+          INSERT INTO submissions (id, itemId, identityKey, submittedBy, submittedByUserId, submittedAt, delta, raw, ipHash)
+          VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9);
         `,
         )
         .bind(
@@ -672,6 +674,7 @@ export const upsertItems = async (items: Item[]) => {
           now,
           null,
           item.raw ? JSON.stringify(item.raw) : null,
+          context?.submissionIpHash ?? null,
         );
     }),
   );

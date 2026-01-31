@@ -6,6 +6,7 @@ import { Item } from '@/types/items';
 import { clearCache, getCached, setCached } from '@/lib/memory-cache';
 import { getAuthSession } from '@/lib/auth';
 import { verifyApiToken } from '@/lib/auth-store';
+import { hashIp } from '@/lib/ip-hash';
 
 const getBearer = (request: NextRequest) => {
   const header = request.headers.get('authorization');
@@ -106,6 +107,7 @@ const applyRequester = (item: ItemInput, requester: Awaited<ReturnType<typeof re
 
 export async function POST(request: NextRequest) {
   const requester = await resolveRequester(request);
+  const ipHash = hashIp(request.headers.get('x-real-ip') ?? '0.0.0.0');
   let payload: PostBody;
 
   try {
@@ -146,7 +148,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    await upsertItems(normalizedItems);
+    await upsertItems(normalizedItems, { submissionIpHash: ipHash });
     clearCache();
     const items = await searchItems();
     return withCors(NextResponse.json({ items, inserted: normalizedItems.length }));
@@ -183,7 +185,7 @@ export async function POST(request: NextRequest) {
         };
       });
 
-      await upsertItems(merged);
+      await upsertItems(merged, { submissionIpHash: ipHash });
       clearCache();
     }
 
@@ -198,7 +200,7 @@ export async function POST(request: NextRequest) {
     return withCors(NextResponse.json({ message: normalized.message }, { status: 400 }));
   }
 
-  await upsertItems([normalized.item]);
+  await upsertItems([normalized.item], { submissionIpHash: ipHash });
   clearCache();
   const [saved] = await searchItems({ id: normalized.item.id });
 
@@ -230,7 +232,7 @@ export async function PATCH(request: NextRequest) {
     normalizedItems.push(normalized.item);
   }
 
-  await upsertItems(normalizedItems);
+  await upsertItems(normalizedItems, { submissionIpHash: ipHash });
   clearCache();
 
   const saved = normalizedItems.length === 1 ? await searchItems({ id: normalizedItems[0].id }) : null;

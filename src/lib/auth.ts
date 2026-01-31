@@ -2,7 +2,8 @@ import type { NextAuthOptions, User } from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import Discord from 'next-auth/providers/discord';
 import { getServerSession } from 'next-auth';
-import { ensureOAuthUser, findUserByEmail, findUserById, verifyPassword } from './auth-store';
+import { ensureOAuthUser, findUserByEmail, findUserById, updateUserIp, verifyPassword } from './auth-store';
+import { hashIp } from './ip-hash';
 
 export const authOptions: NextAuthOptions = {
   session: { strategy: 'jwt' },
@@ -32,7 +33,7 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async signIn({ account, profile }) {
+    async signIn({ account, profile, req }) {
       if (account?.provider === 'discord' && profile) {
         try {
           await ensureOAuthUser('discord', {
@@ -42,7 +43,12 @@ export const authOptions: NextAuthOptions = {
               ?? (profile as { username?: string }).username
               ?? (profile as { name?: string }).name
               ?? undefined,
+            lastIpHash: hashIp(req?.headers?.get('x-real-ip') ?? '0.0.0.0'),
           });
+          if (account.providerAccountId) {
+            const ipHash = hashIp(req?.headers?.get('x-real-ip') ?? '0.0.0.0');
+            await updateUserIp(`discord:${account.providerAccountId}`, ipHash);
+          }
         } catch (error) {
           console.error('Failed to upsert discord user', error);
           return false;

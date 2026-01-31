@@ -60,13 +60,13 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item }) => {
     if (slots.length) return slots;
     const guessed = guessSlot(item);
 
-    console.log('guessed slot:', guessed);
+  
     return guessed ? canonicalizeSlots([guessed]) : [];
   })();
   const displayDroppedBy = item.droppedBy?.trim();
 
 
-  console.log("ItemDroppedBy:", displayDroppedBy);
+
 
   const stats = item.stats ?? { affects: [], weight: 0 };
   const affects = stats.affects ?? [];

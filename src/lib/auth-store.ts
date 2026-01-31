@@ -21,6 +21,8 @@ export type UserRecord = {
   passwordHash: string;
   createdAt: string;
   updatedAt: string;
+  lastIpHash?: string | null;
+  lastIpAt?: string | null;
 };
 
 export type ApiTokenRecord = {
@@ -44,6 +46,8 @@ let schemaReady: Promise<void> | null = null;
 const ensureSchema = async (db: D1Database) => {
   if (!schemaReady) {
     schemaReady = (async () => {
+
+      // Creating the users table
       await db
         .prepare(
           `
@@ -53,12 +57,16 @@ const ensureSchema = async (db: D1Database) => {
             name TEXT NOT NULL,
             passwordHash TEXT NOT NULL,
             createdAt TEXT NOT NULL,
-            updatedAt TEXT NOT NULL
+            updatedAt TEXT NOT NULL,
+            lastIpHash TEXT,
+            lastIpAt TEXT
           );
         `,
         )
         .run();
 
+      // Preparing API tokens table
+      // Used for authenticating API requests for submitting items
       await db
         .prepare(
           `
@@ -76,8 +84,14 @@ const ensureSchema = async (db: D1Database) => {
         )
         .run();
 
+      // Creating indexes for performance
       await db.prepare('CREATE INDEX IF NOT EXISTS idx_api_tokens_userId ON api_tokens(userId);').run();
       await db.prepare('CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);').run();
+
+
+      // Backfill new columns if missing (added 1/30/2026)
+      await db.prepare('ALTER TABLE users ADD COLUMN lastIpHash TEXT;').run().catch(() => {});
+      await db.prepare('ALTER TABLE users ADD COLUMN lastIpAt TEXT;').run().catch(() => {});
     })();
   }
 
@@ -88,7 +102,15 @@ const hashToken = (token: string) => createHash('sha256').update(token).digest('
 
 const generateId = () => (crypto.randomUUID ? crypto.randomUUID() : randomBytes(16).toString('hex'));
 
-export const createUser = async (params: { email: string; name: string; password: string; id?: string }) => {
+
+// User Management
+export const createUser = async (params: {
+  email: string;
+  name: string;
+  password: string;
+  id?: string;
+  lastIpHash?: string | null;
+}) => {
   const db = await getDatabase();
   await ensureSchema(db);
 
@@ -107,17 +129,30 @@ export const createUser = async (params: { email: string; name: string; password
   await db
     .prepare(
       `
-      INSERT INTO users (id, email, name, passwordHash, createdAt, updatedAt)
-      VALUES (?1, ?2, ?3, ?4, ?5, ?6);
+      INSERT INTO users (id, email, name, passwordHash, createdAt, updatedAt, lastIpHash, lastIpAt)
+      VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8);
     `,
     )
-    .bind(id, email, name, passwordHash, now, now)
+    .bind(id, email, name, passwordHash, now, now, params.lastIpHash ?? null, params.lastIpHash ? now : null)
     .run();
 
-  return { id, email, name, passwordHash, createdAt: now, updatedAt: now } satisfies UserRecord;
+  return {
+    id,
+    email,
+    name,
+    passwordHash,
+    createdAt: now,
+    updatedAt: now,
+    lastIpHash: params.lastIpHash ?? null,
+    lastIpAt: params.lastIpHash ? now : null,
+  } satisfies UserRecord;
 };
 
-export const ensureOAuthUser = async (provider: string, profile: { id: string; email?: string | null; name?: string | null }) => {
+
+export const ensureOAuthUser = async (
+  provider: string,
+  profile: { id: string; email?: string | null; name?: string | null; lastIpHash?: string | null },
+) => {
   const db = await getDatabase();
   await ensureSchema(db);
 
@@ -139,15 +174,25 @@ export const ensureOAuthUser = async (provider: string, profile: { id: string; e
   await db
     .prepare(
       `
-      INSERT INTO users (id, email, name, passwordHash, createdAt, updatedAt)
-      VALUES (?1, ?2, ?3, ?4, ?5, ?6);
+      INSERT INTO users (id, email, name, passwordHash, createdAt, updatedAt, lastIpHash, lastIpAt)
+      VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8);
     `,
     )
-    .bind(userId, email, name, passwordHash, now, now)
+    .bind(userId, email, name, passwordHash, now, now, profile.lastIpHash ?? null, profile.lastIpHash ? now : null)
     .run();
 
-  return { id: userId, email, name, passwordHash, createdAt: now, updatedAt: now } satisfies UserRecord;
+  return {
+    id: userId,
+    email,
+    name,
+    passwordHash,
+    createdAt: now,
+    updatedAt: now,
+    lastIpHash: profile.lastIpHash ?? null,
+    lastIpAt: profile.lastIpHash ? now : null,
+  } satisfies UserRecord;
 };
+
 
 export const findUserByEmail = async (email: string): Promise<UserRecord | null> => {
   const db = await getDatabase();
@@ -167,6 +212,17 @@ export const findUserById = async (id: string): Promise<UserRecord | null> => {
 
 export const verifyPassword = async (password: string, passwordHash: string) => bcrypt.compare(password, passwordHash);
 
+
+export const updateUserIp = async (userId: string, ipHash: string) => {
+  const db = await getDatabase();
+  await ensureSchema(db);
+  const now = new Date().toISOString();
+  await db
+    .prepare('UPDATE users SET lastIpHash = ?1, lastIpAt = ?2, updatedAt = ?2 WHERE id = ?3;')
+    .bind(ipHash, now, userId)
+    .run();
+};
+
 export const updateUserName = async (userId: string, name: string) => {
   const db = await getDatabase();
   await ensureSchema(db);
@@ -177,6 +233,8 @@ export const updateUserName = async (userId: string, name: string) => {
   return trimmed;
 };
 
+
+// API Token Management
 export const createApiToken = async (params: { userId: string; label?: string }) => {
   const db = await getDatabase();
   await ensureSchema(db);
@@ -229,5 +287,6 @@ export const verifyApiToken = async (token: string): Promise<UserRecord | null> 
 
   return findUserById(row.userId);
 };
+
 
 export const hashPersonalToken = hashToken;
