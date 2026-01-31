@@ -6,6 +6,7 @@ import Button from '@/components/ui/Button';
 import { Item } from '@/types/items';
 import EditModal from '@/components/modals/EditModal';
 import UserIcon from '@/components/ui/UserIcon';
+import Pagination from '@/components/ui/Pagination';
 
 type Token = { id: string; label: string | null; createdAt: string; lastUsedAt: string | null };
 
@@ -17,6 +18,8 @@ export default function AccountPage() {
   // Loading and error states
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
   
   // User Tokens
   const [tokens, setTokens] = useState<Token[]>([]);
@@ -56,6 +59,11 @@ export default function AccountPage() {
     setError(null);
     Promise.all([loadTokens(), loadItems()]).catch((err) => setError(err instanceof Error ? err.message : 'Failed to load account data'));
   }, [status, session?.user?.name]);
+
+  // reset pagination when items change
+  useEffect(() => {
+    setPage(1);
+  }, [items.length]);
 
   // create new auth token for user
   const handleCreateToken = async () => {
@@ -300,7 +308,7 @@ export default function AccountPage() {
           <p className="text-sm text-zinc-500">Nothing yet. Add items to see them here.</p>
         ) : (
           <div className="grid gap-2">
-            {items.map((item) => (
+            {items.slice((page - 1) * pageSize, (page - 1) * pageSize + pageSize).map((item) => (
               <div key={item.id} className="rounded-lg border border-zinc-800 bg-zinc-950/50 px-3 py-2">
                 <div className="flex items-center justify-between">
                   <div>
@@ -320,6 +328,9 @@ export default function AccountPage() {
             ))}
           </div>
         )}
+        <div className="pt-3 flex justify-center">
+          <Pagination total={items.length} page={page} pageSize={pageSize} onPageChange={setPage} />
+        </div>
       </section>
 
       <EditModal

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { Filter, Search } from 'lucide-react';
 import { Item } from '@/types/items';
 import { ItemCard } from './item-card';
@@ -8,6 +8,7 @@ import uFuzzy from '@leeoniya/ufuzzy';
 import { getRandomOrcPhrase } from '@/lib/orc-phrases';
 import Input from './ui/Input';
 import Button from './ui/Button';
+import Pagination from './ui/Pagination';
 
 // uFuzzy tuned to allow common typos/transpositions while still ranking well.
 const uf = new uFuzzy({
@@ -32,6 +33,8 @@ export const ItemDB: React.FC<ItemDBProps> = ({ items }) => {
   const [suggestItem, setSuggestItem] = useState<Item | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [suggestFeedback, setSuggestFeedback] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const pageSize = 20;
 
   const uniqueTypes = useMemo(() => {
     const types = new Set(items.map((item) => item.type));
@@ -83,6 +86,15 @@ export const ItemDB: React.FC<ItemDBProps> = ({ items }) => {
     return baseResults.filter((item) => item.type.includes(filterType));
   }, [items, search, filterType]);
 
+  // Reset to first page when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [search, filterType]);
+
+  const total = filteredItems.length;
+  const startIdx = (page - 1) * pageSize;
+  const pageItems = filteredItems.slice(startIdx, startIdx + pageSize);
+
   return (
     <div className="">
       <div className="bg-zinc-900 p-4 rounded-xl border border-zinc-800 shadow-sm flex flex-col md:flex-row gap-4">
@@ -124,30 +136,35 @@ export const ItemDB: React.FC<ItemDBProps> = ({ items }) => {
 
       {/* Items Grid */}
       {filteredItems.length > 0 ? (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4 pt-4">
-        {filteredItems.map((item) => (
-          <div key={item.id} className="relative">
-            <ItemCard item={{ ...item }} />
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4 pt-4">
+            {pageItems.map((item) => (
+              <div key={item.id} className="relative">
+                <ItemCard item={{ ...item }} />
 
-            {/* Suggest Edit Button */}
-            <Button
-              size="sm"
-              onClick={() => {
-                setSuggestItem(item);
-                setSuggestFeedback(null);
-              }}
-              className="absolute bottom-2 left-2 inline-flex items-center gap-1 w-auto z-10
-              md:top-2 md:right-2 md:left-auto md:bottom-auto
-              text-[11px] px-2 py-1 rounded
-              bg-zinc-900/80 border border-zinc-700 text-zinc-300 hover:text-white hover:border-orange-500 hover:bg-transparent 
-              transition-colors"
-            >
-              Edit
-            </Button>
+                {/* Suggest Edit Button */}
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    setSuggestItem(item);
+                    setSuggestFeedback(null);
+                  }}
+                  className="absolute bottom-2 left-2 inline-flex items-center gap-1 w-auto z-10
+                  md:top-2 md:right-2 md:left-auto md:bottom-auto
+                  text-[11px] px-2 py-1 rounded
+                  bg-zinc-900/80 border border-zinc-700 text-zinc-300 hover:text-white hover:border-orange-500 hover:bg-transparent 
+                  transition-colors"
+                >
+                  Edit
+                </Button>
 
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
+          <div className="pt-4 flex justify-center">
+            <Pagination total={total} page={page} pageSize={pageSize} onPageChange={setPage} />
+          </div>
+        </>
       ) : (
 
         // No results found
