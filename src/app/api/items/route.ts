@@ -210,11 +210,11 @@ export async function POST(request: NextRequest) {
       const itemUrls = items
         .filter((item) => storedIds.includes(item.id))
         .map((item) => toItemUrl(item.id, item.keywords));
-      return withCors(NextResponse.json({ items, inserted: parsedItems.length, itemIds: storedIds, itemUrls }));
+      return withCors(NextResponse.json({  inserted: parsedItems.length, itemIds: storedIds, itemUrls }));
     }
 
     const items = await searchItems();
-    return withCors(NextResponse.json({ items, inserted: parsedItems.length, itemIds: [], itemUrls: [] }));
+    return withCors(NextResponse.json({  inserted: parsedItems.length, itemIds: [], itemUrls: [] }));
   }
 
   // 2) Direct single-item submission
