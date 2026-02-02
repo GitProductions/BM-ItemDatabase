@@ -124,7 +124,7 @@ export async function POST(request: NextRequest) {
 
   const ipHash = hashIp(request.headers.get('x-real-ip') ?? '0.0.0.0');
   let payload: PostBody;
-  const toItemUrl = (id: string) => itemUrlFor(request, id);
+  const toItemUrl = (id: string, keywords?: string | null) => itemUrlFor(request, id, keywords);
 
   try {
     payload = (await request.json()) as PostBody;

@@ -1,5 +1,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { Filter, Search } from 'lucide-react';
+import Link from 'next/link';
+import { buildItemPath } from '@/lib/slug';
 import { Item } from '@/types/items';
 import { ItemCard } from './item-card';
 import Image from 'next/image';
@@ -142,6 +144,14 @@ export const ItemDB: React.FC<ItemDBProps> = ({ items }) => {
               <div key={item.id} className="relative">
                 <ItemCard item={{ ...item }} />
 
+                <Link
+                  href={buildItemPath(item.id, item.keywords)}
+                  className="absolute top-2 right-2 inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded
+                  bg-zinc-900/80 border border-zinc-700 text-orange-200 hover:text-white hover:border-orange-500 transition-colors"
+                >
+                  View
+                </Link>
+
                 {/* Suggest Edit Button */}
                 <Button
                   size="sm"
@@ -150,7 +160,6 @@ export const ItemDB: React.FC<ItemDBProps> = ({ items }) => {
                     setSuggestFeedback(null);
                   }}
                   className="absolute bottom-2 left-2 inline-flex items-center gap-1 w-auto z-10
-                  md:top-2 md:right-2 md:left-auto md:bottom-auto
                   text-[11px] px-2 py-1 rounded
                   bg-zinc-900/80 border border-zinc-700 text-zinc-300 hover:text-white hover:border-orange-500 hover:bg-transparent 
                   transition-colors"

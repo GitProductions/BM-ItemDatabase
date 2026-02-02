@@ -37,7 +37,6 @@ export default function AccountPage() {
   // Name Change state
   const [nameEditing, setNameEditing] = useState(false);
   const [nameSaving, setNameSaving] = useState(false);
-  const [nameStatus, setNameStatus] = useState<string | null>(null);
 
   // Load user's API tokens
   const loadTokens = async () => {
@@ -115,12 +114,10 @@ export default function AccountPage() {
   // Handle saving display name change
   const handleNameSave = async () => {
     if (!displayName.trim()) {
-      setNameStatus('Name cannot be empty.');
       return;
     }
     setNameEditing(false);
     setNameSaving(true);
-    setNameStatus(null);
     try {
       const res = await fetch('/api/user/profile', {
         method: 'PATCH',
@@ -131,12 +128,11 @@ export default function AccountPage() {
         const body = await res.json().catch(() => ({}));
         throw new Error(body.message ?? 'Unable to update name');
       }
-      setNameStatus('Display name updated.');
       if (update) {
         await update({ name: displayName });
       }
     } catch (err) {
-      setNameStatus(err instanceof Error ? err.message : 'Unable to update name');
+      setError(err instanceof Error ? err.message : 'Unable to update name');
     } finally {
       setNameSaving(false);
     }
@@ -297,7 +293,7 @@ export default function AccountPage() {
                     await navigator.clipboard.writeText(newToken);
                     setCopyStatus('Copied');
                     setTimeout(() => setCopyStatus(null), 2000);
-                  } catch (err) {
+                  } catch {
                     setCopyStatus('Copy failed');
                     setTimeout(() => setCopyStatus(null), 2000);
                   }

@@ -425,9 +425,10 @@ const primeRanges = (item: Item): Item => ({
 
 
 
-// Sanitize limit to be within reasonable bounds
+// Sanitize limit to be within reasonable bounds.
+// Default is generous so searches can span the full catalog (we already have >1k items).
 const sanitizeLimit = (value?: number) => {
-  if (!Number.isFinite(value) || value === undefined || value === null) return 100;
+  if (!Number.isFinite(value) || value === undefined || value === null) return 500;
   return Math.min(Math.max(1, Math.floor(value)), 500);
 };
 
@@ -490,15 +491,20 @@ export const searchItems = async (params: ItemSearchParams = {}): Promise<Item[]
   // Attach contributors/submission counts
   if (items.length) {
     const ids = items.map((i) => i.id);
-    const placeholders = ids.map(() => '?').join(', ');
-    const submissionsResult = await db
-      .prepare(`SELECT itemId, submittedBy FROM submissions WHERE itemId IN (${placeholders})`)
-      .bind(...ids)
-      .all<{ itemId: string; submittedBy: string | null }>();
-    const submissions = (submissionsResult.results ?? submissionsResult.rows ?? []) as {
-      itemId: string;
-      submittedBy: string | null;
-    }[];
+
+
+    const chunkSize = 200;
+    const submissions: { itemId: string; submittedBy: string | null }[] = [];
+    for (let start = 0; start < ids.length; start += chunkSize) {
+      const chunk = ids.slice(start, start + chunkSize);
+      if (!chunk.length) continue;
+      const placeholders = chunk.map(() => '?').join(', ');
+      const res = await db
+        .prepare(`SELECT itemId, submittedBy FROM submissions WHERE itemId IN (${placeholders})`)
+        .bind(...chunk)
+        .all<{ itemId: string; submittedBy: string | null }>();
+      submissions.push(...((res.results ?? res.rows ?? []) as { itemId: string; submittedBy: string | null }[]));
+    }
 
     const grouped = new Map<string, { names: Set<string>; count: number }>();
     submissions.forEach((row) => {

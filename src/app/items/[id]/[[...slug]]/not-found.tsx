@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import Button from '@/components/ui/Button';
 
 export default function ItemNotFound() {
   return (
@@ -9,12 +8,18 @@ export default function ItemNotFound() {
         We couldn&apos;t find an item with that ID. It may have been removed or hasn&apos;t been submitted yet.
       </p>
       <div className="flex justify-center gap-2">
-        <Button as={Link} href="/" variant="secondary" size="sm">
+        <Link
+          href="/"
+          className="inline-flex items-center justify-center rounded-md border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 hover:border-orange-500 transition-colors"
+        >
           Back to items
-        </Button>
-        <Button as={Link} href="/add-item" size="sm">
+        </Link>
+        <Link
+          href="/add-item"
+          className="inline-flex items-center justify-center rounded-md bg-orange-500 px-3 py-2 text-sm font-semibold text-black hover:bg-orange-400 transition-colors"
+        >
           Add an item
-        </Button>
+        </Link>
       </div>
     </div>
   );

@@ -1,4 +1,3 @@
-import { headers } from 'next/headers';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
@@ -10,7 +9,6 @@ import { ItemCard } from '@/components/item-card';
 import { StatBadge } from '@/components/stat-badge';
 import { canonicalizeSlots, guessSlot, normalizeWornSlots, slotLabel } from '@/lib/slots';
 import CopyButton from '@/components/ui/CopyButton';
-import Button from '@/components/ui/Button';
 import { buildItemPath } from '@/lib/slug';
 
 export const revalidate = 0;
@@ -107,11 +105,7 @@ export default async function ItemPage({ params }: { params: Promise<RouteParams
         return guess ? canonicalizeSlots([guess]) : [];
       })();
 
-  const headerList = headers();
-  const protocol = headerList.get('x-forwarded-proto') ?? 'https';
-  const host = headerList.get('host');
-  const origin = host ? `${protocol}://${host}` : '';
-  const itemUrl = origin ? `${origin}${buildItemPath(item.id, item.keywords)}` : buildItemPath(item.id, item.keywords);
+  const itemUrl = buildItemPath(item.id, item.keywords);
 
   const damageStats = stats.damage ? calculateDamage(stats.damage) : null;
   const contributors = item.contributors ?? [];
@@ -127,16 +121,13 @@ export default async function ItemPage({ params }: { params: Promise<RouteParams
         </Link>
         <div className="flex items-center gap-2">
           <CopyButton value={itemUrl} />
-          <Button
-            as={Link}
+          {/* <Link
             href={itemUrl}
-            size="sm"
-            variant="secondary"
-            startIcon={<ExternalLink size={14} />}
-            className="min-w-[96px]"
+            className="inline-flex items-center gap-2 rounded-md border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 hover:border-orange-500 transition-colors"
           >
+            <ExternalLink size={14} />
             Open page
-          </Button>
+          </Link> */}
         </div>
       </div>
 
