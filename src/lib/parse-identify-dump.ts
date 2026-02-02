@@ -1,6 +1,7 @@
 import { Item, ItemAffect } from '@/types/items';
 
-const objectLineRegex = /Object '([^']+)', Item type: (.+)/;
+// Capture the whole keyword blob up to ", Item type" so embedded apostrophes don't break parsing
+const objectLineRegex = /Object '(.+?)', Item type: (.+)/;
 
 const generateId = () => {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
