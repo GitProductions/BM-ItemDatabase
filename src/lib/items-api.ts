@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { Item } from '@/types/items';
+import { generateShortId } from '@/lib/id';
 
 export const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -13,10 +14,7 @@ export const withCors = (response: NextResponse) => {
   return response;
 };
 
-export const generateId = () => {
-  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return crypto.randomUUID();
-  return Math.random().toString(36).slice(2, 11);
-};
+export const generateId = () => generateShortId(6);
 
 // Override flags/worn to allow either CSV string or string[]
 export type ItemInput = Omit<Partial<Item>, 'flags' | 'worn'> & { flags?: string | string[]; worn?: string | string[] };

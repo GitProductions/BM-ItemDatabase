@@ -7,6 +7,10 @@ import { clearCache, getCached, setCached } from '@/lib/memory-cache';
 import { getAuthSession } from '@/lib/auth';
 import { verifyApiToken } from '@/lib/auth-store';
 import { hashIp } from '@/lib/ip-hash';
+import { buildItemPath } from '@/lib/slug';
+
+const itemUrlFor = (request: NextRequest, id: string, keywords?: string | null) =>
+  new URL(buildItemPath(id, keywords), request.url).toString();
 
 const getBearer = (request: NextRequest) => {
   const header = request.headers.get('authorization');
@@ -120,6 +124,7 @@ export async function POST(request: NextRequest) {
 
   const ipHash = hashIp(request.headers.get('x-real-ip') ?? '0.0.0.0');
   let payload: PostBody;
+  const toItemUrl = (id: string) => itemUrlFor(request, id);
 
   try {
     payload = (await request.json()) as PostBody;
@@ -159,10 +164,13 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    await upsertItems(normalizedItems, { submissionIpHash: ipHash });
+    const storedIds = await upsertItems(normalizedItems, { submissionIpHash: ipHash });
     clearCache();
     const items = await searchItems();
-    return withCors(NextResponse.json({ items, inserted: normalizedItems.length }));
+    const itemUrls = items
+      .filter((item) => storedIds.includes(item.id))
+      .map((item) => toItemUrl(item.id, item.keywords));
+    return withCors(NextResponse.json({ items, inserted: normalizedItems.length, itemIds: storedIds, itemUrls }));
   }
 
   // 2) Raw identify dump -> multiple items (fallback path)
@@ -196,12 +204,17 @@ export async function POST(request: NextRequest) {
         };
       });
 
-      await upsertItems(merged, { submissionIpHash: ipHash });
+      const storedIds = await upsertItems(merged, { submissionIpHash: ipHash });
       clearCache();
+      const items = await searchItems();
+      const itemUrls = items
+        .filter((item) => storedIds.includes(item.id))
+        .map((item) => toItemUrl(item.id, item.keywords));
+      return withCors(NextResponse.json({ items, inserted: parsedItems.length, itemIds: storedIds, itemUrls }));
     }
 
     const items = await searchItems();
-    return withCors(NextResponse.json({ items, inserted: parsedItems.length }));
+    return withCors(NextResponse.json({ items, inserted: parsedItems.length, itemIds: [], itemUrls: [] }));
   }
 
   // 2) Direct single-item submission
@@ -211,11 +224,15 @@ export async function POST(request: NextRequest) {
     return withCors(NextResponse.json({ message: normalized.message }, { status: 400 }));
   }
 
-  await upsertItems([normalized.item], { submissionIpHash: ipHash });
+  const [storedId] = await upsertItems([normalized.item], { submissionIpHash: ipHash });
   clearCache();
-  const [saved] = await searchItems({ id: normalized.item.id });
+  const stableId = storedId ?? normalized.item.id;
+  const [saved] = await searchItems({ id: stableId });
+  const itemUrl = stableId ? toItemUrl(stableId, saved?.keywords ?? normalized.item.keywords) : undefined;
 
-  return withCors(NextResponse.json({ item: saved ?? normalized.item }, { status: 201 }));
+  return withCors(
+    NextResponse.json({ item: saved ?? normalized.item, itemId: stableId, itemUrl }, { status: 201 }),
+  );
 }
 
 export async function PATCH(request: NextRequest) {
@@ -244,11 +261,25 @@ export async function PATCH(request: NextRequest) {
   }
 
   const ipHash = hashIp(request.headers.get('x-real-ip') ?? '0.0.0.0');
-  await upsertItems(normalizedItems, { submissionIpHash: ipHash });
+  const updatedIds = await upsertItems(normalizedItems, { submissionIpHash: ipHash });
   clearCache();
 
-  const saved = normalizedItems.length === 1 ? await searchItems({ id: normalizedItems[0].id }) : null;
-  const body = normalizedItems.length === 1 ? { item: saved?.[0] ?? normalizedItems[0] } : { updated: normalizedItems.length };
+  const savedId = normalizedItems.length === 1 ? updatedIds[0] ?? normalizedItems[0].id : null;
+  const saved = savedId ? await searchItems({ id: savedId }) : null;
+  const body =
+    normalizedItems.length === 1
+      ? {
+          item: saved?.[0] ?? normalizedItems[0],
+          itemId: savedId,
+          itemUrl: savedId
+            ? itemUrlFor(request, savedId, (saved?.[0] ?? normalizedItems[0])?.keywords)
+            : undefined,
+        }
+      : {
+          updated: normalizedItems.length,
+          itemIds: updatedIds,
+          itemUrls: updatedIds.map((id, idx) => itemUrlFor(request, id, normalizedItems[idx]?.keywords)),
+        };
 
   return withCors(NextResponse.json(body, { status: 200 }));
 }

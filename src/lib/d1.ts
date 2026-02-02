@@ -1,6 +1,7 @@
 import { getCloudflareContext } from '@opennextjs/cloudflare';
 import { Item, ItemAffect } from '@/types/items';
 import { Suggestion } from '@/types/suggestions';
+import { generateShortId } from '@/lib/id';
 
 const DB_BINDING = 'bm_itemdb';
 
@@ -530,8 +531,9 @@ export const fetchItems = async (): Promise<Item[]> => searchItems();
 // Insert into Items table with upsert on unique identity (name, keywords, type)
 // We update all fields on conflict to ensure latest data is stored
 // including flags, stats, ego, isArtifact, raw, flaggedForReview, duplicateOf, and updatedAt
-export const upsertItems = async (items: Item[], context?: { submissionIpHash?: string | null }) => {
-  if (!items.length) return;
+// Returns the stable item IDs (existing or newly created) in the same order as the input.
+export const upsertItems = async (items: Item[], context?: { submissionIpHash?: string | null }): Promise<string[]> => {
+  if (!items.length) return [];
 
   const db = await getDatabase();
   await ensureSchema(db);
@@ -555,20 +557,42 @@ export const upsertItems = async (items: Item[], context?: { submissionIpHash?: 
     return row ? decodeItem(row) : undefined;
   };
 
-  const ensureId = (id?: string) => id ?? (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2, 11));
+  const ensureId = async (id?: string): Promise<string> => {
+    if (id) return id;
+
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const candidate = generateShortId(6);
+      const existing = await fetchExistingById(candidate);
+      if (!existing) return candidate;
+    }
+
+    // Fallback: slightly longer id to avoid repeated collisions
+    return generateShortId(8);
+  };
+
+  const persistedIds: string[] = [];
 
   const statements = await Promise.all(
-    items.map(async (item) => {
+    items.map(async (item, idx) => {
       const existingById = item.id ? await fetchExistingById(item.id) : undefined;
       const existingByIdentity = await fetchExistingByIdentity(item);
-      const existing = existingById ?? existingByIdentity;
 
-      const merged = existing ? mergeItems(existing, item) : primeRanges(item);
-      const stableId = ensureId(existing?.id ?? item.id);
+      const idCollisionWithDifferentIdentity =
+        existingById && submissionIdentity(existingById) !== submissionIdentity(item);
+
+      const resolvedExisting = idCollisionWithDifferentIdentity ? existingByIdentity : existingById ?? existingByIdentity;
+
+      const merged = resolvedExisting ? mergeItems(resolvedExisting, item) : primeRanges(item);
+
+      const stableId = idCollisionWithDifferentIdentity
+        ? await ensureId(undefined)
+        : await ensureId(resolvedExisting?.id ?? item.id);
+
+      persistedIds[idx] = stableId;
       const values = encodeItem({ ...primeRanges(merged), id: stableId }, now);
 
       // If we found an existing record (by id or identity), perform an update to avoid PK conflicts.
-      if (existing) {
+      if (resolvedExisting) {
         return db
           .prepare(
             `
@@ -652,16 +676,14 @@ export const upsertItems = async (items: Item[], context?: { submissionIpHash?: 
   );
 
   const submissionStatements = await Promise.all(
-    items.map(async (item) => {
+    items.map(async (item, idx) => {
       const submitterName = item.submittedBy?.trim();
       const submitterId = item.submittedByUserId?.trim();
       if (!submitterName && !submitterId) return null;
 
       const identityKey = submissionIdentity(item);
       const submissionId = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2, 11);
-
-      const existing = await fetchExistingByIdentity(item) ?? (item.id ? await fetchExistingById(item.id) : undefined);
-      const mergedId = existing?.id ?? item.id;
+      const mergedId = persistedIds[idx] ?? item.id ?? (await ensureId(undefined));
 
       return db
         .prepare(
@@ -686,6 +708,8 @@ export const upsertItems = async (items: Item[], context?: { submissionIpHash?: 
   const submissionPrep = submissionStatements.filter(Boolean) as D1PreparedStatement[];
 
   await db.batch([...statements, ...submissionPrep]);
+
+  return persistedIds;
 };
 
 

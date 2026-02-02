@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
         }
 
         return withCors(NextResponse.json({ message: 'valid' }, { status: 200 }));
-    } catch (error) {
+    } catch {
         return withCors(new NextResponse(null, { status: 400 }));
     }
 }

@@ -1,14 +1,10 @@
 import { Item, ItemAffect } from '@/types/items';
+import { generateShortId } from '@/lib/id';
 
 // Capture the whole keyword blob up to ", Item type" so embedded apostrophes don't break parsing
 const objectLineRegex = /Object '(.+?)', Item type: (.+)/;
 
-const generateId = () => {
-  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
-    return crypto.randomUUID();
-  }
-  return Math.random().toString(36).slice(2, 11);
-};
+const generateId = () => generateShortId(6);
 
 const parseStatAffect = (line: string): ItemAffect | null => {
   const statMatch = line.match(/Type:\s+(.+?)\s+Value:\s+(-?\d+)/i);

@@ -50,11 +50,6 @@ const Leaderboard: React.FC = () => {
     run();
   }, []);
 
-  const totalSubmissions = useMemo(
-    () => entries.reduce((sum, entry) => sum + (entry.submissionCount ?? 0), 0),
-    [entries],
-  );
-
   return (
     <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 shadow-sm">
       <div className="flex items-center justify-between mb-4">
