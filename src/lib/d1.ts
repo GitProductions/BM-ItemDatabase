@@ -428,8 +428,8 @@ const primeRanges = (item: Item): Item => ({
 // Sanitize limit to be within reasonable bounds.
 // Default is generous so searches can span the full catalog (we already have >1k items).
 const sanitizeLimit = (value?: number) => {
-  if (!Number.isFinite(value) || value === undefined || value === null) return 500;
-  return Math.min(Math.max(1, Math.floor(value)), 500);
+  if (!Number.isFinite(value) || value === undefined || value === null) return 100;
+  return Math.min(Math.max(1, Math.floor(value)), 100);
 };
 
 
@@ -493,7 +493,7 @@ export const searchItems = async (params: ItemSearchParams = {}): Promise<Item[]
     const ids = items.map((i) => i.id);
 
 
-    const chunkSize = 200;
+    const chunkSize = 75;
     const submissions: { itemId: string; submittedBy: string | null }[] = [];
     for (let start = 0; start < ids.length; start += chunkSize) {
       const chunk = ids.slice(start, start + chunkSize);

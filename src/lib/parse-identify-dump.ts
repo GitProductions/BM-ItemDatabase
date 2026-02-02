@@ -153,9 +153,11 @@ export const parseIdentifyDump = (text: string): Item[] => {
           if (statAffect) currentItem.stats.affects.push(statAffect);
         }
       } else if (nextLine.includes("This item's ego")) {
+        
         const egoMatch = nextLine.match(/This item's ego is of\s+(.+)/i);
         if (egoMatch) {
-          currentItem.ego = egoMatch[1];
+          // removing 'proportions' from the ego name if present
+          currentItem.ego = egoMatch[1].replace(/proportions./gi, '').trim();
         }
       }
 
