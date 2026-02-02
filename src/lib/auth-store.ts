@@ -2,7 +2,7 @@ import { getCloudflareContext } from '@opennextjs/cloudflare';
 import bcrypt from 'bcryptjs';
 import { createHash, randomBytes } from 'crypto';
 
-const DB_BINDING = 'ITEMS_DB';
+const DB_BINDING = 'bm_itemdb';
 
 type D1PreparedStatement = {
   bind: (...values: unknown[]) => D1PreparedStatement;

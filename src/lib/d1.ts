@@ -2,7 +2,7 @@ import { getCloudflareContext } from '@opennextjs/cloudflare';
 import { Item, ItemAffect } from '@/types/items';
 import { Suggestion } from '@/types/suggestions';
 
-const DB_BINDING = 'ITEMS_DB';
+const DB_BINDING = 'bm_itemdb';
 
 type D1PreparedStatement = {
   bind: (...values: unknown[]) => D1PreparedStatement;
@@ -23,8 +23,6 @@ type StoredItemRow = {
   type: string;
   flags: string | null;
   stats: string | null;
-  submittedBy: string | null;
-  submittedByUserId: string | null;
   droppedBy: string | null;
   worn: string | null;
   ego: string | null;
@@ -36,12 +34,19 @@ type StoredItemRow = {
   updatedAt: string | null;
 };
 
-type SubmitterRow = {
-  id: string; // normalized key (lowercase)
+export type LeaderboardEntry = {
   name: string;
   submissionCount: number;
-  itemIds: string | null; // JSON array of item ids
-  lastSubmittedAt: string | null;
+  itemCount?: number;
+  lastSubmittedAt?: string;
+};
+
+export type LeaderboardData = {
+  entries: LeaderboardEntry[];
+  totals: {
+    submissions: number;
+    distinctItems: number;
+  };
 };
 
 export type ItemSearchParams = {
@@ -81,8 +86,6 @@ const ensureSchema = async (db: D1Database) => {
             type TEXT NOT NULL,
             flags TEXT NOT NULL,
             stats TEXT NOT NULL,
-            submittedBy TEXT,
-            submittedByUserId TEXT,
             droppedBy TEXT,
             worn TEXT,
             ego TEXT,
@@ -111,7 +114,6 @@ const ensureSchema = async (db: D1Database) => {
             submittedBy TEXT,
             submittedByUserId TEXT,
             submittedAt TEXT NOT NULL,
-            delta TEXT,
             raw TEXT,
             ipHash TEXT
           );
@@ -119,27 +121,12 @@ const ensureSchema = async (db: D1Database) => {
         )
         .run();
 
-      await db
-        .prepare(
-          `
-          CREATE TABLE IF NOT EXISTS submitters (
-            id TEXT PRIMARY KEY,
-            name TEXT NOT NULL,
-            submissionCount INTEGER NOT NULL DEFAULT 0,
-            itemIds TEXT,
-            lastSubmittedAt TEXT
-          );
-        `,
-        )
-        .run();
-
       // Backfill newly added columns if the table already exists
-      await db.prepare('ALTER TABLE items ADD COLUMN submittedBy TEXT;').run().catch(() => {});
-      await db.prepare('ALTER TABLE items ADD COLUMN submittedByUserId TEXT;').run().catch(() => {});
       await db.prepare('ALTER TABLE items ADD COLUMN droppedBy TEXT;').run().catch(() => {});
       await db.prepare('ALTER TABLE items ADD COLUMN worn TEXT;').run().catch(() => {});
       await db.prepare('ALTER TABLE submissions ADD COLUMN submittedByUserId TEXT;').run().catch(() => {});
       await db.prepare('ALTER TABLE submissions ADD COLUMN ipHash TEXT;').run().catch(() => {});
+      await db.prepare('CREATE INDEX IF NOT EXISTS idx_submissions_item_user ON submissions(itemId, submittedByUserId);').run();
 
       await db
         .prepare(
@@ -307,8 +294,8 @@ const decodeItem = (row: StoredItemRow): Item => ({
   type: row.type,
   flags: row.flags ? (JSON.parse(row.flags) as string[]) : [],
   stats: row.stats ? (JSON.parse(row.stats) as Item['stats']) : { affects: [], weight: 0 },
-  submittedBy: row.submittedBy ?? undefined,
-  submittedByUserId: row.submittedByUserId ?? undefined,
+  submittedBy: undefined,
+  submittedByUserId: undefined,
   droppedBy: row.droppedBy ?? undefined,
   worn: normalizeWorn(row.worn),
   ego: row.ego ?? undefined,
@@ -326,13 +313,64 @@ const submissionIdentity = (item: Item) =>
   `${item.name.toLowerCase().trim()}|${item.keywords.toLowerCase().trim()}|${item.type.toLowerCase().trim()}`;
 
 
-// Decode and encode submitter rows
-const decodeSubmitter = (row: SubmitterRow): { name: string; submissionCount: number; itemIds: Set<string>; lastSubmittedAt?: string } => ({
-  name: row.name,
-  submissionCount: row.submissionCount ?? 0,
-  itemIds: new Set<string>((row.itemIds ? (JSON.parse(row.itemIds) as string[]) : []) ?? []),
-  lastSubmittedAt: row.lastSubmittedAt ?? undefined,
-});
+/**
+ * Fetch submitter leaderboard (top contributors by submission count).
+ * Fully derived from the `submissions` event log to avoid stale materialized tables.
+ */
+export const fetchSubmitterLeaderboard = async (limit = 20): Promise<LeaderboardData> => {
+  const db = await getDatabase();
+  await ensureSchema(db);
+
+  const cappedLimit = Math.max(1, Math.min(limit, 100));
+
+  // Aggregate directly from submissions to keep counts accurate without a materialized table
+  const result = await db
+    .prepare(
+      `
+        SELECT
+          COALESCE(NULLIF(TRIM(submittedBy), ''), 'Unknown') AS name,
+          COUNT(*) AS submissionCount,
+          COUNT(DISTINCT itemId) AS itemCount,
+          MAX(submittedAt) AS lastSubmittedAt
+        FROM submissions
+        GROUP BY LOWER(COALESCE(NULLIF(TRIM(submittedBy), ''), 'Unknown'))
+        ORDER BY submissionCount DESC, lastSubmittedAt DESC
+        LIMIT ?1;
+      `,
+    )
+    .bind(cappedLimit)
+    .all<{ name: string; submissionCount: number; itemCount: number; lastSubmittedAt: string }>();
+
+  const rows = (result.results ?? result.rows ?? []) as {
+    name: string;
+    submissionCount: number;
+    itemCount: number;
+    lastSubmittedAt: string;
+  }[];
+
+  const entries = rows.map((row) => ({
+    name: row.name,
+    submissionCount: row.submissionCount,
+    itemCount: row.itemCount ?? undefined,
+    lastSubmittedAt: row.lastSubmittedAt ?? undefined,
+  }));
+
+  const totalsResult = await db
+    .prepare('SELECT COUNT(*) as submissions FROM submissions;')
+    .all<{ submissions: number }>();
+  const totalsRow = (totalsResult.results ?? totalsResult.rows ?? [])[0] as { submissions: number } | undefined;
+
+  const itemsResult = await db.prepare('SELECT COUNT(*) as itemCount FROM items;').all<{ itemCount: number }>();
+  const itemsRow = (itemsResult.results ?? itemsResult.rows ?? [])[0] as { itemCount: number } | undefined;
+
+  return {
+    entries,
+    totals: {
+      submissions: totalsRow?.submissions ?? 0,
+      distinctItems: itemsRow?.itemCount ?? 0,
+    },
+  };
+};
 
 
 // Prepare item for storage in the database
@@ -346,8 +384,6 @@ const encodeItem = (item: Item, timestamp?: string) => {
     type: item.type,
     flags: JSON.stringify(item.flags ?? []),
     stats: JSON.stringify(item.stats ?? { affects: [], weight: 0 }),
-    submittedBy: item.submittedBy ?? null,
-    submittedByUserId: item.submittedByUserId ?? null,
     droppedBy: item.droppedBy ?? null,
     worn: (() => {
       const worn = normalizeWorn(item.worn);
@@ -362,15 +398,6 @@ const encodeItem = (item: Item, timestamp?: string) => {
     updatedAt: now,
   };
 };
-
-
-const encodeSubmitter = (id: string, data: { name: string; submissionCount: number; itemIds: Set<string>; lastSubmittedAt?: string }) => ({
-  id,
-  name: data.name,
-  submissionCount: data.submissionCount,
-  itemIds: JSON.stringify(Array.from(data.itemIds)),
-  lastSubmittedAt: data.lastSubmittedAt ?? null,
-});
 
 
 // Ensure min/max ranges are populated based on current value
@@ -429,8 +456,13 @@ export const searchItems = async (params: ItemSearchParams = {}): Promise<Item[]
   }
 
   if (params.submittedByUserId) {
-    where.push('submittedByUserId = ?');
+    where.push('EXISTS (SELECT 1 FROM submissions s WHERE s.itemId = items.id AND s.submittedByUserId = ?)');
     values.push(params.submittedByUserId);
+  }
+
+  if (params.submittedBy) {
+    where.push('EXISTS (SELECT 1 FROM submissions s WHERE s.itemId = items.id AND LOWER(IFNULL(s.submittedBy, \"\")) = LOWER(?))');
+    values.push(params.submittedBy.trim());
   }
 
 
@@ -506,17 +538,6 @@ export const upsertItems = async (items: Item[], context?: { submissionIpHash?: 
 
   const now = new Date().toISOString();
 
-  const submitterCache = new Map<string, { name: string; submissionCount: number; itemIds: Set<string>; lastSubmittedAt?: string }>();
-  const loadSubmitter = async (name: string) => {
-    const key = name.toLowerCase().trim();
-    if (submitterCache.has(key)) return submitterCache.get(key)!;
-    const result = await db.prepare('SELECT * FROM submitters WHERE id = ?1 LIMIT 1;').bind(key).all<SubmitterRow>();
-    const row = (result.results ?? result.rows ?? [])[0] as SubmitterRow | undefined;
-    const decoded = row ? decodeSubmitter(row) : { name, submissionCount: 0, itemIds: new Set<string>(), lastSubmittedAt: undefined };
-    submitterCache.set(key, decoded);
-    return decoded;
-  };
-
   const fetchExistingByIdentity = async (item: Item): Promise<Item | undefined> => {
     const result = await db
       .prepare('SELECT * FROM items WHERE name = ?1 AND keywords = ?2 AND type = ?3 LIMIT 1;')
@@ -557,16 +578,14 @@ export const upsertItems = async (items: Item[], context?: { submissionIpHash?: 
               type = ?4,
               flags = ?5,
               stats = ?6,
-              submittedBy = ?7,
-              submittedByUserId = ?8,
-              droppedBy = ?9,
-              worn = ?10,
-              ego = ?11,
-              isArtifact = ?12,
-              raw = ?13,
-              flaggedForReview = ?14,
-              duplicateOf = ?15,
-              updatedAt = ?16
+              droppedBy = ?7,
+              worn = ?8,
+              ego = ?9,
+              isArtifact = ?10,
+              raw = ?11,
+              flaggedForReview = ?12,
+              duplicateOf = ?13,
+              updatedAt = ?14
             WHERE id = ?1;
           `,
           )
@@ -577,8 +596,6 @@ export const upsertItems = async (items: Item[], context?: { submissionIpHash?: 
             values.type,
             values.flags,
             values.stats,
-            values.submittedBy,
-            values.submittedByUserId,
             values.droppedBy,
             values.worn,
             values.ego,
@@ -594,18 +611,16 @@ export const upsertItems = async (items: Item[], context?: { submissionIpHash?: 
         .prepare(
           `
         INSERT INTO items (
-          id, name, keywords, type, flags, stats, submittedBy, submittedByUserId, droppedBy, worn, ego, isArtifact, raw,
+          id, name, keywords, type, flags, stats, droppedBy, worn, ego, isArtifact, raw,
           flaggedForReview, duplicateOf, createdAt, updatedAt
         )
-        VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17)
+        VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15)
         ON CONFLICT(name, keywords, type) DO UPDATE SET
           name=excluded.name,
           keywords=excluded.keywords,
           type=excluded.type,
           flags=excluded.flags,
           stats=excluded.stats,
-          submittedBy=excluded.submittedBy,
-          submittedByUserId=excluded.submittedByUserId,
           droppedBy=excluded.droppedBy,
           worn=excluded.worn,
           ego=excluded.ego,
@@ -623,8 +638,6 @@ export const upsertItems = async (items: Item[], context?: { submissionIpHash?: 
         values.type,
         values.flags,
         values.stats,
-        values.submittedBy,
-        values.submittedByUserId,
         values.droppedBy,
         values.worn,
         values.ego,
@@ -650,19 +663,11 @@ export const upsertItems = async (items: Item[], context?: { submissionIpHash?: 
       const existing = await fetchExistingByIdentity(item) ?? (item.id ? await fetchExistingById(item.id) : undefined);
       const mergedId = existing?.id ?? item.id;
 
-      if (submitterName) {
-        const submitter = await loadSubmitter(submitterName);
-        submitter.submissionCount += 1;
-        submitter.lastSubmittedAt = now;
-
-        submitter.itemIds.add(mergedId);
-      }
-
       return db
         .prepare(
           `
-          INSERT INTO submissions (id, itemId, identityKey, submittedBy, submittedByUserId, submittedAt, delta, raw, ipHash)
-          VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9);
+          INSERT INTO submissions (id, itemId, identityKey, submittedBy, submittedByUserId, submittedAt, raw, ipHash)
+          VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8);
         `,
         )
         .bind(
@@ -672,33 +677,15 @@ export const upsertItems = async (items: Item[], context?: { submissionIpHash?: 
           submitterName,
           submitterId ?? null,
           now,
-          null,
           item.raw ? JSON.stringify(item.raw) : null,
           context?.submissionIpHash ?? null,
         );
     }),
   );
 
-  const submitterStatements = Array.from(submitterCache.entries()).map(([id, data]) => {
-    const enc = encodeSubmitter(id, data);
-    return db
-      .prepare(
-        `
-        INSERT INTO submitters (id, name, submissionCount, itemIds, lastSubmittedAt)
-        VALUES (?1, ?2, ?3, ?4, ?5)
-        ON CONFLICT(id) DO UPDATE SET
-          name=excluded.name,
-          submissionCount=excluded.submissionCount,
-          itemIds=excluded.itemIds,
-          lastSubmittedAt=excluded.lastSubmittedAt;
-      `,
-      )
-      .bind(enc.id, enc.name, enc.submissionCount, enc.itemIds, enc.lastSubmittedAt);
-  });
-
   const submissionPrep = submissionStatements.filter(Boolean) as D1PreparedStatement[];
 
-  await db.batch([...statements, ...submissionPrep, ...submitterStatements]);
+  await db.batch([...statements, ...submissionPrep]);
 };
 
 
