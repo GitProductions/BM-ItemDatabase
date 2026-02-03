@@ -75,6 +75,7 @@ const getDatabase = async () => {
 let schemaReady: Promise<void> | null = null;
 
 const ensureSchema = async (db: D1Database) => {
+  if (!shouldEnsureSchema) return;
   if (!schemaReady) {
     schemaReady = (async () => {
       await db
@@ -152,6 +153,12 @@ const ensureSchema = async (db: D1Database) => {
 
   return schemaReady;
 };
+
+// Avoid running D1 DDL on every production request; allow opt-in via env.
+// Defaults to true in dev/preview, false in production unless explicitly enabled.
+const shouldEnsureSchema =
+  process.env.NODE_ENV !== 'production' || process.env.ENABLE_D1_SCHEMA_BOOTSTRAP === 'true';
+
 
 // NOTE: D1 stores JSON in a TEXT column; this parses legacy shapes (string, CSV string, array)
 // into a normalized string[] so the rest of the app can treat worn as an array.
@@ -540,13 +547,66 @@ export const searchItems = async (params: ItemSearchParams = {}): Promise<Item[]
   return items;
 };
 
+export const countItemsFiltered = async (params: ItemSearchParams = {}): Promise<number> => {
+  const db = await getDatabase();
+  await ensureSchema(db);
 
-export const countItems = async (): Promise<any> => {
+  const where: string[] = [];
+  const values: unknown[] = [];
+
+  if (params.id) {
+    where.push('id = ?');
+    values.push(params.id);
+  }
+
+  if (params.q) {
+    const like = `%${params.q.toLowerCase()}%`;
+    where.push('(LOWER(name) LIKE ? OR LOWER(keywords) LIKE ? OR LOWER(type) LIKE ? OR LOWER(flags) LIKE ?)');
+    values.push(like, like, like, like);
+  }
+
+  if (params.type) {
+    where.push('LOWER(type) LIKE ?');
+    values.push(`%${params.type.toLowerCase()}%`);
+  }
+
+  if (params.submittedByUserId) {
+    where.push('EXISTS (SELECT 1 FROM submissions s WHERE s.itemId = items.id AND s.submittedByUserId = ?)');
+    values.push(params.submittedByUserId);
+  }
+
+  if (params.submittedBy) {
+    where.push('EXISTS (SELECT 1 FROM submissions s WHERE s.itemId = items.id AND LOWER(IFNULL(s.submittedBy, "")) = LOWER(?))');
+    values.push(params.submittedBy.trim());
+  }
+
+  if (typeof params.flagged === 'boolean') {
+    where.push('flaggedForReview = ?');
+    values.push(params.flagged ? 1 : 0);
+  }
+
+  const sql = `
+    SELECT COUNT(*) AS count
+    FROM items
+    ${where.length ? `WHERE ${where.join(' AND ')}` : ''};
+  `;
+
+  const result = await db.prepare(sql).bind(...values).all<{ count: number }>();
+  const row = (result.results ?? result.rows ?? [])[0] as { count: number } | undefined;
+  return row?.count ?? 0;
+};
+
+
+export const countItems = async (): Promise<number> => {
   const db = await getDatabase();
 
   // wrangler d1 execute <DATABASE_NAME> --command="SELECT COUNT(*) FROM <TABLE_NAME>;" --remote
 
-  db.prepare('SELECT COUNT(*) FROM items;').run();
+  await ensureSchema(db);
+
+  const result = await db.prepare('SELECT COUNT(*) AS count FROM items;').all<{ count: number }>();
+  const row = (result.results ?? result.rows ?? [])[0] as { count: number } | undefined;
+  return row?.count ?? 0;
 
 }
 
