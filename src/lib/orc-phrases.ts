@@ -33,23 +33,22 @@ const orcPhrases = {
     // When user tries to submit/suggest without identify output
     mild: [
       "A half-orc grumbles: 'No identify scroll? Can't help ya then.'",
-      "The half-orc points: 'Identify it first, then talk to me.'",
-      "Half-orc shrugs: 'Dunno what it does. Identify it, git.'",
+      "The half-orc points: 'Maybe you should go back, identify it, then talk to me.'",
     ],
     medium: [
-      "A half-orc snarls: 'Ya expect me to guess? Identify that junk first!'",
-      "The half-orc growls: 'No identify output? No deal. Go rub some magic on it.'",
-      "Half-orc barks: 'Identify it proper or stop wastin' me breath!'",
+      "A half-orc snarls: 'Ya expect me to guess? Maybe put something in the box?!'",
+      "The half-orc growls: 'No data? No deal. Go rub some magic on it.'",
+      "Half-orc barks: 'Paste it proper or stop wastin' me breath!'",
     ],
     high: [
       "The half-orc leans in: 'No identify? Then shut yer trap or I'll shut it for ya!'",
-      "Half-orc spits: 'Identify dat thing or I'll identify yer skull wit' me axe!'",
+      "Half-orc spits: 'Give me dat data or I'll identify yer skull wit' me axe!'",
       "A furious half-orc roars: 'Ya come here empty-handed? Identify it NOW!'",
     ],
     savage: [
-      "The half-orc grabs your collar: 'No identify? I'll identify yer guts on the floor!'",
-      "Half-orc screams: 'Ya dare submit dat without knowin' what it is?! Die!'",
-      "A berserk half-orc howls: 'No identify = no mercy! Prepare to bleed!'",
+      "The half-orc grabs your collar: 'No data? I'll spill yer guts on the floor!'",
+      "Half-orc screams: 'Ya dare submit dat without knowin' checking it first?!'",
+      "A berserk half-orc howls: 'No data = no mercy! Prepare to bleed!'",
     ],
   },
 
@@ -130,6 +129,23 @@ const orcPhrases = {
       "Half-orc growls: 'Better be good.'",
       "A half-orc snarls: 'Spit it out already!'",
       "The half-orc roars: 'Talk or get smashed!'",
+    ],
+  },
+
+  loadingQueue: {
+    // Used for loading / please wait states
+    mild: [
+      "Half-orc grunts: 'Hold yer horses, it's goin'.'",
+      "Half-orc mutters: 'Processing yer junk. Don't rush me.'",
+    ],
+    medium: [
+      "A half-orc snarls: 'Quit fidgetin'. It'll finish when it finishes.'",
+      "The half-orc growls: 'Loading... touch that button again and lose a finger.'",
+    ],
+    high: [
+      "The half-orc roars: 'It's churnin'! You want it faster? Bring more ale!'",
+      "Half-orc spits: 'Wait or I'll staple yer hands to the table.'",
+      "A furious half-orc bellows: 'Patience, or I'll process YOU next!'",
     ],
   },
 } satisfies Record<string, OrcPhraseCategory>;
