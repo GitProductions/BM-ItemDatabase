@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { Filter, Search } from 'lucide-react';
+import { Search } from 'lucide-react';
 import Link from 'next/link';
 import { buildItemPath } from '@/lib/slug';
 import { Item } from '@/types/items';
@@ -28,8 +28,7 @@ export const ItemDB: React.FC<ItemDBProps> = () => {
   const { items, refresh, totalCount, resultCount } = useAppData();
   
   const [search, setSearch] = useState('');
-  const [filterType, setFilterType] = useState('all');
-  const [knownTypes, setKnownTypes] = useState<string[]>(['all']);
+  const [filterType] = useState('all');
   const [slotFilter, setSlotFilter] = useState<string>('all');
   const slotOptions = useMemo(() => {
     const uniq = new Set<string>();
@@ -42,21 +41,6 @@ export const ItemDB: React.FC<ItemDBProps> = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [suggestFeedback, setSuggestFeedback] = useState<string | null>(null);
   const [page, setPage] = useState(1);
-
-  useEffect(() => {
-    const next = new Set(knownTypes);
-    items.forEach((item) => next.add(item.type));
-    // Always ensure current selection is present
-    if (filterType !== 'all') next.add(filterType);
-    setKnownTypes(Array.from(next));
-  }, [items, filterType]);
-
-  const uniqueTypes = useMemo(() => {
-    const sorted = [...new Set(knownTypes)];
-    // Keep "all" at the front, rest alphabetized for predictability
-    const rest = sorted.filter((t) => t !== 'all').sort((a, b) => a.localeCompare(b));
-    return ['all', ...rest];
-  }, [knownTypes]);
 
   const filteredItemsBySlot =
     slotFilter === 'all'
@@ -193,8 +177,8 @@ export const ItemDB: React.FC<ItemDBProps> = () => {
                     setSuggestItem(item);
                     setSuggestFeedback(null);
                   }}
-                  className='absolute bottom-1 left-2 inline-flex items-center gap-1 w-auto z-10  text-[10px] px-2 bg-transparent py-1 rounded
-                   text-white/10 hover:text-orange-400 hover:border-orange-500 hover:bg-transparent'
+                  className='absolute bottom-1 left-2 inline-flex items-center gap-1 w-auto z-10  text-[11px] px-2 bg-transparent py-1 rounded
+                   text-white/30 hover:text-orange-400 hover:border-orange-500 hover:bg-transparent'
                   // className="absolute bottom-2 left-2 inline-flex items-center gap-1 w-auto z-10
                   // text-[11px] px-2 py-1 rounded
                   // bg-zinc-900/80 border border-zinc-700 text-zinc-300 hover:text-white hover:border-orange-500 hover:bg-transparent 

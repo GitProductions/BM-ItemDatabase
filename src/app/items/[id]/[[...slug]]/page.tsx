@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { cache } from 'react';
-import { AlertTriangle, ArrowLeft, ExternalLink } from 'lucide-react';
+import { AlertTriangle, ArrowLeft } from 'lucide-react';
 
 import { searchItems } from '@/lib/d1';
 import { ItemCard } from '@/components/item-card';
@@ -215,6 +215,8 @@ export default async function ItemPage({ params }: { params: Promise<RouteParams
           </p>
         </div>
 
+        
+        {/* Contributors  */}
         <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-4 space-y-3">
           <h2 className="text-sm font-semibold text-white">Contributors</h2>
           <p className="text-sm text-zinc-300">
@@ -232,9 +234,14 @@ export default async function ItemPage({ params }: { params: Promise<RouteParams
             <p className="text-sm text-zinc-500">No additional contributors listed.</p>
           )}
         </div>
+
       </div>
 
+
+        {/*  Bottom Section */}
       <section className="rounded-xl border border-zinc-800 bg-zinc-900/70 p-4 space-y-3">
+       
+        
         <div className="flex items-center justify-between gap-2">
           <h2 className="text-sm font-semibold text-white">Stats</h2>
           {damageStats ? (
@@ -293,6 +300,8 @@ export default async function ItemPage({ params }: { params: Promise<RouteParams
           <h2 className="text-sm font-semibold text-white">Identify dump</h2>
           <div className="rounded-lg border border-zinc-800 bg-black/50 p-3">
             <pre className="whitespace-pre-wrap text-sm font-mono leading-relaxed text-emerald-100">
+              {/* removing last line which has the items name, which isnt part of the orignal identify */}
+              {/* {item.raw.slice(0, -1).join('\n')} */}
               {item.raw.join('\n')}
             </pre>
           </div>

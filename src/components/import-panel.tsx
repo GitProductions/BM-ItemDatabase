@@ -14,6 +14,27 @@ import { getRandomOrcPhrase } from '@/lib/orc-phrases';
 import { useAppData } from '@/components/app-provider';
 import { useSession } from 'next-auth/react';
 
+const LoadingOverlay = ({ message }: { message: string }) => (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+    <div className="flex flex-col items-center gap-3 rounded-xl border border-zinc-800 bg-zinc-900/90 px-6 py-6 shadow-2xl max-w-sm text-center">
+      <Image
+        src="/no-results.png"
+        alt="Grumpy half-orc"
+        width={150}
+        height={150}
+        quality={60}
+        className="rounded-full border border-zinc-800 object-cover"
+      />
+      <div className="flex items-center gap-2 text-sm text-zinc-200 font-semibold">
+        <Loader2 className="h-5 w-5 animate-spin text-orange-400" />
+        <span>Please wait...</span>
+      </div>
+      <p className="text-xs text-zinc-400 px-2">{message}</p>
+      {/* <p className="text-[11px] text-zinc-500">Big batches can take a moment while we flag duplicates.</p> */}
+    </div>
+  </div>
+);
+
 type ImportPanelProps = {
   rawInput: string;
   onRawInputChange: (value: string) => void;
@@ -72,33 +93,12 @@ export const ImportPanel: React.FC<ImportPanelProps> = ({
     return shouldShowOverlay ? getRandomOrcPhrase('loadingQueue', 'random') : '';
   }, [shouldShowOverlay]);
 
-  const LoadingOverlay = () => (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
-      <div className="flex flex-col items-center gap-3 rounded-xl border border-zinc-800 bg-zinc-900/90 px-6 py-6 shadow-2xl max-w-sm text-center">
-        <Image
-          src="/no-results.png"
-          alt="Grumpy half-orc"
-          width={150}
-          height={150}
-          quality={60}
-          className="rounded-full border border-zinc-800 object-cover"
-        />
-        <div className="flex items-center gap-2 text-sm text-zinc-200 font-semibold">
-          <Loader2 className="h-5 w-5 animate-spin text-orange-400" />
-          <span>Please wait...</span>
-        </div>
-        <p className="text-xs text-zinc-400 px-2">{waitingPhrase}</p>
-        {/* <p className="text-[11px] text-zinc-500">Big batches can take a moment while we flag duplicates.</p> */}
-      </div>
-    </div>
-  );
-
   // If there are duplicates, show the duplicate review panel
   if (duplicateCheck && duplicateCheck.hasDuplicates) {
     return (
       <div className="">
         <div className="bg-zinc-900 rounded-xl border border-zinc-800 p-6 shadow-lg">
-          {shouldShowOverlay ? <LoadingOverlay /> : null}
+          {shouldShowOverlay ? <LoadingOverlay message={waitingPhrase} /> : null}
           
           <div className="flex items-center gap-3 mb-4">
             <AlertCircle className="text-amber-500" />
@@ -172,7 +172,7 @@ export const ImportPanel: React.FC<ImportPanelProps> = ({
   return (
     <div className="">
       <div className="bg-zinc-900 rounded-xl border border-zinc-800 p-6 shadow-lg">
-        {shouldShowOverlay ? <LoadingOverlay /> : null}
+        {shouldShowOverlay ? <LoadingOverlay message={waitingPhrase} /> : null}
         <div className="flex items-center gap-3 mb-4">
           <Terminal className="text-orange-500" />
         <h2 className="text-lg font-bold text-white">Import Identify Data</h2>

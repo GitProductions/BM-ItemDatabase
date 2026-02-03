@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { useSession } from 'next-auth/react';
-import { Item } from '@/types/items';
 import Button from './ui/Button';
 
 const navLinks = [
@@ -40,11 +39,9 @@ function NavButtons({ onDone }: { onDone?: () => void }) {
 }
 
 function Header({
-  items,
   loading = false,
   totalCount,
 }: {
-  items: Item[];
   loading?: boolean;
   totalCount: number;
 }) {
