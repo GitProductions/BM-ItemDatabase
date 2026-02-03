@@ -6,6 +6,10 @@ const objectLineRegex = /Object '(.+?)', Item type: (.+)/;
 
 const generateId = () => generateShortId(6);
 
+// const commonMistakes = [
+//   ""
+// ]
+
 const parseStatAffect = (line: string): ItemAffect | null => {
   const statMatch = line.match(/Type:\s+(.+?)\s+Value:\s+(-?\d+)/i);
   if (!statMatch) return null;
@@ -130,6 +134,10 @@ export const parseIdentifyDump = (text: string): Item[] => {
     let j = i + 1;
     while (j < lines.length) {
       const nextLine = lines[j];
+      const upcomingIsObjectLine = j + 1 < lines.length && objectLineRegex.test(lines[j + 1]);
+
+      // Stop before we consume the next item's display name (which precedes its Object line)
+      if (upcomingIsObjectLine) break;
       if (nextLine.match(objectLineRegex)) break;
 
       if (nextLine.startsWith('Weight:')) {

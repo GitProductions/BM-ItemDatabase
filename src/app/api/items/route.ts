@@ -75,7 +75,10 @@ export async function GET(request: NextRequest) {
     NextResponse.json(payload, {
       status: 200,
       headers: {
-        'Cache-Control': 'public, max-age=3600',
+        // Avoid browser-level caching so UI reflects DB changes immediately
+        'Cache-Control': 'public, max-age=3600',  // 1 hour
+
+        // 'Cache-Control': 'no-store',
         'X-Cache': 'MISS',
       },
     }),

@@ -91,7 +91,9 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     abortRef.current = controller;
 
     try {
-      const response = await fetch(url, { signal: controller.signal });
+      const response = await fetch(url, { signal: controller.signal, 
+        cache: 'no-store' 
+      });
       if (!response.ok) throw new Error('Failed to load items');
       const data = await response.json();
       const fetchedItems = data.items ?? [];
