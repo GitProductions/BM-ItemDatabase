@@ -11,6 +11,7 @@ import Input from './ui/Input';
 import Button from './ui/Button';
 import Pagination from './ui/Pagination';
 import { useAppData } from '@/components/app-provider';
+import { useRouter } from 'next/navigation';
 
 type ItemDBProps = Record<string, never>;
 
@@ -20,6 +21,8 @@ const MIN_SEARCH_LENGTH = 2;
 const DEBOUNCE_MS = 400;
 
 export const ItemDB: React.FC<ItemDBProps> = () => {
+  const [active, setActive] = useState(false)
+  const router = useRouter();
   const { items, refresh } = useAppData();
   const [search, setSearch] = useState('');
   const [filterType, setFilterType] = useState('all');
@@ -56,7 +59,7 @@ export const ItemDB: React.FC<ItemDBProps> = () => {
     setPage(1);
   }, [search, filterType]);
 
-  
+
 
   const filteredItems = items; // server already applied search/type filters
   const total = filteredItems.length;
@@ -66,12 +69,12 @@ export const ItemDB: React.FC<ItemDBProps> = () => {
   return (
     <div className="">
       <div className="bg-zinc-900 p-4 rounded-xl border border-zinc-800 shadow-sm flex flex-col md:flex-row gap-4">
-       
+
         {/* Main Search  */}
         <div className="relative flex-1 ">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
 
-          <Input 
+          <Input
             type="text"
             className="bg-zinc-950 border-zinc-700 rounded-lg pl-10"
             placeholder="Search by name, keywords, or stats (e.g. 'str', 'hit-n-dam')..."
@@ -86,18 +89,17 @@ export const ItemDB: React.FC<ItemDBProps> = () => {
           {uniqueTypes.map((type) => (
             <Button
               key={type}
-              size = 'sm'
+              size='sm'
               onClick={() => setFilterType(type)}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium capitalize whitespace-nowrap transition-colors ${
-                filterType === type ? 'bg-orange-600 text-white' : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
-              
-              }`}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium capitalize whitespace-nowrap transition-colors ${filterType === type ? 'bg-orange-600 text-white' : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
+
+                }`}
             >
               {type}
             </Button>
           ))}
 
-        
+
         </div>
 
       </div>
@@ -112,6 +114,10 @@ export const ItemDB: React.FC<ItemDBProps> = () => {
 
                 <Link
                   href={buildItemPath(item.id, item.keywords)}
+                  // prefetch={active ? null : false}
+                  // onMouseEnter={() => setActive(true)}
+                  prefetch={false}
+                  onMouseEnter={() => router.prefetch(buildItemPath(item.id, item.keywords))}
                   className="absolute top-2 right-2 inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded
                   bg-zinc-900/80 border border-zinc-700 text-orange-200 hover:text-white hover:border-orange-500 transition-colors"
                 >

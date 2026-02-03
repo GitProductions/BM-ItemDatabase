@@ -114,7 +114,7 @@ export default function LoginPage() {
                 <Input
                   value={name}
                   onChange={(event) => setName(event.target.value)}
-                  placeholder="e.g. Jaela"
+                  placeholder="e.g. Gitago"
                   required
                   disabled={busy}
                 />
