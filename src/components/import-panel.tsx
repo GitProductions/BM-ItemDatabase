@@ -40,7 +40,7 @@ export const ImportPanel: React.FC<ImportPanelProps> = ({
   onCheckDuplicates,
   onProceedWithDuplicates,
   onCancelDuplicates,
-  isProcessing = false,
+  isProcessing: shouldShowLoading = false,
   previewItems,
   // userName,
   // onUserNameChange,
@@ -59,9 +59,18 @@ export const ImportPanel: React.FC<ImportPanelProps> = ({
 
   const hasMissingNames = previewItems.some((item) => !resolveName(item));
 
+  const submissionCount = useMemo(() => {
+    if (duplicateCheck?.hasDuplicates) {
+      return (duplicateCheck.newItems?.length || 0) + (duplicateCheck.duplicateItems?.length || 0);
+    }
+    return previewItems.length;
+  }, [duplicateCheck, previewItems]);
+
+  const shouldShowOverlay = shouldShowLoading && submissionCount > 3;
+
   const waitingPhrase = useMemo(() => {
-    return isProcessing ? getRandomOrcPhrase('loadingQueue', 'random') : '';
-  }, [isProcessing]);
+    return shouldShowOverlay ? getRandomOrcPhrase('loadingQueue', 'random') : '';
+  }, [shouldShowOverlay]);
 
   const LoadingOverlay = () => (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
@@ -89,7 +98,7 @@ export const ImportPanel: React.FC<ImportPanelProps> = ({
     return (
       <div className="">
         <div className="bg-zinc-900 rounded-xl border border-zinc-800 p-6 shadow-lg">
-          {isProcessing ? <LoadingOverlay /> : null}
+          {shouldShowOverlay ? <LoadingOverlay /> : null}
           
           <div className="flex items-center gap-3 mb-4">
             <AlertCircle className="text-amber-500" />
@@ -141,14 +150,14 @@ export const ImportPanel: React.FC<ImportPanelProps> = ({
           <div className="flex justify-between gap-3">
             <Button
               onClick={onCancelDuplicates}
-              disabled={isProcessing}
+              disabled={shouldShowLoading}
               className="px-4 py-2 rounded-lg text-zinc-300 hover:text-zinc-100 hover:bg-zinc-800 text-sm font-medium transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
             >
               Cancel
             </Button>
             <Button
               onClick={onProceedWithDuplicates}
-              disabled={isProcessing}
+              disabled={shouldShowLoading}
               className="px-6 py-2 rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-bold transition-colors shadow-lg shadow-amber-900/50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               <Save size={18} /> Proceed with Import
@@ -163,7 +172,7 @@ export const ImportPanel: React.FC<ImportPanelProps> = ({
   return (
     <div className="">
       <div className="bg-zinc-900 rounded-xl border border-zinc-800 p-6 shadow-lg">
-        {isProcessing ? <LoadingOverlay /> : null}
+        {shouldShowOverlay ? <LoadingOverlay /> : null}
         <div className="flex items-center gap-3 mb-4">
           <Terminal className="text-orange-500" />
         <h2 className="text-lg font-bold text-white">Import Identify Data</h2>
@@ -212,7 +221,7 @@ export const ImportPanel: React.FC<ImportPanelProps> = ({
           <div className="flex justify-between items-center">
             <Button
               onClick={onCheckDuplicates}
-              disabled={isProcessing || !rawInput.trim() || hasMissingNames}
+              disabled={shouldShowLoading || !rawInput.trim() || hasMissingNames}
               className="px-6 py-2 rounded-lg bg-orange-600 hover:bg-orange-500 text-white font-bold transition-colors shadow-lg shadow-orange-900/50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               <Save size={18} /> Check & Import
