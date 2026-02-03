@@ -162,7 +162,7 @@ export const ImportPanel: React.FC<ImportPanelProps> = ({
               type="text"
               value={userName}
               onChange={(event) => handleSetUserName(event.target.value)}
-              placeholder="e.g. Jaela, Merchants Guild"
+              placeholder="e.g. Gitago"
               disabled={lockedName}
               // size="sm"
             />
