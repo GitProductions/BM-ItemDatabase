@@ -12,6 +12,8 @@ import Button from './ui/Button';
 import Pagination from './ui/Pagination';
 import { useAppData } from '@/components/app-provider';
 import { useRouter } from 'next/navigation';
+import { matchesSlot, SlotKey, canonicalSlot, slotLabel, SLOT_CONFIG } from '@/lib/slots';
+import ComboBox from './ui/ComboBox';
 
 type ItemDBProps = Record<string, never>;
 
@@ -22,24 +24,53 @@ const MIN_SEARCH_LENGTH = 2;
 const DEBOUNCE_MS = 400;
 
 export const ItemDB: React.FC<ItemDBProps> = () => {
-  const [active, setActive] = useState(false)
   const router = useRouter();
   const { items, refresh, totalCount, resultCount } = useAppData();
+  
   const [search, setSearch] = useState('');
   const [filterType, setFilterType] = useState('all');
+  const [knownTypes, setKnownTypes] = useState<string[]>(['all']);
+  const [slotFilter, setSlotFilter] = useState<string>('all');
+  const slotOptions = useMemo(() => {
+    const uniq = new Set<string>();
+    uniq.add('all');
+    SLOT_CONFIG.forEach((slot) => uniq.add(canonicalSlot(slot.key)));
+    return Array.from(uniq);
+  }, []);
+
   const [suggestItem, setSuggestItem] = useState<Item | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [suggestFeedback, setSuggestFeedback] = useState<string | null>(null);
   const [page, setPage] = useState(1);
 
-  const uniqueTypes = useMemo(() => {
-    const types = new Set(items.map((item) => item.type));
-    return ['all', ...Array.from(types)];
-  }, [items]);
+  useEffect(() => {
+    const next = new Set(knownTypes);
+    items.forEach((item) => next.add(item.type));
+    // Always ensure current selection is present
+    if (filterType !== 'all') next.add(filterType);
+    setKnownTypes(Array.from(next));
+  }, [items, filterType]);
 
-  const filteredItems = items; // server already applied search/type filters
+  const uniqueTypes = useMemo(() => {
+    const sorted = [...new Set(knownTypes)];
+    // Keep "all" at the front, rest alphabetized for predictability
+    const rest = sorted.filter((t) => t !== 'all').sort((a, b) => a.localeCompare(b));
+    return ['all', ...rest];
+  }, [knownTypes]);
+
+  const filteredItemsBySlot =
+    slotFilter === 'all'
+      ? items
+      : items.filter((item) => {
+          const target = canonicalSlot(slotFilter as SlotKey);
+          return matchesSlot(item, target as SlotKey);
+        });
+
+  const filteredItems = filteredItemsBySlot; // server already applied search/type filters; slot applied client-side
+
   const hasFilters = filterType !== 'all' || search.trim().length >= MIN_SEARCH_LENGTH;
-  const total = hasFilters ? resultCount : totalCount;
+  const baseTotal = hasFilters ? resultCount : totalCount;
+  const total = slotFilter === 'all' ? baseTotal : filteredItems.length;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const pageItems = filteredItems;
 
@@ -48,23 +79,30 @@ export const ItemDB: React.FC<ItemDBProps> = () => {
     const typeParam = filterType === 'all' ? undefined : filterType;
     const trimmed = search.trim();
     const hasSearch = trimmed.length >= MIN_SEARCH_LENGTH;
+    const slotParam = slotFilter === 'all' ? undefined : slotFilter;
 
     const timeout = setTimeout(() => {
       // If user typed but hasn't reached the minimum length, don't refetch (unless a type filter is applied)
-      if (!hasSearch && trimmed.length > 0 && !typeParam) return;
+      if (!hasSearch && trimmed.length > 0 && !typeParam && !slotParam) return;
 
       const limit = hasSearch ? SEARCH_LIMIT : DEFAULT_LIMIT;
       const offset = (page - 1) * limit;
-      void refresh({ q: hasSearch ? trimmed : undefined, type: typeParam, limit, offset, silent: true });
+      void refresh({
+        q: hasSearch ? trimmed : undefined,
+        type: typeParam,
+        limit,
+        offset,
+        silent: true,
+      });
     }, DEBOUNCE_MS);
 
     return () => clearTimeout(timeout);
-  }, [search, filterType, page, refresh]);
+  }, [search, filterType, slotFilter, page, refresh]);
 
   // Reset pagination when filters change
   useEffect(() => {
     setPage(1);
-  }, [search, filterType]);
+  }, [search, filterType, slotFilter]);
 
   useEffect(() => {
     if (page > totalPages) {
@@ -76,38 +114,53 @@ export const ItemDB: React.FC<ItemDBProps> = () => {
 
   return (
     <div className="">
-      <div className="bg-zinc-900 p-4 rounded-xl border border-zinc-800 shadow-sm flex flex-col md:flex-row gap-4">
+      <div className="bg-zinc-900 p-4 rounded-xl border border-zinc-800 shadow-sm flex flex-col md:flex-row gap-4 md:items-end">
 
         {/* Main Search  */}
         <div className="relative flex-1 ">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
-
+           <span className="text-[11px] uppercase tracking-wide text-zinc-500">Search</span>
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 mt-3" size={18} />
+          
           <Input
             type="text"
-            className="bg-zinc-950 border-zinc-700 rounded-lg pl-10"
+            className="bg-zinc-950 border-zinc-700 rounded-lg pl-10 pr-3 h-10 text-sm"
             placeholder="Search by name, keywords, or stats (e.g. 'str', 'hit-n-dam')..."
             value={search}
             onChange={(event) => setSearch(event.target.value)}
           />
         </div>
 
-        {/* Type Filters */}
-        <div className="flex gap-2 items-center overflow-x-auto pb-3 md:pb-0">
-          <Filter size={18} className="text-zinc-500 shrink-0" />
-          {uniqueTypes.map((type) => (
-            <Button
-              key={type}
-              size='sm'
-              onClick={() => setFilterType(type)}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium capitalize whitespace-nowrap transition-colors ${filterType === type ? 'bg-orange-600 text-white' : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
+        {/* Type Filter */}
+        {/* <div className="flex flex-col gap-1 w-full md:w-72">
+          <span className="text-[11px] uppercase tracking-wide text-zinc-500 flex items-center gap-1">
+            <Filter size={14} className="text-zinc-500" /> Type
+          </span>
+          <ComboBox
+            options={uniqueTypes}
+            value={[filterType]}
+            allowCustom={false}
+            onChange={(vals) => setFilterType(vals[0] ?? 'all')}
+            placeholder="All types"
+            className="w-full"
+            size="md"
+            singleSelect
+          />
+        </div> */}
 
-                }`}
-            >
-              {type}
-            </Button>
-          ))}
-
-
+        {/* Slot Filter */}
+        <div className="flex flex-col gap-1 w-full md:w-72">
+          <span className="text-[11px] uppercase tracking-wide text-zinc-500">Slot</span>
+          <ComboBox
+            options={slotOptions}
+            value={[slotFilter]}
+            allowCustom={false}
+            onChange={(vals) => setSlotFilter(vals[0] ?? 'all')}
+            placeholder="All slots"
+            className="w-full"
+            size="md"
+            singleSelect
+            labelForOption={(opt) => (opt === 'all' ? 'All slots' : slotLabel(opt as SlotKey))}
+          />
         </div>
 
       </div>
@@ -154,7 +207,7 @@ export const ItemDB: React.FC<ItemDBProps> = () => {
             ))}
           </div>
           <div className="pt-4 flex flex-col items-center gap-1">
-            <Pagination total={total} page={page} pageSize={PAGE_SIZE} onPageChange={setPage} />
+          <Pagination total={total} page={page} pageSize={PAGE_SIZE} onPageChange={setPage} />
             <p className="text-xs text-zinc-500">
               Page {page} of {totalPages} • {total} items total
             </p>

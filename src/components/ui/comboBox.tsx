@@ -14,6 +14,8 @@ type ComboBoxProps = {
   allowCustom?: boolean;
   disabled?: boolean;
   size?: keyof typeof SIZE_STYLES;
+  singleSelect?: boolean;
+  labelForOption?: (value: string) => string;
 };
 
 // Lightweight multi-select combobox tuned for the dark UI used in modals.
@@ -26,6 +28,8 @@ const ComboBox: React.FC<ComboBoxProps> = ({
   allowCustom = true,
   disabled = false,
   size = 'sm',
+  singleSelect = false,
+  labelForOption = (v) => v,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -45,6 +49,13 @@ const ComboBox: React.FC<ComboBoxProps> = ({
   }, []);
 
   const toggleOption = (option: string) => {
+    if (singleSelect) {
+      const isSelected = value.includes(option);
+      const next = isSelected ? [] : [option];
+      onChange(next);
+      setIsOpen(false);
+      return;
+    }
     const newValue = value.includes(option) ? value.filter((v) => v !== option) : [...value, option];
     onChange(newValue);
   };
@@ -68,8 +79,10 @@ const ComboBox: React.FC<ComboBoxProps> = ({
     if (e.key === 'Escape') setIsOpen(false);
     if (e.key === 'Enter' && allowCustom && searchTerm.trim()) {
       const candidate = searchTerm.trim().toLowerCase();
-      if (!value.includes(candidate)) onChange([...value, candidate]);
+      const next = singleSelect ? [candidate] : value.includes(candidate) ? value : [...value, candidate];
+      onChange(next);
       setSearchTerm('');
+      if (singleSelect) setIsOpen(false);
     }
   };
 
@@ -97,7 +110,7 @@ const ComboBox: React.FC<ComboBoxProps> = ({
               className="inline-flex items-center gap-1 px-2
                bg-orange-900/40 text-orange-100 border border-orange-800 rounded-md text-xs"
             >
-              {item}
+              {labelForOption(item)}
               {!disabled && (
                 <button
                   onClick={(e) => removeOption(item, e)}
@@ -159,10 +172,10 @@ const ComboBox: React.FC<ComboBoxProps> = ({
                     type="button"
                     key={option}
                     onClick={() => toggleOption(option)}
-                    className={`w-full text-left ${sizeStyle} cursor-pointer flex items-center gap-2 transition-colors ${
-                      isSelected ? 'bg-orange-900/30 text-orange-100' : 'hover:bg-zinc-800 text-zinc-200'
-                    }`}
-                  >
+                  className={`w-full text-left ${sizeStyle} cursor-pointer flex items-center gap-2 transition-colors ${
+                    isSelected ? 'bg-orange-900/30 text-orange-100' : 'hover:bg-zinc-800 text-zinc-200'
+                  }`}
+                >
                     {/* Checkbox */}
                     <span
                       className={`inline-flex h-4 w-4 items-center justify-center rounded border ${
@@ -175,7 +188,7 @@ const ComboBox: React.FC<ComboBoxProps> = ({
                         </svg>
                       )}
                     </span>
-                    <span className={isSelected ? 'font-semibold' : ''}>{option}</span>
+                    <span className={isSelected ? 'font-semibold' : ''}>{labelForOption(option)}</span>
                   </button>
                 );
               })
