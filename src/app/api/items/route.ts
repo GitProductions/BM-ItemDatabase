@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidateTag } from 'next/cache';
 import { parseIdentifyDump } from '@/lib/parse-identify-dump';
-import { deleteAllItems, deleteItem, searchItems, upsertItems } from '@/lib/d1';
+import { countItems, countItemsFiltered, deleteAllItems, deleteItem, searchItems, upsertItems } from '@/lib/d1';
 import { ItemInput, normalizeItemInput, parseBooleanParam, withCors } from '@/lib/items-api';
 import { Item } from '@/types/items';
-import { clearCache, getCached, setCached } from '@/lib/memory-cache';
 import { getAuthSession } from '@/lib/auth';
 import { verifyApiToken } from '@/lib/auth-store';
 import { hashIp } from '@/lib/ip-hash';
 import { buildItemPath } from '@/lib/slug';
+
+const ITEMS_TAG = 'items';
 
 const itemUrlFor = (request: NextRequest, id: string, keywords?: string | null) =>
   new URL(buildItemPath(id, keywords), request.url).toString();
@@ -54,20 +56,6 @@ export async function GET(request: NextRequest) {
   const limitParam = Number(searchParams.get('limit') ?? undefined);
   const offsetParam = Number(searchParams.get('offset') ?? undefined);
 
-  const cacheKey = JSON.stringify({ q, type, flagged, id, limit: limitParam, offset: offsetParam });
-  const cached = getCached<{ items: unknown[]; count: number }>(cacheKey);
-  if (cached) {
-    return withCors(
-      NextResponse.json(cached, {
-        status: 200,
-        headers: {
-          'Cache-Control': 'public, max-age=3600',
-          'X-Cache': 'HIT',
-        },
-      }),
-    );
-  }
-
   const items = await searchItems({
     q,
     type,
@@ -77,9 +65,12 @@ export async function GET(request: NextRequest) {
     offset: Number.isFinite(offsetParam) ? offsetParam : undefined,
   });
 
-  const payload = { items, count: items.length };
-  setCached(cacheKey, payload);
+  const [totalAll, totalMatching] = await Promise.all([
+    countItems(),
+    countItemsFiltered({ q, type, flagged, id }),
+  ]);
 
+  const payload = { items, count: items.length, total: totalMatching, totalAll };
   return withCors(
     NextResponse.json(payload, {
       status: 200,
@@ -166,7 +157,7 @@ export async function POST(request: NextRequest) {
 
     const storedResults = await upsertItems(normalizedItems, { submissionIpHash: ipHash });
     const storedIds: string[] = storedResults.map((entry) => entry.id);
-    clearCache();
+    await revalidateTag(ITEMS_TAG);
     const items = await searchItems();
     const itemUrls = items
       .filter((item) => storedIds.includes(item.id))
@@ -207,7 +198,7 @@ export async function POST(request: NextRequest) {
 
       const storedResults = await upsertItems(merged, { submissionIpHash: ipHash });
       const storedIds: string[] = storedResults.map((entry) => entry.id);
-      clearCache();
+      await revalidateTag(ITEMS_TAG);
       const items = await searchItems();
       const itemUrls = items
         .filter((item) => storedIds.includes(item.id))
@@ -227,7 +218,7 @@ export async function POST(request: NextRequest) {
   }
 
   const [storedResult] = await upsertItems([normalized.item], { submissionIpHash: ipHash });
-  clearCache();
+  await revalidateTag(ITEMS_TAG);
   const stableId = storedResult?.id ?? normalized.item.id;
   const [saved] = await searchItems({ id: stableId });
   const itemUrl = stableId ? toItemUrl(stableId, saved?.keywords ?? normalized.item.keywords) : undefined;
@@ -265,7 +256,7 @@ export async function PATCH(request: NextRequest) {
   const ipHash = hashIp(request.headers.get('x-real-ip') ?? '0.0.0.0');
   const updatedResults = await upsertItems(normalizedItems, { submissionIpHash: ipHash });
   const updatedIds: string[] = updatedResults.map((entry) => entry.id);
-  clearCache();
+  await revalidateTag(ITEMS_TAG);
 
   const savedId = normalizedItems.length === 1 ? updatedIds[0] ?? normalizedItems[0].id : null;
   const saved = savedId ? await searchItems({ id: savedId }) : null;
@@ -299,7 +290,7 @@ export async function DELETE(request: NextRequest) {
 
   if (id) {
     await deleteItem(id);
-    clearCache();
+    await revalidateTag(ITEMS_TAG);
     return withCors(NextResponse.json({ deleted: true, id }));
   }
 
@@ -307,7 +298,7 @@ export async function DELETE(request: NextRequest) {
   const wipe = parseBooleanParam(searchParams.get('all'));
   if (wipe) {
     await deleteAllItems();
-    clearCache();
+    await revalidateTag(ITEMS_TAG);
     return withCors(NextResponse.json({ deleted: true, all: true, items: [] }));
   }
 
