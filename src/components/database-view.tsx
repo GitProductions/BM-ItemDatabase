@@ -15,27 +15,33 @@ import { useRouter } from 'next/navigation';
 
 type ItemDBProps = Record<string, never>;
 
-const DEFAULT_LIMIT = 50;
-const SEARCH_LIMIT = 50;
+const PAGE_SIZE = 20;
+const DEFAULT_LIMIT = PAGE_SIZE;
+const SEARCH_LIMIT = PAGE_SIZE;
 const MIN_SEARCH_LENGTH = 2;
 const DEBOUNCE_MS = 400;
 
 export const ItemDB: React.FC<ItemDBProps> = () => {
   const [active, setActive] = useState(false)
   const router = useRouter();
-  const { items, refresh } = useAppData();
+  const { items, refresh, totalCount, resultCount } = useAppData();
   const [search, setSearch] = useState('');
   const [filterType, setFilterType] = useState('all');
   const [suggestItem, setSuggestItem] = useState<Item | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [suggestFeedback, setSuggestFeedback] = useState<string | null>(null);
   const [page, setPage] = useState(1);
-  const pageSize = 20;
 
   const uniqueTypes = useMemo(() => {
     const types = new Set(items.map((item) => item.type));
     return ['all', ...Array.from(types)];
   }, [items]);
+
+  const filteredItems = items; // server already applied search/type filters
+  const hasFilters = filterType !== 'all' || search.trim().length >= MIN_SEARCH_LENGTH;
+  const total = hasFilters ? resultCount : totalCount;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const pageItems = filteredItems;
 
   // Trigger server-side fetch when search or filter changes (debounced)
   useEffect(() => {
@@ -48,23 +54,25 @@ export const ItemDB: React.FC<ItemDBProps> = () => {
       if (!hasSearch && trimmed.length > 0 && !typeParam) return;
 
       const limit = hasSearch ? SEARCH_LIMIT : DEFAULT_LIMIT;
-      void refresh({ q: hasSearch ? trimmed : undefined, type: typeParam, limit, silent: true });
+      const offset = (page - 1) * limit;
+      void refresh({ q: hasSearch ? trimmed : undefined, type: typeParam, limit, offset, silent: true });
     }, DEBOUNCE_MS);
 
     return () => clearTimeout(timeout);
-  }, [search, filterType, refresh]);
+  }, [search, filterType, page, refresh]);
 
   // Reset pagination when filters change
   useEffect(() => {
     setPage(1);
   }, [search, filterType]);
 
+  useEffect(() => {
+    if (page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [page, totalPages]);
 
 
-  const filteredItems = items; // server already applied search/type filters
-  const total = filteredItems.length;
-  const startIdx = (page - 1) * pageSize;
-  const pageItems = filteredItems.slice(startIdx, startIdx + pageSize);
 
   return (
     <div className="">
@@ -126,24 +134,30 @@ export const ItemDB: React.FC<ItemDBProps> = () => {
 
                 {/* Suggest Edit Button */}
                 <Button
+                  // variant="ghost"
                   size="sm"
                   onClick={() => {
                     setSuggestItem(item);
                     setSuggestFeedback(null);
                   }}
-                  className="absolute bottom-2 left-2 inline-flex items-center gap-1 w-auto z-10
-                  text-[11px] px-2 py-1 rounded
-                  bg-zinc-900/80 border border-zinc-700 text-zinc-300 hover:text-white hover:border-orange-500 hover:bg-transparent 
-                  transition-colors"
+                  className='absolute bottom-1 left-2 inline-flex items-center gap-1 w-auto z-10  text-[10px] px-2 bg-transparent py-1 rounded
+                   text-white/10 hover:text-orange-400 hover:border-orange-500 hover:bg-transparent'
+                  // className="absolute bottom-2 left-2 inline-flex items-center gap-1 w-auto z-10
+                  // text-[11px] px-2 py-1 rounded
+                  // bg-zinc-900/80 border border-zinc-700 text-zinc-300 hover:text-white hover:border-orange-500 hover:bg-transparent 
+                  // transition-colors"
                 >
-                  Edit
+                  Suggest an edit
                 </Button>
 
               </div>
             ))}
           </div>
-          <div className="pt-4 flex justify-center">
-            <Pagination total={total} page={page} pageSize={pageSize} onPageChange={setPage} />
+          <div className="pt-4 flex flex-col items-center gap-1">
+            <Pagination total={total} page={page} pageSize={PAGE_SIZE} onPageChange={setPage} />
+            <p className="text-xs text-zinc-500">
+              Page {page} of {totalPages} • {total} items total
+            </p>
           </div>
         </>
       ) : (

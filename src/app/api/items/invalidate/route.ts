@@ -1,9 +1,11 @@
 import { NextResponse } from 'next/server';
-import { clearCache } from '@/lib/memory-cache';
+import { revalidateTag } from 'next/cache';
 import { withCors } from '@/lib/items-api';
 
+const ITEMS_TAG = 'items';
+
 export async function POST() {
-  clearCache();
+  await revalidateTag(ITEMS_TAG);
   return withCors(
     NextResponse.json(
       { cleared: true, message: 'Cache invalidated manually' },

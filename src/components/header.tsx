@@ -90,7 +90,7 @@ function Header({
           <div>
             <h1 className="font-bold text-xl tracking-tight text-white">BlackMUD Item DB</h1>
             <p className="text-xs text-zinc-400 font-mono min-w-[12ch]" aria-busy={loading}>
-              {loading ? 'Loading...' : `${totalCount || items.length} items indexed`}
+              {loading ? 'Loading...' : `${totalCount} items indexed`}
             </p>
           </div>
         </div>

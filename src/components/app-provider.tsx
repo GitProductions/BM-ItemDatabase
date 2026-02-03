@@ -21,6 +21,7 @@ const AppDataContext = createContext<{
   refresh: (options?: FetchOptions) => Promise<void>;
   searchItems: (query: string, limit?: number) => Promise<void>;
   totalCount: number;
+  resultCount: number;
   userName: string;
   handleSetUserName: (name: string) => void;
 } | null>(null);
@@ -31,6 +32,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [totalCount, setTotalCount] = useState<number>(0);
+  const [resultCount, setResultCount] = useState<number>(0);
   const [userName, setUserName] = useState<string>('');
   const lastRequestRef = useRef<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -66,7 +68,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     if (options.type) params.set('type', options.type);
     if (typeof options.flagged === 'boolean') params.set('flagged', options.flagged ? 'true' : 'false');
 
-    const resolvedLimit = options.limit ?? (options.q ? undefined : 10);
+    const resolvedLimit = options.limit ?? (options.q ? undefined : 20);
     if (resolvedLimit) params.set('limit', String(resolvedLimit));
     if (Number.isFinite(options.offset)) params.set('offset', String(options.offset));
 
@@ -92,8 +94,10 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
       const response = await fetch(url, { signal: controller.signal });
       if (!response.ok) throw new Error('Failed to load items');
       const data = await response.json();
-      setItems(data.items ?? []);
-      setTotalCount(data.totalAll ?? data.total ?? data.count ?? (data.items?.length ?? 0));
+      const fetchedItems = data.items ?? [];
+      setItems(fetchedItems);
+      setTotalCount(typeof data.totalAll === 'number' ? data.totalAll : 0);
+      setResultCount(typeof data.total === 'number' ? data.total : 0);
     } catch (err) {
       if ((err as Error)?.name === 'AbortError') return;
       console.error('Failed to load items', err);
@@ -109,18 +113,18 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
   const searchItems = useCallback(
     async (query: string, limit?: number) => {
       const trimmed = query.trim();
-      await refresh({ q: trimmed || undefined, limit: limit ?? (trimmed ? undefined : 50) });
+      await refresh({ q: trimmed || undefined, limit: limit ?? (trimmed ? undefined : 20) });
     },
     [refresh],
   );
 
   useEffect(() => {
-    void refresh({ limit: 50 });
+    void refresh({ limit: 20 });
   }, [refresh]);
 
   return (
     <AppDataContext.Provider
-      value={{ items, loading, error, refresh, searchItems, totalCount, userName, handleSetUserName }}
+      value={{ items, loading, error, refresh, searchItems, totalCount, resultCount, userName, handleSetUserName }}
     >
       {children}
     </AppDataContext.Provider>

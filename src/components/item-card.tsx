@@ -222,7 +222,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item }) => {
       <div className="mt-2 flex flex-col gap-1 text-xs text-zinc-500">
         <div className="flex justify-between gap-2">
           <div className="">
-          <span>{displayWorn.length ? `Worn: ${displayWorn.map((slot) => slotLabel(slot)).join(', ')}` : ''}</span>
+          {/* <span>{displayWorn.length ? `Worn: ${displayWorn.map((slot) => slotLabel(slot)).join(', ')}` : ''}</span> */}
            {displayDroppedBy && 
            <p className="text-right italic">Dropped by: {displayDroppedBy}</p>
            }
