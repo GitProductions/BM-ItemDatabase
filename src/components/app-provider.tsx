@@ -1,14 +1,26 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { Item } from '@/types/items';
+
+type FetchOptions = {
+  q?: string;
+  type?: string;
+  limit?: number;
+  offset?: number;
+  flagged?: boolean;
+  force?: boolean;
+  silent?: boolean;
+};
 
 const AppDataContext = createContext<{
   items: Item[];
   loading: boolean;
   error: string | null;
-  refresh: () => Promise<void>;
+  refresh: (options?: FetchOptions) => Promise<void>;
+  searchItems: (query: string, limit?: number) => Promise<void>;
+  totalCount: number;
   userName: string;
   handleSetUserName: (name: string) => void;
 } | null>(null);
@@ -18,7 +30,10 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [totalCount, setTotalCount] = useState<number>(0);
   const [userName, setUserName] = useState<string>('');
+  const lastRequestRef = useRef<string | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   const handleSetUserName = useCallback(
     (name: string) => {
@@ -45,29 +60,68 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
 
 
 
-  const refresh = useCallback(async () => {
-    setLoading(true);
+  const refresh = useCallback(async (options: FetchOptions = {}) => {
+    const params = new URLSearchParams();
+    if (options.q) params.set('q', options.q);
+    if (options.type) params.set('type', options.type);
+    if (typeof options.flagged === 'boolean') params.set('flagged', options.flagged ? 'true' : 'false');
+
+    const resolvedLimit = options.limit ?? (options.q ? undefined : 10);
+    if (resolvedLimit) params.set('limit', String(resolvedLimit));
+    if (Number.isFinite(options.offset)) params.set('offset', String(options.offset));
+
+    const queryString = params.toString();
+    const url = queryString ? `/api/items?${queryString}` : '/api/items';
+    const requestKey = `${url}`;
+
+    // Avoid hammering the API with identical back-to-back requests unless forced
+    if (!options.force && requestKey === lastRequestRef.current) return;
+    lastRequestRef.current = requestKey;
+
+    if (!options.silent) setLoading(true);
     setError(null);
+
+    // Cancel any in-flight request to avoid piling queries when typing
+    if (abortRef.current) {
+      abortRef.current.abort();
+    }
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     try {
-      const response = await fetch('/api/items', { cache: 'no-store' });
+      const response = await fetch(url, { signal: controller.signal });
       if (!response.ok) throw new Error('Failed to load items');
       const data = await response.json();
-      // setItems(normalizeItems(data.items ?? []));
       setItems(data.items ?? []);
+      setTotalCount(data.totalAll ?? data.total ?? data.count ?? (data.items?.length ?? 0));
     } catch (err) {
+      if ((err as Error)?.name === 'AbortError') return;
       console.error('Failed to load items', err);
       setError('Unable to load items from the database. Check your connection and try again.');
     } finally {
-      setLoading(false);
+      if (abortRef.current === controller) {
+        abortRef.current = null;
+      }
+      if (!options.silent) setLoading(false);
     }
   }, []);
 
+  const searchItems = useCallback(
+    async (query: string, limit?: number) => {
+      const trimmed = query.trim();
+      await refresh({ q: trimmed || undefined, limit: limit ?? (trimmed ? undefined : 50) });
+    },
+    [refresh],
+  );
+
   useEffect(() => {
-    void refresh();
+    void refresh({ limit: 50 });
   }, [refresh]);
 
   return (
-    <AppDataContext.Provider value={{ items, loading, error, refresh, userName, handleSetUserName   }}>
+    <AppDataContext.Provider
+      value={{ items, loading, error, refresh, searchItems, totalCount, userName, handleSetUserName }}
+    >
       {children}
     </AppDataContext.Provider>
   );

@@ -39,7 +39,15 @@ function NavButtons({ onDone }: { onDone?: () => void }) {
   );
 }
 
-function Header({ items, loading = false }: { items: Item[]; loading?: boolean }) {
+function Header({
+  items,
+  loading = false,
+  totalCount,
+}: {
+  items: Item[];
+  loading?: boolean;
+  totalCount: number;
+}) {
   const { data: session, status } = useSession();
   const [mobileOpen, setMobileOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement | null>(null);
@@ -82,7 +90,7 @@ function Header({ items, loading = false }: { items: Item[]; loading?: boolean }
           <div>
             <h1 className="font-bold text-xl tracking-tight text-white">BlackMUD Item DB</h1>
             <p className="text-xs text-zinc-400 font-mono min-w-[12ch]" aria-busy={loading}>
-              {loading ? 'Loading…' : `${items.length} items indexed`}
+              {loading ? 'Loading...' : `${totalCount || items.length} items indexed`}
             </p>
           </div>
         </div>
@@ -102,6 +110,7 @@ function Header({ items, loading = false }: { items: Item[]; loading?: boolean }
             </Link>
           ) : (
             <Link
+              prefetch={false}
               href="/login"
               className="px-3 py-2 rounded-md border border-zinc-800 text-sm text-zinc-100 hover:border-orange-500 transition-colors"
             >

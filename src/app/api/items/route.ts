@@ -164,7 +164,8 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const storedIds = await upsertItems(normalizedItems, { submissionIpHash: ipHash });
+    const storedResults = await upsertItems(normalizedItems, { submissionIpHash: ipHash });
+    const storedIds: string[] = storedResults.map((entry) => entry.id);
     clearCache();
     const items = await searchItems();
     const itemUrls = items
@@ -204,7 +205,8 @@ export async function POST(request: NextRequest) {
         };
       });
 
-      const storedIds = await upsertItems(merged, { submissionIpHash: ipHash });
+      const storedResults = await upsertItems(merged, { submissionIpHash: ipHash });
+      const storedIds: string[] = storedResults.map((entry) => entry.id);
       clearCache();
       const items = await searchItems();
       const itemUrls = items
@@ -213,7 +215,7 @@ export async function POST(request: NextRequest) {
       return withCors(NextResponse.json({  inserted: parsedItems.length, itemIds: storedIds, itemUrls }));
     }
 
-    const items = await searchItems();
+    // const items = await searchItems();
     return withCors(NextResponse.json({  inserted: parsedItems.length, itemIds: [], itemUrls: [] }));
   }
 
@@ -224,9 +226,9 @@ export async function POST(request: NextRequest) {
     return withCors(NextResponse.json({ message: normalized.message }, { status: 400 }));
   }
 
-  const [storedId] = await upsertItems([normalized.item], { submissionIpHash: ipHash });
+  const [storedResult] = await upsertItems([normalized.item], { submissionIpHash: ipHash });
   clearCache();
-  const stableId = storedId ?? normalized.item.id;
+  const stableId = storedResult?.id ?? normalized.item.id;
   const [saved] = await searchItems({ id: stableId });
   const itemUrl = stableId ? toItemUrl(stableId, saved?.keywords ?? normalized.item.keywords) : undefined;
 
@@ -261,7 +263,8 @@ export async function PATCH(request: NextRequest) {
   }
 
   const ipHash = hashIp(request.headers.get('x-real-ip') ?? '0.0.0.0');
-  const updatedIds = await upsertItems(normalizedItems, { submissionIpHash: ipHash });
+  const updatedResults = await upsertItems(normalizedItems, { submissionIpHash: ipHash });
+  const updatedIds: string[] = updatedResults.map((entry) => entry.id);
   clearCache();
 
   const savedId = normalizedItems.length === 1 ? updatedIds[0] ?? normalizedItems[0].id : null;

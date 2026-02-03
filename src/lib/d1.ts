@@ -313,6 +313,17 @@ const decodeItem = (row: StoredItemRow): Item => ({
 const submissionIdentity = (item: Item) =>
   `${item.name.toLowerCase().trim()}|${item.keywords.toLowerCase().trim()}|${item.type.toLowerCase().trim()}`;
 
+// Normalize raw identify dumps for equality checks
+const normalizeRaw = (raw?: string[]) =>
+  (raw ?? [])
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .join('\n');
+
+const isExactRawMatch = (a?: string[], b?: string[]) => normalizeRaw(a) !== '' && normalizeRaw(a) === normalizeRaw(b);
+
+export type UpsertResult = { id: string; duplicate: boolean; duplicateOf?: string };
+
 
 /**
  * Fetch submitter leaderboard (top contributors by submission count).
@@ -425,11 +436,11 @@ const primeRanges = (item: Item): Item => ({
 
 
 
-// Sanitize limit to be within reasonable bounds.
-// Default is generous so searches can span the full catalog (we already have >1k items).
+// Sanitize limit to balance completeness with response time.
+// Default 200 covers current dataset; hard cap 1000 to avoid slow queries.
 const sanitizeLimit = (value?: number) => {
-  if (!Number.isFinite(value) || value === undefined || value === null) return 100;
-  return Math.min(Math.max(1, Math.floor(value)), 100);
+  if (!Number.isFinite(value) || value === undefined || value === null) return 500;
+  return Math.min(Math.max(1, Math.floor(value)), 1000);
 };
 
 
@@ -530,6 +541,17 @@ export const searchItems = async (params: ItemSearchParams = {}): Promise<Item[]
 };
 
 
+export const countItems = async (): Promise<any> => {
+  const db = await getDatabase();
+
+  // wrangler d1 execute <DATABASE_NAME> --command="SELECT COUNT(*) FROM <TABLE_NAME>;" --remote
+
+  db.prepare('SELECT COUNT(*) FROM items;').run();
+
+}
+
+
+
 // Fetch all items (for app initialization, caching, etc)
 export const fetchItems = async (): Promise<Item[]> => searchItems();
 
@@ -538,13 +560,31 @@ export const fetchItems = async (): Promise<Item[]> => searchItems();
 // We update all fields on conflict to ensure latest data is stored
 // including flags, stats, ego, isArtifact, raw, flaggedForReview, duplicateOf, and updatedAt
 // Returns the stable item IDs (existing or newly created) in the same order as the input.
-export const upsertItems = async (items: Item[], context?: { submissionIpHash?: string | null }): Promise<string[]> => {
+export const upsertItems = async (
+  items: Item[],
+  context?: { submissionIpHash?: string | null },
+): Promise<UpsertResult[]> => {
   if (!items.length) return [];
 
   const db = await getDatabase();
   await ensureSchema(db);
 
   const now = new Date().toISOString();
+  const keywordCache = new Map<string, Item[]>();
+
+  const loadByKeyword = async (keyword: string): Promise<Item[]> => {
+    const key = keyword.trim().toLowerCase();
+    if (!key) return [];
+    if (keywordCache.has(key)) return keywordCache.get(key)!;
+    const result = await db
+      .prepare('SELECT * FROM items WHERE LOWER(keywords) = ?1')
+      .bind(key)
+      .all<StoredItemRow>();
+    const rows = (result.results ?? result.rows ?? []) as StoredItemRow[];
+    const decoded = rows.map(decodeItem);
+    keywordCache.set(key, decoded);
+    return decoded;
+  };
 
   const fetchExistingByIdentity = async (item: Item): Promise<Item | undefined> => {
     const result = await db
@@ -576,10 +616,16 @@ export const upsertItems = async (items: Item[], context?: { submissionIpHash?: 
     return generateShortId(8);
   };
 
-  const persistedIds: string[] = [];
+  const persisted: UpsertResult[] = [];
 
   const statements = await Promise.all(
     items.map(async (item, idx) => {
+      // Detect duplicates before persisting submissions
+      const candidates = await loadByKeyword(item.keywords);
+      const duplicateMatch = candidates.find(
+        (candidate) => candidate.id !== item.id && isExactRawMatch(candidate.raw, item.raw),
+      );
+
       const existingById = item.id ? await fetchExistingById(item.id) : undefined;
       const existingByIdentity = await fetchExistingByIdentity(item);
 
@@ -594,8 +640,16 @@ export const upsertItems = async (items: Item[], context?: { submissionIpHash?: 
         ? await ensureId(undefined)
         : await ensureId(resolvedExisting?.id ?? item.id);
 
-      persistedIds[idx] = stableId;
-      const values = encodeItem({ ...primeRanges(merged), id: stableId }, now);
+      persisted[idx] = {
+        id: stableId,
+        duplicate: Boolean(duplicateMatch),
+        duplicateOf: duplicateMatch?.id,
+      };
+
+      const values = encodeItem(
+        { ...primeRanges(merged), id: stableId, duplicateOf: duplicateMatch?.id ?? merged.duplicateOf },
+        now,
+      );
 
       // If we found an existing record (by id or identity), perform an update to avoid PK conflicts.
       if (resolvedExisting) {
@@ -683,13 +737,16 @@ export const upsertItems = async (items: Item[], context?: { submissionIpHash?: 
 
   const submissionStatements = await Promise.all(
     items.map(async (item, idx) => {
+      // Skip logging submissions for exact duplicates to avoid inflating counts.
+      if (persisted[idx]?.duplicate) return null;
+
       const submitterName = item.submittedBy?.trim();
       const submitterId = item.submittedByUserId?.trim();
       if (!submitterName && !submitterId) return null;
 
       const identityKey = submissionIdentity(item);
       const submissionId = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2, 11);
-      const mergedId = persistedIds[idx] ?? item.id ?? (await ensureId(undefined));
+      const mergedId = persisted[idx]?.id ?? item.id ?? (await ensureId(undefined));
 
       return db
         .prepare(
@@ -715,7 +772,7 @@ export const upsertItems = async (items: Item[], context?: { submissionIpHash?: 
 
   await db.batch([...statements, ...submissionPrep]);
 
-  return persistedIds;
+  return persisted;
 };
 
 

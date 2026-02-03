@@ -48,7 +48,9 @@ export default function AccountPage() {
 
   // Load user's submitted items
   const loadItems = async () => {
-    const res = await fetch('/api/user/items', { cache: 'no-store' });
+    const res = await fetch('/api/user/items', 
+      // { cache: 'no-store' }
+    );
     if (!res.ok) throw new Error('Unable to load your items');
     const data = (await res.json()) as { items: Item[] };
     setItems(data.items);

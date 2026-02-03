@@ -4,7 +4,7 @@ import { ItemDB } from '@/components/database-view';
 import { useAppData } from '@/components/app-provider';
 
 export default function HomePage() {
-  const { items, loading, error } = useAppData();
+  const { loading, error } = useAppData();
 
   return (
     <>
@@ -17,7 +17,7 @@ export default function HomePage() {
       {loading ? (
         <div className="text-center py-20 text-zinc-500">Loading items from the database...</div>
       ) : (
-        <ItemDB items={items} />
+        <ItemDB />
       )}
     </>
   );

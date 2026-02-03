@@ -101,7 +101,7 @@ export default function AddItemPage() {
 
       if (!response.ok) throw new Error('Import failed');
 
-      await refresh();
+      await refresh({ force: true });
       setRawInput('');
       setItemOverrides({});
       setDuplicateCheck(null);
@@ -176,7 +176,7 @@ export default function AddItemPage() {
 
       if (!response.ok) throw new Error('Import failed');
 
-      await refresh();
+      await refresh({ force: true });
       setRawInput('');
       setItemOverrides({});
       setDuplicateCheck(null);

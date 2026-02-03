@@ -6,30 +6,21 @@ import { Item } from '@/types/items';
 import { ItemCard } from './item-card';
 import Image from 'next/image';
 import EditModal from './modals/EditModal';
-import uFuzzy from '@leeoniya/ufuzzy';
 import { getRandomOrcPhrase } from '@/lib/orc-phrases';
 import Input from './ui/Input';
 import Button from './ui/Button';
 import Pagination from './ui/Pagination';
+import { useAppData } from '@/components/app-provider';
 
-// uFuzzy tuned to allow common typos/transpositions while still ranking well.
-const uf = new uFuzzy({
-  intraMode: 1, // Crucial: enable SingleError (one typo per term)
-  intraIns: 1, // Allow 1 insertion (extra char)
-  intraSub: 1, // Allow 1 substitution (wrong char)
-  intraDel: 1, // Allow 1 deletion (missing char)
-  intraTrn: 1, // Allow 1 transposition (swapped adjacent chars)
-  // Optional extras below - keep or remove based on testing
-  // interIns: Infinity,   // Default - fine for item names
-  intraChars: "[a-z\\\\d'-]", // Allow letters, digits, apostrophes, hyphens (common in item names)
-});
+type ItemDBProps = Record<string, never>;
 
-type ItemDBProps = {
-  items: Item[];
-  onRefresh?: () => Promise<void> | void;
-};
+const DEFAULT_LIMIT = 50;
+const SEARCH_LIMIT = 50;
+const MIN_SEARCH_LENGTH = 2;
+const DEBOUNCE_MS = 400;
 
-export const ItemDB: React.FC<ItemDBProps> = ({ items }) => {
+export const ItemDB: React.FC<ItemDBProps> = () => {
+  const { items, refresh } = useAppData();
   const [search, setSearch] = useState('');
   const [filterType, setFilterType] = useState('all');
   const [suggestItem, setSuggestItem] = useState<Item | null>(null);
@@ -43,56 +34,31 @@ export const ItemDB: React.FC<ItemDBProps> = ({ items }) => {
     return ['all', ...Array.from(types)];
   }, [items]);
 
-  // Filtered items based on search and type filter
-  const filteredItems = useMemo(() => {
-    const searchTerm = search.trim().toLowerCase();
+  // Trigger server-side fetch when search or filter changes (debounced)
+  useEffect(() => {
+    const typeParam = filterType === 'all' ? undefined : filterType;
+    const trimmed = search.trim();
+    const hasSearch = trimmed.length >= MIN_SEARCH_LENGTH;
 
-    const baseResults =
-      searchTerm.length === 0
-        ? items
-        : (() => {
-            const haystack = items.map((item) => {
-              const affectsStr = (item.stats?.affects ?? [])
-                .flatMap((affect) => [affect.stat, affect.spell])
-                .filter(Boolean)
-                .join(' ');
+    const timeout = setTimeout(() => {
+      // If user typed but hasn't reached the minimum length, don't refetch (unless a type filter is applied)
+      if (!hasSearch && trimmed.length > 0 && !typeParam) return;
 
-              return [item.name, item.keywords || '', item.type, affectsStr]
-                .join(' | ')
-                .toLowerCase();
-            });
+      const limit = hasSearch ? SEARCH_LIMIT : DEFAULT_LIMIT;
+      void refresh({ q: hasSearch ? trimmed : undefined, type: typeParam, limit, silent: true });
+    }, DEBOUNCE_MS);
 
-            const searchResult = uf.search(haystack, searchTerm);
+    return () => clearTimeout(timeout);
+  }, [search, filterType, refresh]);
 
-            let uniqueIdxs: number[];
-
-            if (searchResult && searchResult[0] && searchResult[0].length > 0) {
-              const [idxs, info, order] = searchResult;
-
-              const orderedIdxs =
-                info && order ? order.map((ord) => info.idx[ord]) : Array.from(idxs);
-
-              uniqueIdxs = Array.from(new Set(orderedIdxs));
-            } else {
-              // Fallback to simple substring includes when fuzzy misses (helps with very short/odd inputs)
-              uniqueIdxs = haystack
-                .map((text, idx) => (text.includes(searchTerm) ? idx : -1))
-                .filter((idx) => idx !== -1);
-            }
-
-            return uniqueIdxs.map((idx) => items[idx]).filter(Boolean);
-          })();
-
-    if (filterType === 'all') return baseResults;
-
-    return baseResults.filter((item) => item.type.includes(filterType));
-  }, [items, search, filterType]);
-
-  // Reset to first page when filters change
+  // Reset pagination when filters change
   useEffect(() => {
     setPage(1);
   }, [search, filterType]);
 
+  
+
+  const filteredItems = items; // server already applied search/type filters
   const total = filteredItems.length;
   const startIdx = (page - 1) * pageSize;
   const pageItems = filteredItems.slice(startIdx, startIdx + pageSize);

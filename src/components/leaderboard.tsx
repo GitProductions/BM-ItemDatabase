@@ -35,7 +35,10 @@ const Leaderboard: React.FC = () => {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch('/api/leaderboard?limit=25', { cache: 'no-store' });
+        const res = await fetch('/api/leaderboard?limit=25', 
+          { next: { revalidate: 3600 } }
+          // { cache: 'no-store' }
+        );
         if (!res.ok) throw new Error(`Request failed (${res.status})`);
         const data = await res.json();
         setEntries(data?.submitters ?? []);
