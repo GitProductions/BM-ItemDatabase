@@ -44,7 +44,5 @@ next-env.d.ts
 /.open-next
 /.wrangler
 wrangler.jsonc
-wrangler.jsonc
-*.jsonc
 *.jsonc
 database.sql
