@@ -6,8 +6,10 @@ const objectLineRegex = /Object '(.+?)', Item type: (.+)/;
 
 const generateId = () => generateShortId(6);
 
+// common line splits or extra lines when copy/pasted we can attempt to filter our before submission
 // const commonMistakes = [
-//   ""
+//   "You feel informed:"
+      // "hums powerfully.",
 // ]
 
 const parseStatAffect = (line: string): ItemAffect | null => {
@@ -108,6 +110,7 @@ export const parseIdentifyDump = (text: string): Item[] => {
 
     const keywords = match[1];
     const type = match[2].trim().toLowerCase();
+
     const hasNameLine = i > 0 && !objectLineRegex.test(lines[i - 1]);
     const rawName = hasNameLine ? lines[i - 1] : '';
     const { label: name, condition } = stripCondition(rawName || 'Unknown Item');
