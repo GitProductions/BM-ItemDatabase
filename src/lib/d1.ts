@@ -625,7 +625,7 @@ export const fetchItems = async (): Promise<Item[]> => searchItems();
 // Returns the stable item IDs (existing or newly created) in the same order as the input.
 export const upsertItems = async (
   items: Item[],
-  context?: { submissionIpHash?: string | null },
+  context?: { submissionIpHash?: string | null; preserveIdOnIdentityChange?: boolean },
 ): Promise<UpsertResult[]> => {
   if (!items.length) return [];
 
@@ -694,12 +694,14 @@ export const upsertItems = async (
 
       const idCollisionWithDifferentIdentity =
         existingById && submissionIdentity(existingById) !== submissionIdentity(item);
+      const treatAsIdCollision =
+        idCollisionWithDifferentIdentity && !context?.preserveIdOnIdentityChange;
 
-      const resolvedExisting = idCollisionWithDifferentIdentity ? existingByIdentity : existingById ?? existingByIdentity;
+      const resolvedExisting = treatAsIdCollision ? existingByIdentity : existingById ?? existingByIdentity;
 
       const merged = resolvedExisting ? mergeItems(resolvedExisting, item) : primeRanges(item);
 
-      const stableId = idCollisionWithDifferentIdentity
+      const stableId = treatAsIdCollision
         ? await ensureId(undefined)
         : await ensureId(resolvedExisting?.id ?? item.id);
 

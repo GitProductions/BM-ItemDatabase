@@ -26,8 +26,60 @@ type SuggestionModalProps = {
   proposerLocked?: string;
 };
 
+
+// const knownStatTypes = [
+//   'damroll',
+//   'damage',
+
+//   'hitroll',
+//   'hit',
+
+//   'hit-n-dam',
+
+//   'armor',
+//   'ac',
+
+//   'hp',
+//   'hp-regen',
+//   'hitpoints'
+//   ,
+//   'mana_regen',
+//   'mana',
+
+//   'movement',
+//   'move_regen',
+//   'move',
+
+//   'strength',
+//   'intelligence',
+//   'wisdom',
+//   'dexterity',
+//   'constitution',
+//   'charisma',
+
+//   'save_all',
+
+//   'weight',
+
+// ];
+
+// const knownItemFlags = [
+//   'glowing',
+//   'hum',
+//   'invisible',
+//   'magic',
+//   'nodrop',
+//   'bless',
+
+//   'anti_good',
+//   'anti_evil',
+//   'anti_neutral',
+
+//   'noremove',
+// ]  
+
 const EditModal: React.FC<SuggestionModalProps> = ({ item, open, isSubmitting, feedback, onSubmit, onClose, hideAdminControls = false, hideNameInput = false, proposerLocked }) => {
-  const { userName, handleSetUserName, refresh } = useAppData();
+  const { userName, handleSetUserName, refresh, items, setItems } = useAppData();
   const [name, setName] = useState(proposerLocked ?? userName);
   const [note, setNote] = useState('');
   const [reason, setReason] = useState('');
@@ -78,6 +130,47 @@ const EditModal: React.FC<SuggestionModalProps> = ({ item, open, isSubmitting, f
     });
   };
 
+  // Handle item deletion (admin mode)
+  const handleDeleteItem = async () => {
+    if (!item || !adminToken.trim()) {
+      setAdminError('Admin token is required to delete an item.');
+      return;
+    }
+    const confirm = window.confirm(`Are you sure you want to delete the item "${item.name}"? This action cannot be undone.`);
+    if (!confirm) return;
+    setAdminSaving(true);
+    setAdminError(null);
+    setAdminStatus(null);
+    try {
+      const response = await fetch('/api/items', {
+        method: 'DELETE',
+        headers: {
+          'content-type': 'application/json',
+          authorization: `Bearer ${adminToken.trim()}`,
+        },
+        body: JSON.stringify({ id: item.id }),
+      });
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({}));
+        throw new Error(body?.message ?? 'Failed to delete item');
+      }
+
+    } catch (error) {
+      console.error(error);
+      setAdminError(error instanceof Error ? error.message : 'Could not delete item.');
+      return;
+    } finally {
+      // Closing the modal on success
+
+      // instead of refreshing the data as a whole and making an extra DB call that wouldnt be needed
+      // lets just remove the item from view
+      setItems(items.filter((i) => i.id !== item.id));
+
+      // await refresh();
+      onClose();
+      setAdminSaving(false);
+    } 
+  };
 
   // Handle direct save (admin mode)
   const handleDirectSave = async () => {
@@ -146,18 +239,26 @@ const EditModal: React.FC<SuggestionModalProps> = ({ item, open, isSubmitting, f
             />
           )}
 
-          <TextArea
-            placeholder="Describe the edit you suggest..."
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            className="w-full h-[4rem] min-h-[4rem] max-h-[10rem] rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
-          />
+          <div className="space-y-1">
+            <label htmlFor="edit-note" className="block text-xs text-zinc-300 px-1">
+              Suggested edit <span className="text-yellow-400">*</span>
+            </label>
+            <TextArea
+              id="edit-note"
+              required
+              aria-required="true"
+              placeholder="Describe the edit you suggest..."
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              className={`w-full h-[4rem] min-h-[5rem] max-h-[8rem] ${!note.trim() ? 'border-yellow-500/70 focus:border-yellow-400 focus:ring-yellow-400' : ''}`}
+            />
+          </div>
 
-          <textarea
+          <TextArea
             placeholder="Reason (why this change is needed)"
             value={reason}
             onChange={(e) => setReason(e.target.value)}
-            className="w-full h-[4rem] min-h-[6rem] max-h-[10rem] rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+            className="w-full h-[4rem] min-h-[5rem] max-h-[8rem] "
           />
 
           {feedback && <div className="text-sm text-amber-300">{feedback}</div>}
@@ -197,7 +298,16 @@ const EditModal: React.FC<SuggestionModalProps> = ({ item, open, isSubmitting, f
             Cancel
           </Button>
 
-          {adminMode ? (
+          {adminMode && adminToken ? (
+            <>
+
+            <Button
+              onClick={handleDeleteItem}
+              disabled={adminSaving || !draftItem}
+              className="px-4 py-2 text-sm rounded-md bg-red-600 hover:bg-red-500 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {adminSaving ? 'Deleting�' : 'Delete Item'}
+            </Button>
             
             <Button
               onClick={handleDirectSave}
@@ -206,8 +316,11 @@ const EditModal: React.FC<SuggestionModalProps> = ({ item, open, isSubmitting, f
             >
               {adminSaving ? 'Saving�' : 'Save directly'}
             </Button>
+            </>
           ) : (
+
             <Button
+              title={!note.trim() ? 'Please describe why you are making this edit before submitting' : ''}
               disabled={isSubmitting || !note.trim()}
               onClick={handleSubmit}
               className="px-4 py-2 text-sm rounded-md bg-orange-600 hover:bg-orange-500 text-white disabled:opacity-50 disabled:cursor-not-allowed"

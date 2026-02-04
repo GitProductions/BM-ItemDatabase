@@ -15,6 +15,7 @@ type FetchOptions = {
 };
 
 const AppDataContext = createContext<{
+  setItems: (items: Item[]) => void;
   items: Item[];
   loading: boolean;
   error: string | null;
@@ -126,7 +127,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AppDataContext.Provider
-      value={{ items, loading, error, refresh, searchItems, totalCount, resultCount, userName, handleSetUserName }}
+      value={{ setItems, items, loading, error, refresh, searchItems, totalCount, resultCount, userName, handleSetUserName }}
     >
       {children}
     </AppDataContext.Provider>

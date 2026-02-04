@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidateTag } from 'next/cache';
 import { parseIdentifyDump } from '@/lib/parse-identify-dump';
-import { countItems, countItemsFiltered, deleteAllItems, deleteItem, searchItems, upsertItems } from '@/lib/d1';
+import { countItems, countItemsFiltered, deleteItem, searchItems, upsertItems } from '@/lib/d1';
 import { ItemInput, normalizeItemInput, parseBooleanParam, withCors } from '@/lib/items-api';
 import { Item } from '@/types/items';
 import { getAuthSession } from '@/lib/auth';
@@ -257,7 +257,10 @@ export async function PATCH(request: NextRequest) {
   }
 
   const ipHash = hashIp(request.headers.get('x-real-ip') ?? '0.0.0.0');
-  const updatedResults = await upsertItems(normalizedItems, { submissionIpHash: ipHash });
+  const updatedResults = await upsertItems(normalizedItems, {
+    submissionIpHash: ipHash,
+    preserveIdOnIdentityChange: true,
+  });
   const updatedIds: string[] = updatedResults.map((entry) => entry.id);
   await revalidateTag(ITEMS_TAG);
 
@@ -281,15 +284,26 @@ export async function PATCH(request: NextRequest) {
   return withCors(NextResponse.json(body, { status: 200 }));
 }
 
+type DeleteBody = {
+  id?: string;
+};
+
 export async function DELETE(request: NextRequest) {
   // Require admin token to clear the database
   // Note: returning 401 rather than 403 to avoid leaking existence of the endpoint
   if (!isAdminRequest(request)) {
     return withCors(NextResponse.json({ message: 'Unauthorized' }, { status: 401 }));
   }
+  let payload
+  try {
+    payload = (await request.json()) as DeleteBody;
+  } catch {
+    return withCors(NextResponse.json({ message: 'Invalid request payload' }, { status: 400 }));
+  }
 
-  const { searchParams } = new URL(request.url);
-  const id = searchParams.get('id')?.trim();
+  // const { searchParams } = new URL(request.url);
+  // const id = searchParams.get('id')?.trim();
+  const id = payload?.id?.trim();
 
   if (id) {
     await deleteItem(id);
@@ -297,13 +311,14 @@ export async function DELETE(request: NextRequest) {
     return withCors(NextResponse.json({ deleted: true, id }));
   }
 
-  // If no id provided, fall back to full wipe (explicitly requested via ?all=true)
-  const wipe = parseBooleanParam(searchParams.get('all'));
-  if (wipe) {
-    await deleteAllItems();
-    await revalidateTag(ITEMS_TAG);
-    return withCors(NextResponse.json({ deleted: true, all: true, items: [] }));
-  }
+  // // If no id provided, fall back to full wipe (explicitly requested via ?all=true)
+  // // const wipe = parseBooleanParam(searchParams.get('all'));
+  // const wipe = parseBooleanParam(payload?.all ? 'true' : null);
+  // if (wipe) {
+  //   await deleteAllItems();
+  //   await revalidateTag(ITEMS_TAG);
+  //   return withCors(NextResponse.json({ deleted: true, all: true, items: [] }));
+  // }
 
   return withCors(NextResponse.json({ message: 'id is required to delete an item (or set all=true to wipe)' }, { status: 400 }));
 }
