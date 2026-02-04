@@ -74,6 +74,14 @@ const getDatabase = async () => {
 
 let schemaReady: Promise<void> | null = null;
 
+
+// Avoid running D1 DDL on every production request; allow opt-in via env.
+// Defaults to true in dev/preview, false in production unless explicitly enabled.
+const shouldEnsureSchema =
+  process.env.NODE_ENV !== 'production' || process.env.ENABLE_D1_SCHEMA_BOOTSTRAP === 'true';
+
+
+
 const ensureSchema = async (db: D1Database) => {
   if (!shouldEnsureSchema) return;
   if (!schemaReady) {
@@ -153,11 +161,6 @@ const ensureSchema = async (db: D1Database) => {
 
   return schemaReady;
 };
-
-// Avoid running D1 DDL on every production request; allow opt-in via env.
-// Defaults to true in dev/preview, false in production unless explicitly enabled.
-const shouldEnsureSchema =
-  process.env.NODE_ENV !== 'production' || process.env.ENABLE_D1_SCHEMA_BOOTSTRAP === 'true';
 
 
 // NOTE: D1 stores JSON in a TEXT column; this parses legacy shapes (string, CSV string, array)
