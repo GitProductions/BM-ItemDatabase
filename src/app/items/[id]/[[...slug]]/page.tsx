@@ -19,12 +19,7 @@ const fetchItem = cache(async (id: string) => {
   return items[0] ?? null;
 });
 
-const formatValueRange = (
-  value?: number,
-  min?: number,
-  max?: number,
-  { signed = false }: { signed?: boolean } = {},
-): string => {
+const formatValueRange = ( value?: number, min?: number, max?: number, { signed = false }: { signed?: boolean } = {}): string => {
   const fmt = (num?: number): string => {
     if (num === undefined || num === null) return '';
     const rounded = Number.isInteger(num) ? num.toString() : num.toFixed(1);
@@ -54,8 +49,8 @@ const calculateDamage = (damage: string): DamageStats | null => {
   return { average: averageDamage.toFixed(2), high: highDamage, low: lowDamage };
 };
 
-type RouteParams = { id: string; slug?: string[] };
 
+type RouteParams = { id: string; slug?: string[] };
 export async function generateMetadata({ params }: { params: Promise<RouteParams> }): Promise<Metadata> {
   const { id } = await params;
   const item = await fetchItem(id);
@@ -72,22 +67,70 @@ export async function generateMetadata({ params }: { params: Promise<RouteParams
       })();
 
   const slotText = guessedSlots.map((slot) => slotLabel(slot)).join(', ');
-  const descParts = [
-    item.type,
-    item.keywords ? `Keywords: ${item.keywords}` : null,
-    slotText ? `Slots: ${slotText}` : null,
-  ].filter(Boolean);
+  // const descParts = [
+  //   item.type,
+  //   item.keywords ? `Keywords: ${item.keywords}` : null,
+  //   slotText ? `Slots: ${slotText}` : null,
+  // ].filter(Boolean);
 
-  const description = descParts.join(' • ');
-
+  const description = "Learn more item details for " + item.name + (slotText ? ` worn on ${slotText}` : '');
+ 
+  // if we create an image with all the details, people would be less likely to click through
+  // const ogParams = new URLSearchParams({
+  //   name: item.name,
+  //   type: item.type,
+  //   keywords: item.keywords ?? '',
+  //   worn: slotText,
+  //   damage: item.stats?.damage ?? '',
+  //   ac: item.stats?.ac !== undefined ? String(item.stats.ac) : '',
+  //   weight: item.stats?.weight !== undefined ? String(item.stats.weight) : '',
+  //   ego: item.ego ?? '',
+  //   droppedBy: item.droppedBy ?? '',
+  //   artifact: item.isArtifact ? '1' : '',
+  //   flags: item.flags?.join(',') ?? '',
+  //   affects: JSON.stringify(
+  //     (item.stats?.affects ?? []).map((affect) => ({
+  //       type: affect.type,
+  //       stat: affect.stat,
+  //       value: affect.value,
+  //       min: affect.min,
+  //       max: affect.max,
+  //       spell: affect.spell,
+  //       level: affect.level,
+  //     })),
+  //   ),
+  //   submittedBy: (item.contributors?.[0] ?? item.submittedBy ?? ''),
+  // });
+  // const metaOGImage = `/api/thumbnails/item?${ogParams.toString()}`;
   return {
     title: `${item.name} | BlackMUD Item DB`,
     description: description || 'BlackMUD item details',
     openGraph: {
       title: `${item.name} | BlackMUD Item DB`,
       description: description || 'BlackMUD item details',
+    //   images: metaOGImage ? [
+    //         {
+    //           url: metaOGImage,
+    //           alt: item.name,
+    //         },
+    //       ]
+    //     : undefined,
+    // },
+    //  twitter: {
+    //   card: 'summary_large_image',
+    //   title: `${item.name} | BlackMUD Item DB`,
+    //   description: description || 'BlackMUD item details',
+    //   images: metaOGImage ? [
+    //         {
+    //           url: metaOGImage,
+    //           alt: item.name,
+    //         },
+    //       ]
+    //     : undefined,
     },
-  };
+  };  
+    
+
 }
 
 export default async function ItemPage({ params }: { params: Promise<RouteParams> }) {
@@ -136,9 +179,9 @@ export default async function ItemPage({ params }: { params: Promise<RouteParams
           <div>
             <p className="text-[11px] uppercase tracking-[0.18em] text-orange-300">Item</p>
             <h1 className="text-3xl font-bold text-white leading-tight">{item.name || 'Unnamed item'}</h1>
-            <p className="text-sm text-zinc-400 font-mono">
+            {/* <p className="text-sm text-zinc-400 font-mono">
               {item.keywords || 'No keywords'} • <span className="uppercase text-zinc-300">{item.type}</span>
-            </p>
+            </p> */}
           </div>
           <div className="flex flex-col items-end gap-2 text-right">
             <span className="text-[11px] text-zinc-500 font-mono">ID: {item.id}</span>
