@@ -46,6 +46,9 @@ const resolveRequester = async (request: NextRequest) => {
   return null;
 };
 
+
+
+// GET supports filtering by search query, type, flagged status, and id, as well as pagination via limit/offset
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const q = searchParams.get('q')?.trim() || undefined;
@@ -77,9 +80,10 @@ export async function GET(request: NextRequest) {
       headers: {
         // Avoid browser-level caching so UI reflects DB changes immediately
         'Cache-Control': 'public, max-age=3600',  // 1 hour
-
+        // 'Cache-Control': 'public, max-age=3600, must-revalidate',  // 1 hour
+        'Content-Type': 'application/json',
         // 'Cache-Control': 'no-store',
-        'X-Cache': 'MISS',
+        // 'X-Cache': 'MISS',
       },
     }),
   );
