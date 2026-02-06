@@ -26,9 +26,8 @@ function NavButtons({ onDone }: { onDone?: () => void }) {
             key={href}
             href={href}
             onClick={onDone}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 ${
-              active ? 'bg-zinc-800 text-orange-400 border border-zinc-700' : 'text-zinc-400 hover:text-white'
-            }`}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 ${active ? 'bg-zinc-800 text-orange-400 border border-zinc-700' : 'text-zinc-400 hover:text-white'
+              }`}
           >
             <Icon size={16} /> {label}
           </Link>
@@ -73,19 +72,20 @@ function Header({
         <div className="flex items-center gap-3">
           <div className="p-2 rounded text-white">
 
+            <p className="sr-only">Home</p>
             <Link href="/" className="flex items-center gap-2">
-            <Image
-              priority
-              sizes="30px"
-              src="/bm-logo.webp"
-              alt="Logo"
-              width={30}
-              height={30}
-            />
+              <Image
+                priority
+                sizes="30px"
+                src="/bm-logo.webp"
+                alt="BlackMUD Logo"
+                width={30}
+                height={30}
+              />
             </Link>
           </div>
           <div>
-            <h1 className="font-bold text-xl tracking-tight text-white">BlackMUD Item DB</h1>
+            <p className="font-bold text-xl tracking-tight text-white">BlackMUD Item DB</p>
             <p className="text-xs text-zinc-400 font-mono min-w-[12ch]" aria-busy={loading}>
               {loading ? 'Loading...' : `${totalCount} items indexed`}
             </p>
@@ -93,7 +93,7 @@ function Header({
         </div>
 
 
-   
+
         <div className="hidden md:flex gap-2">
           <NavButtons />
 
