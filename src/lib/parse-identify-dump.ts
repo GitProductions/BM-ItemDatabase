@@ -134,6 +134,12 @@ export const parseIdentifyDump = (text: string): Item[] => {
       worn: undefined,
     };
 
+    // Preserve the full identify header in raw: name line + Object line
+    if (hasNameLine) {
+      currentItem.raw?.push(name);
+    }
+    currentItem.raw?.push(lines[i]);
+
     let j = i + 1;
     while (j < lines.length) {
       const nextLine = lines[j];

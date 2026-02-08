@@ -19,6 +19,7 @@ export const generateId = () => generateShortId(6);
 // Override flags/worn to allow either CSV string or string[]
 export type ItemInput = Omit<Partial<Item>, 'flags' | 'worn'> & { flags?: string | string[]; worn?: string | string[] };
 
+// 
 export const normalizeItemInput = (input: ItemInput) => {
   const name = input.name?.trim();
   const type = input.type?.trim();
@@ -81,3 +82,10 @@ export const parseBooleanParam = (value: string | null) => {
   if (['0', 'false', 'no', 'off'].includes(normalized)) return false;
   return undefined;
 };
+
+
+
+
+
+
+
