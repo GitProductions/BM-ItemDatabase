@@ -35,6 +35,8 @@ export interface Item {
   worn?: string[];
   stats: ItemStats;
   ego?: string;
+  egoMin?: string;
+  egoMax?: string;
   isArtifact?: boolean;
   raw?: string[];
   flaggedForReview?: boolean;

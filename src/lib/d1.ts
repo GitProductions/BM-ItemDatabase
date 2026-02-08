@@ -2,6 +2,7 @@ import { getCloudflareContext } from '@opennextjs/cloudflare';
 import { Item, ItemAffect } from '@/types/items';
 import { Suggestion } from '@/types/suggestions';
 import { generateShortId } from '@/lib/id';
+import { mergeEgo } from '@/lib/ego';
 
 const DB_BINDING = 'bm_itemdb';
 
@@ -27,6 +28,8 @@ type StoredItemRow = {
   droppedBy: string | null;
   worn: string | null;
   ego: string | null;
+  egoMin: string | null;
+  egoMax: string | null;
   isArtifact: number | null;
   raw: string | null;
   flaggedForReview: number | null;
@@ -134,6 +137,8 @@ const ensureSchema = async (db: D1Database) => {
       // Backfill newly added columns if the table already exists
       await db.prepare('ALTER TABLE items ADD COLUMN droppedBy TEXT;').run().catch(() => {});
       await db.prepare('ALTER TABLE items ADD COLUMN worn TEXT;').run().catch(() => {});
+      await db.prepare('ALTER TABLE items ADD COLUMN egoMin TEXT;').run().catch(() => {});
+      await db.prepare('ALTER TABLE items ADD COLUMN egoMax TEXT;').run().catch(() => {});
       await db.prepare('ALTER TABLE submissions ADD COLUMN submittedByUserId TEXT;').run().catch(() => {});
       await db.prepare('ALTER TABLE submissions ADD COLUMN ipHash TEXT;').run().catch(() => {});
       await db.prepare('CREATE INDEX IF NOT EXISTS idx_submissions_item_user ON submissions(itemId, submittedByUserId);').run();
@@ -264,6 +269,10 @@ const mergeItems = (existing: Item, incoming: Item): Item => {
     { min: existing.stats.acMin, max: existing.stats.acMax, value: existing.stats.ac },
     incoming.stats.ac,
   );
+  const egoRange = mergeEgo(
+    { ego: existing.ego, egoMin: existing.egoMin, egoMax: existing.egoMax },
+    incoming.ego,
+  );
 
   return {
     ...existing,
@@ -283,7 +292,9 @@ const mergeItems = (existing: Item, incoming: Item): Item => {
       acMax: acRange.max,
       affects: mergeAffects(existing.stats.affects, incoming.stats.affects),
     },
-    ego: incoming.ego ?? existing.ego,
+    ego: egoRange.ego ?? existing.ego,
+    egoMin: egoRange.egoMin,
+    egoMax: egoRange.egoMax,
     isArtifact: Boolean(existing.isArtifact || incoming.isArtifact),
     submittedBy: incoming.submittedBy ?? existing.submittedBy,
     submittedByUserId: incoming.submittedByUserId ?? existing.submittedByUserId,
@@ -310,6 +321,8 @@ const decodeItem = (row: StoredItemRow): Item => ({
   droppedBy: row.droppedBy ?? undefined,
   worn: normalizeWorn(row.worn),
   ego: row.ego ?? undefined,
+  egoMin: row.egoMin ?? undefined,
+  egoMax: row.egoMax ?? undefined,
   isArtifact: row.isArtifact === 1,
   raw: row.raw ? (JSON.parse(row.raw) as string[]) : undefined,
   flaggedForReview: row.flaggedForReview === 1,
@@ -412,6 +425,8 @@ const encodeItem = (item: Item, timestamp?: string) => {
       return worn && worn.length ? JSON.stringify(worn) : null;
     })(),
     ego: item.ego ?? null,
+    egoMin: item.egoMin ?? null,
+    egoMax: item.egoMax ?? null,
     isArtifact: item.isArtifact ? 1 : 0,
     raw: item.raw ? JSON.stringify(item.raw) : JSON.stringify([]),
     flaggedForReview: item.flaggedForReview ? 1 : 0,
@@ -425,6 +440,8 @@ const encodeItem = (item: Item, timestamp?: string) => {
 // Ensure min/max ranges are populated based on current value
 const primeRanges = (item: Item): Item => ({
   ...item,
+  egoMin: item.egoMin ?? item.ego,
+  egoMax: item.egoMax ?? item.ego,
   stats: {
     ...item.stats,
     weightMin: item.stats.weightMin ?? item.stats.weight,
@@ -730,11 +747,13 @@ export const upsertItems = async (
               droppedBy = ?7,
               worn = ?8,
               ego = ?9,
-              isArtifact = ?10,
-              raw = ?11,
-              flaggedForReview = ?12,
-              duplicateOf = ?13,
-              updatedAt = ?14
+              egoMin = ?10,
+              egoMax = ?11,
+              isArtifact = ?12,
+              raw = ?13,
+              flaggedForReview = ?14,
+              duplicateOf = ?15,
+              updatedAt = ?16
             WHERE id = ?1;
           `,
           )
@@ -748,6 +767,8 @@ export const upsertItems = async (
             values.droppedBy,
             values.worn,
             values.ego,
+            values.egoMin,
+            values.egoMax,
             values.isArtifact,
             values.raw,
             values.flaggedForReview,
@@ -760,10 +781,10 @@ export const upsertItems = async (
         .prepare(
           `
         INSERT INTO items (
-          id, name, keywords, type, flags, stats, droppedBy, worn, ego, isArtifact, raw,
+          id, name, keywords, type, flags, stats, droppedBy, worn, ego, egoMin, egoMax, isArtifact, raw,
           flaggedForReview, duplicateOf, createdAt, updatedAt
         )
-        VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15)
+        VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17)
         ON CONFLICT(name, keywords, type) DO UPDATE SET
           name=excluded.name,
           keywords=excluded.keywords,
@@ -773,6 +794,8 @@ export const upsertItems = async (
           droppedBy=excluded.droppedBy,
           worn=excluded.worn,
           ego=excluded.ego,
+          egoMin=excluded.egoMin,
+          egoMax=excluded.egoMax,
           isArtifact=excluded.isArtifact,
           raw=excluded.raw,
           flaggedForReview=excluded.flaggedForReview,
@@ -790,6 +813,8 @@ export const upsertItems = async (
         values.droppedBy,
         values.worn,
         values.ego,
+        values.egoMin,
+        values.egoMax,
         values.isArtifact,
         values.raw,
         values.flaggedForReview,

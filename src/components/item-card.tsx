@@ -63,7 +63,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item }) => {
   
     return guessed ? canonicalizeSlots([guessed]) : [];
   })();
-  const displayDroppedBy = item.droppedBy?.trim();
+  // const displayDroppedBy = item.droppedBy?.trim();
 
 
 
@@ -126,7 +126,11 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item }) => {
       <div className="mb-1">
         {item.ego && (
           <span className="text-[10px] uppercase border border-zinc-600 text-whte-400 px-1.5 py-0.5 rounded mr-1 mb-1 pt-1">
-            Ego: {item.ego}
+            Ego: {(() => {
+              const min = item.egoMin ?? item.ego;
+              const max = item.egoMax ?? item.ego;
+              return min !== max ? `${min} / ${max}` : item.ego;
+            })()}
           </span>
         )}
       </div>
@@ -223,9 +227,9 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item }) => {
         <div className="flex justify-between gap-2">
           <div className="">
           {/* <span>{displayWorn.length ? `Worn: ${displayWorn.map((slot) => slotLabel(slot)).join(', ')}` : ''}</span> */}
-           {displayDroppedBy && 
-           <p className="text-right italic">Dropped by: {displayDroppedBy}</p>
-           }
+           {/* {displayDroppedBy &&  */}
+           <p className="text-right italic">Dropped by: {item.droppedBy ? item.droppedBy : 'Unknown'}</p>
+           {/* } */}
            </div>
           <span className="flex items-center gap-2">
             <span>Submitted by:</span>

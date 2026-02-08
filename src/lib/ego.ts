@@ -31,5 +31,43 @@ export const EGO_TIERS: { min: number; max: number; label: string }[] = [
     { min: 51, max: 100, label: 'Creator' },
 ];
 
+// Get the index of a tier label in EGO_TIERS (lower index = lower ego).
+// Returns -1 for unknown labels so they sort below everything.
+export const egoTierIndex = (label?: string): number => {
+  if (!label) return -1;
+  const normalized = label.trim().toLowerCase();
+  return EGO_TIERS.findIndex((tier) => tier.label.toLowerCase() === normalized);
+};
+
+// Merge two ego tier labels, keeping track of the lowest and highest seen.
+// Works like mergeRange but for ordinal tier labels instead of numbers.
+export const mergeEgo = (
+  current: { ego?: string; egoMin?: string; egoMax?: string },
+  incoming?: string,
+): { ego?: string; egoMin?: string; egoMax?: string } => {
+  if (!incoming) return current;
+
+  const baseEgo = current.ego ?? incoming;
+  const baseMin = current.egoMin ?? baseEgo;
+  const baseMax = current.egoMax ?? baseEgo;
+
+  const incomingIdx = egoTierIndex(incoming);
+  const minIdx = egoTierIndex(baseMin);
+  const maxIdx = egoTierIndex(baseMax);
+
+  // If any label is unknown (-1) keep the known one; if both unknown keep incoming
+  const newMin =
+    incomingIdx === -1 ? baseMin :
+    minIdx === -1 ? incoming :
+    incomingIdx < minIdx ? incoming : baseMin;
+
+  const newMax =
+    incomingIdx === -1 ? baseMax :
+    maxIdx === -1 ? incoming :
+    incomingIdx > maxIdx ? incoming : baseMax;
+
+  return { ego: incoming, egoMin: newMin, egoMax: newMax };
+};
+
 
 
