@@ -182,7 +182,7 @@ export async function POST(request: NextRequest) {
     const storedResults = await upsertItems(normalizedItems, { submissionIpHash: ipHash });
     const storedIds: string[] = storedResults.map((entry) => entry.id);
 
-    await revalidateTag(ITEMS_TAG);
+    revalidateTag(ITEMS_TAG);
 
     // Generate item URLs for the submitted items to include in the response
     const itemUrls = normalizedItems.map((item) => toItemUrl(item.id, item.keywords));
@@ -229,7 +229,7 @@ export async function POST(request: NextRequest) {
       const storedResults = await upsertItems(merged, { submissionIpHash: ipHash });
       const storedIds: string[] = storedResults.map((entry) => entry.id);
 
-      await revalidateTag(ITEMS_TAG);
+      revalidateTag(ITEMS_TAG);
       
       // Generate item URLs for the submitted items to include in the response
       const itemUrls = merged.map((item) => toItemUrl(item.id, item.keywords));
@@ -250,7 +250,9 @@ export async function POST(request: NextRequest) {
   }
 
   const [storedResult] = await upsertItems([normalized.item], { submissionIpHash: ipHash });
-  await revalidateTag(ITEMS_TAG);
+
+  revalidateTag(ITEMS_TAG);
+
   const stableId = storedResult?.id ?? normalized.item.id;
 
   // const [saved] = await searchItems({ id: stableId });
@@ -293,8 +295,8 @@ export async function PATCH(request: NextRequest) {
     preserveIdOnIdentityChange: true,
   });
   const updatedIds: string[] = updatedResults.map((entry) => entry.id);
-  await revalidateTag(ITEMS_TAG);
 
+  revalidateTag(ITEMS_TAG);
 
   // const savedId = normalizedItems.length === 1 ? updatedIds[0] ?? normalizedItems[0].id : null;
   // const saved = savedId ? await searchItems({ id: savedId }) : null;
@@ -326,7 +328,6 @@ export async function PATCH(request: NextRequest) {
 type DeleteBody = {
   id?: string;
 };
-
 export async function DELETE(request: NextRequest) {
   // Require admin token to clear the database
   // Note: returning 401 rather than 403 to avoid leaking existence of the endpoint
@@ -340,24 +341,15 @@ export async function DELETE(request: NextRequest) {
     return withCors(NextResponse.json({ message: 'Invalid request payload' }, { status: 400 }));
   }
 
-  // const { searchParams } = new URL(request.url);
-  // const id = searchParams.get('id')?.trim();
   const id = payload?.id?.trim();
 
   if (id) {
     await deleteItem(id);
-    await revalidateTag(ITEMS_TAG);
+
+    revalidateTag(ITEMS_TAG);
+    
     return withCors(NextResponse.json({ deleted: true, id }));
   }
-
-  // // If no id provided, fall back to full wipe (explicitly requested via ?all=true)
-  // // const wipe = parseBooleanParam(searchParams.get('all'));
-  // const wipe = parseBooleanParam(payload?.all ? 'true' : null);
-  // if (wipe) {
-  //   await deleteAllItems();
-  //   await revalidateTag(ITEMS_TAG);
-  //   return withCors(NextResponse.json({ deleted: true, all: true, items: [] }));
-  // }
 
   return withCors(NextResponse.json({ message: 'id is required to delete an item (or set all=true to wipe)' }, { status: 400 }));
 }
