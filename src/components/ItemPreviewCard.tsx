@@ -4,7 +4,7 @@ import Input from './ui/Input';
 import Button from './ui/Button';
 import Checkbox from './ui/CheckBox';
 import { Item, ItemAffect } from '@/types/items';
-import {SLOT_CONFIG } from '@/lib/slots';
+import { SLOT_CONFIG } from '@/lib/slots';
 
 type ItemPreviewCardProps = {
   item: Item;
@@ -136,48 +136,53 @@ function ItemPreviewCard({ item, editable = false, onChange }: ItemPreviewCardPr
         <label className="text-[11px] uppercase text-zinc-400 space-y-1">
           <span>Name</span>
 
-          <Input 
+          <Input
             value={item.name}
             onChange={(e) => updateItem({ name: e.target.value })}
             className="w-full rounded border px-3 py-2 text-sm text-white"
           />
         </label>
-        <label className="text-[11px] uppercase text-zinc-400 space-y-1">
-          <span>Type</span>
-          <Input
-            value={item.type}
-            onChange={(e) => updateItem({ type: e.target.value })}
-            className="w-full rounded border  px-3 py-2 text-sm text-white"
-          />
-        </label>
-      </div>
 
-      <label className="text-[11px] uppercase text-zinc-400 space-y-1 block">
-        <span>Keywords</span>
-        <Input
-          value={item.keywords}
-          onChange={(e) => updateItem({ keywords: e.target.value })}
-          className="w-full rounded border px-3 py-2 text-sm text-white"
-        />
-      </label>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+
         <label className="text-[11px] uppercase text-zinc-400 space-y-1">
-          <span>Ego</span>
-          <Input
-            value={item.ego ?? ''}
-            placeholder="optional"
-            onChange={(e) => updateItem({ ego: e.target.value || undefined })}
-            className="w-full rounded border px-3 py-2 text-sm text-white"
-          />
-        </label>
-        <div className="text-[11px] uppercase text-zinc-400 space-y-1">
+
           <span>Flags</span>
           <ComboBox
             options={flagOptions}
             value={item.flags ?? []}
             onChange={(selected) => updateItem({ flags: selected })}
             placeholder="Select or type flags"
+          />
+        </label>
+      </div>
+
+      {/* <label className="text-[11px] uppercase text-zinc-400 space-y-1 block">
+        <span>Keywords</span>
+        <Input
+          value={item.keywords}
+          onChange={(e) => updateItem({ keywords: e.target.value })}
+          className="w-full rounded border px-3 py-2 text-sm text-white"
+        />
+        
+      </label> */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+
+        <div className="text-[11px] uppercase text-zinc-400 space-y-1">
+          <span>Keywords</span>
+          <Input
+            value={item.keywords}
+            onChange={(e) => updateItem({ keywords: e.target.value })}
+            className="w-full rounded border px-3 py-2 text-sm text-white"
+          />
+        </div>
+
+        <div className="text-[11px] uppercase text-zinc-400 space-y-1">
+          <span>Type</span>
+          <Input
+            value={item.type}
+            onChange={(e) => updateItem({ type: e.target.value })}
+            className="w-full rounded border  px-3 py-2 text-sm text-white"
           />
         </div>
         <div className="text-[11px] uppercase text-zinc-400 space-y-1">
@@ -191,7 +196,31 @@ function ItemPreviewCard({ item, editable = false, onChange }: ItemPreviewCardPr
         </div>
       </div>
 
+      {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+
+        <div className="text-[11px] uppercase text-zinc-400 space-y-1">
+          <span>Type</span>
+          <Input
+            value={item.type}
+            onChange={(e) => updateItem({ type: e.target.value })}
+            className="w-full rounded border  px-3 py-2 text-sm text-white"
+          />
+        </div>
+        <div className="text-[11px] uppercase text-zinc-400 space-y-1">
+          <span>Worn slots</span>
+          <ComboBox
+            options={SLOT_CONFIG.map(slot => slot.key)}
+            value={item.worn || []}
+            onChange={(selected) => updateItem({ worn: selected.length ? selected : undefined })}
+            placeholder="Choose worn slots"
+          />
+        </div>
+      </div> */}
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+
+        {/* damage should only show if the 'type' is a weapon.. */}
+        {/* we need to determine a list item item types first since its text right now */}
         <label className="text-[11px] uppercase text-zinc-400 space-y-1">
           <span>Damage</span>
           <Input
@@ -201,6 +230,8 @@ function ItemPreviewCard({ item, editable = false, onChange }: ItemPreviewCardPr
             className="w-full rounded border px-3 py-2 text-sm text-white"
           />
         </label>
+
+
         <label className="text-[11px] uppercase text-zinc-400 space-y-1">
           <span>AC</span>
           <Input
@@ -213,6 +244,8 @@ function ItemPreviewCard({ item, editable = false, onChange }: ItemPreviewCardPr
             className="w-full rounded border px-3 py-2 text-sm text-white"
           />
         </label>
+
+
         <label className="text-[11px] uppercase text-zinc-400 space-y-1">
           <span>Weight</span>
           <Input
@@ -236,6 +269,8 @@ function ItemPreviewCard({ item, editable = false, onChange }: ItemPreviewCardPr
             className="w-full rounded border px-3 py-2 text-sm text-white"
           />
         </label>
+
+        {/* We need to move isArtifact to the itemFlags instead but D1 needs adjusted */}
         <label className="text-[11px] uppercase text-zinc-400 inline-flex items-center gap-2">
           <Checkbox
             checked={Boolean(item.isArtifact)}
@@ -244,8 +279,10 @@ function ItemPreviewCard({ item, editable = false, onChange }: ItemPreviewCardPr
           />
           <span>Is artifact</span>
         </label>
+
       </div>
 
+      {/* Adding affects  */}
       <div className="border border-zinc-800 rounded-lg p-3 space-y-2 bg-zinc-900/40">
         <div className="flex items-center justify-between">
           <span className="text-[11px] uppercase text-zinc-400">Affects</span>
