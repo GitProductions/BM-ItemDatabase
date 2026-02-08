@@ -171,7 +171,7 @@ function ItemPreviewCard({ item, editable = false, onChange }: ItemPreviewCardPr
             className="w-full rounded border px-3 py-2 text-sm text-white"
           />
         </label>
-        <label className="text-[11px] uppercase text-zinc-400 space-y-1">
+        <div className="text-[11px] uppercase text-zinc-400 space-y-1">
           <span>Flags</span>
           <ComboBox
             options={flagOptions}
@@ -179,8 +179,8 @@ function ItemPreviewCard({ item, editable = false, onChange }: ItemPreviewCardPr
             onChange={(selected) => updateItem({ flags: selected })}
             placeholder="Select or type flags"
           />
-        </label>
-        <label className="text-[11px] uppercase text-zinc-400 space-y-1">
+        </div>
+        <div className="text-[11px] uppercase text-zinc-400 space-y-1">
           <span>Worn slots</span>
           <ComboBox
             options={SLOT_CONFIG.map(slot => slot.key)}
@@ -188,7 +188,7 @@ function ItemPreviewCard({ item, editable = false, onChange }: ItemPreviewCardPr
             onChange={(selected) => updateItem({ worn: selected.length ? selected : undefined })}
             placeholder="Choose worn slots"
           />
-        </label>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">

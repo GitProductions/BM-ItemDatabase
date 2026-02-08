@@ -1,4 +1,4 @@
-﻿import React, { useState, useRef, useEffect, useMemo } from 'react';
+﻿import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 
 const SIZE_STYLES = {
   sm: 'min-h-[32px] px-2 py-1 text-xs',
@@ -18,13 +18,13 @@ type ComboBoxProps = {
   labelForOption?: (value: string) => string;
 };
 
-// Lightweight multi-select combobox tuned for the dark UI used in modals.
 const ComboBox: React.FC<ComboBoxProps> = ({
   options,
   value,
   onChange,
   placeholder = 'Select options...',
   className = '',
+
   allowCustom = true,
   disabled = false,
   size = 'sm',
@@ -33,37 +33,48 @@ const ComboBox: React.FC<ComboBoxProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const dropdownRef = useRef<HTMLDivElement | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
+  // Track if a remove button was just clicked so we can suppress the toggle
+  const suppressToggleRef = useRef(false);
   const sizeStyle = SIZE_STYLES[size] ?? SIZE_STYLES.sm;
 
   // Close dropdown when clicking outside
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+    const handleOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
         setIsOpen(false);
+        setSearchTerm('');
       }
     };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('mousedown', handleOutside);
+    return () => document.removeEventListener('mousedown', handleOutside);
   }, []);
 
-  const toggleOption = (option: string) => {
-    if (singleSelect) {
-      const isSelected = value.includes(option);
-      const next = isSelected ? [] : [option];
+  const toggleOption = useCallback(
+    (option: string) => {
+      if (singleSelect) {
+        const isSelected = value.includes(option);
+        onChange(isSelected ? [] : [option]);
+        setIsOpen(false);
+        setSearchTerm('');
+        return;
+      }
+      const next = value.includes(option)
+        ? value.filter((v) => v !== option)
+        : [...value, option];
       onChange(next);
-      setIsOpen(false);
-      return;
-    }
-    const newValue = value.includes(option) ? value.filter((v) => v !== option) : [...value, option];
-    onChange(newValue);
-  };
+    },
+    [onChange, singleSelect, value],
+  );
 
-  const removeOption = (option: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    onChange(value.filter((v) => v !== option));
-  };
+  const removeOption = useCallback(
+    (option: string) => {
+      onChange(value.filter((v) => v !== option));
+    },
+    [onChange, value],
+  );
 
   const filteredOptions = useMemo(
     () =>
@@ -75,49 +86,83 @@ const ComboBox: React.FC<ComboBoxProps> = ({
     [options, searchTerm],
   );
 
+  // Handle Enter for adding custom option if allowed, or just to toggle dropdown
+  // Also handle Escape to close dropdown and clear search
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Escape') setIsOpen(false);
+    if (e.key === 'Escape') {
+      setIsOpen(false);
+      setSearchTerm('');
+    }
     if (e.key === 'Enter' && allowCustom && searchTerm.trim()) {
       const candidate = searchTerm.trim().toLowerCase();
-      const next = singleSelect ? [candidate] : value.includes(candidate) ? value : [...value, candidate];
+      const next = singleSelect
+        ? [candidate]
+        : value.includes(candidate)
+          ? value
+          : [...value, candidate];
       onChange(next);
       setSearchTerm('');
       if (singleSelect) setIsOpen(false);
     }
   };
 
-  const handleToggle = () => {
+  // The main toggle area uses onMouseDown so we act before focus shifts.
+  // We also preventDefault to stop <label> from forwarding clicks.
+  const handleTriggerMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault(); // prevent <label> focus forwarding
     if (disabled) return;
-    setIsOpen((prev) => !prev);
+    // If a remove button set the suppress flag, skip toggling
+    if (suppressToggleRef.current) {
+      suppressToggleRef.current = false;
+      return;
+    }
+    setIsOpen((prev) => {
+      if (prev) setSearchTerm('');
+      return !prev;
+    });
+  };
+
+  // Remove buttons use onMouseDown so they fire before the parent's handler.
+  // They set the suppress flag so handleTriggerMouseDown won't also toggle.
+  const handleRemoveMouseDown = (option: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    suppressToggleRef.current = true;
+    removeOption(option);
   };
 
   return (
-    <div ref={dropdownRef} className={`relative w-full` + ` ${className}`}>
-      {/* Selected items display */}
+    <div ref={containerRef} className={`relative w-full ${className}`}>
+      {/* Trigger / selected items display */}
       <div
-        role="button"
+        role="combobox"
+        aria-expanded={isOpen}
         tabIndex={0}
-        onClick={handleToggle}
-        onKeyDown={(e) => e.key === 'Enter' && handleToggle()}
-        className={`${sizeStyle} border rounded-md cursor-pointer transition-colors flex flex-wrap gap-2 items-center  bg-zinc-900 border-zinc-700 text-zinc-100`}
+        onMouseDown={handleTriggerMouseDown}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            if (!disabled) setIsOpen((p) => !p);
+          }
+        }}
+        className={`${sizeStyle} border rounded-md cursor-pointer transition-colors flex flex-wrap gap-2 items-center bg-zinc-900 border-zinc-700 text-zinc-100 select-none`}
       >
         {value.length === 0 ? (
-          <span className="text-zinc-500">{placeholder}</span>
+          <span className="text-zinc-500 pointer-events-none">{placeholder}</span>
         ) : (
           value.map((item) => (
             <span
               key={item}
-              className="inline-flex items-center gap-1 px-2
-               bg-orange-900/40 text-orange-100 border border-orange-800 rounded-md text-xs"
+              className="inline-flex items-center gap-1 px-2 bg-orange-900/40 text-orange-100 border border-orange-800 rounded-md text-xs"
             >
               {labelForOption(item)}
               {!disabled && (
                 <button
-                  onClick={(e) => removeOption(item, e)}
+                  type="button"
+                  onMouseDown={(e) => handleRemoveMouseDown(item, e)}
                   className="hover:text-white text-orange-200 rounded-full p-0.5 transition-colors"
                   aria-label={`Remove ${item}`}
                 >
-                  {/* Close/Clear  */}
                   <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
@@ -129,7 +174,7 @@ const ComboBox: React.FC<ComboBoxProps> = ({
 
         {/* Dropdown arrow */}
         <svg
-          className="w-4 h-4 ml-auto transition-transform"
+          className={`w-4 h-4 ml-auto transition-transform pointer-events-none ${isOpen ? 'rotate-180' : ''}`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -140,18 +185,24 @@ const ComboBox: React.FC<ComboBoxProps> = ({
 
       {/* Dropdown menu */}
       {isOpen && !disabled && (
-        <div className="absolute z-50 w-full mt-2 bg-zinc-900 border border-zinc-800 rounded-md shadow-xl max-h-64 overflow-hidden">
+        <div
+          className="absolute z-50 w-full mt-2 bg-zinc-900 border border-zinc-800 rounded-md shadow-xl max-h-64 overflow-hidden"
+          onMouseDown={(e) => {
+            // Prevent clicks inside the dropdown from closing via blur / label forwarding
+            e.preventDefault();
+          }}
+        >
           {/* Search input */}
           <div className="p-2 border-b border-zinc-800">
             <input
+              ref={inputRef}
               type="text"
+              autoFocus
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Search..."
-              className="w-full  rounded-md bg-zinc-900 border ps-1
-                border-zinc-700 text-zinc-100 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
-              autoFocus
+              className="w-full rounded-md bg-zinc-900 border ps-1 border-zinc-700 text-zinc-100 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
             />
           </div>
 
@@ -166,17 +217,19 @@ const ComboBox: React.FC<ComboBoxProps> = ({
             ) : (
               filteredOptions.map((option) => {
                 const isSelected = value.includes(option);
-
                 return (
                   <button
                     type="button"
                     key={option}
-                    onClick={() => toggleOption(option)}
-                  className={`w-full text-left ${sizeStyle} cursor-pointer flex items-center gap-2 transition-colors ${
-                    isSelected ? 'bg-orange-900/30 text-orange-100' : 'hover:bg-zinc-800 text-zinc-200'
-                  }`}
-                >
-                    {/* Checkbox */}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      toggleOption(option);
+                    }}
+                    className={`w-full text-left ${sizeStyle} cursor-pointer flex items-center gap-2 transition-colors ${
+                      isSelected ? 'bg-orange-900/30 text-orange-100' : 'hover:bg-zinc-800 text-zinc-200'
+                    }`}
+                  >
                     <span
                       className={`inline-flex h-4 w-4 items-center justify-center rounded border ${
                         isSelected ? 'bg-orange-500 border-orange-500' : 'border-zinc-600'

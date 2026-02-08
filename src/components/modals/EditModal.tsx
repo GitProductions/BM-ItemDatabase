@@ -220,12 +220,14 @@ const EditModal: React.FC<SuggestionModalProps> = ({ item, open, isSubmitting, f
           {/* Item preview */}
           {item && (
             <div className="space-y-3">
+
+              {/* Our Editable Card */}
               <ItemPreviewCard
-                // item={adminMode && draftItem ? draftItem : item}
                 item ={draftItem ? draftItem : item}
                 editable={true}
                 onChange={setDraftItem}
               />
+
             </div>
           )}
 
