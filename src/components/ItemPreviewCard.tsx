@@ -30,6 +30,15 @@ const DEFAULT_FLAG_OPTIONS = [
   'inventory',
 ];
 
+
+const DEFAULT_ITEM_TYPES = [
+  'weapon',
+  'armor',
+  'potion',
+  'scroll',
+  'wand',
+];
+
 function ItemPreviewCard({ item, editable = false, onChange }: ItemPreviewCardProps) {
   const stats = item.stats ?? { affects: [] };
   const affects = stats.affects ?? [];
@@ -43,6 +52,18 @@ function ItemPreviewCard({ item, editable = false, onChange }: ItemPreviewCardPr
         ),
       ),
     [item.flags],
+  );
+
+  const itemTypeOptions = React.useMemo(
+    () =>
+      Array.from(
+        new Set(
+          [...DEFAULT_ITEM_TYPES, ...(item.type ? [item.type] : [])]
+            .map((t) => t.trim().toLowerCase())
+            .filter(Boolean),
+        ),
+      ).sort(),
+    [item.type],
   );
 
   const updateItem = (next: Partial<Item>) => {
@@ -144,17 +165,15 @@ function ItemPreviewCard({ item, editable = false, onChange }: ItemPreviewCardPr
         </label>
 
 
-
         <label className="text-[11px] uppercase text-zinc-400 space-y-1">
-
-          <span>Flags</span>
-          <ComboBox
-            options={flagOptions}
-            value={item.flags ?? []}
-            onChange={(selected) => updateItem({ flags: selected })}
-            placeholder="Select or type flags"
+          <span>Keywords</span>
+          <Input
+            value={item.keywords}
+            onChange={(e) => updateItem({ keywords: e.target.value })}
+            className="w-full rounded border px-3 py-2 text-sm text-white"
           />
         </label>
+
       </div>
 
       {/* <label className="text-[11px] uppercase text-zinc-400 space-y-1 block">
@@ -169,22 +188,27 @@ function ItemPreviewCard({ item, editable = false, onChange }: ItemPreviewCardPr
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
 
         <div className="text-[11px] uppercase text-zinc-400 space-y-1">
-          <span>Keywords</span>
-          <Input
-            value={item.keywords}
-            onChange={(e) => updateItem({ keywords: e.target.value })}
-            className="w-full rounded border px-3 py-2 text-sm text-white"
+          <span>Type</span>
+          <ComboBox
+            options={itemTypeOptions}
+            value={item.type ? [item.type] : []}
+            onChange={(selected) => updateItem({ type: selected[0] ?? '' })}
+            placeholder="Select item type"
+            singleSelect
           />
         </div>
 
         <div className="text-[11px] uppercase text-zinc-400 space-y-1">
-          <span>Type</span>
-          <Input
-            value={item.type}
-            onChange={(e) => updateItem({ type: e.target.value })}
-            className="w-full rounded border  px-3 py-2 text-sm text-white"
+          <span>Flags</span>
+          <ComboBox
+            options={flagOptions}
+            value={item.flags ?? []}
+            onChange={(selected) => updateItem({ flags: selected })}
+            placeholder="Select or type flags"
           />
         </div>
+
+
         <div className="text-[11px] uppercase text-zinc-400 space-y-1">
           <span>Worn slots</span>
           <ComboBox
@@ -217,33 +241,10 @@ function ItemPreviewCard({ item, editable = false, onChange }: ItemPreviewCardPr
         </div>
       </div> */}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
 
         {/* damage should only show if the 'type' is a weapon.. */}
         {/* we need to determine a list item item types first since its text right now */}
-        <label className="text-[11px] uppercase text-zinc-400 space-y-1">
-          <span>Damage</span>
-          <Input
-            value={stats.damage ?? ''}
-            placeholder="e.g. 2d5+3"
-            onChange={(e) => updateStats({ damage: e.target.value || undefined })}
-            className="w-full rounded border px-3 py-2 text-sm text-white"
-          />
-        </label>
-
-
-        <label className="text-[11px] uppercase text-zinc-400 space-y-1">
-          <span>AC</span>
-          <Input
-            type="number"
-            value={stats.ac ?? ''}
-            onChange={(e) => {
-              const val = e.target.value;
-              updateStats({ ac: val === '' ? undefined : Number(val) });
-            }}
-            className="w-full rounded border px-3 py-2 text-sm text-white"
-          />
-        </label>
 
 
         <label className="text-[11px] uppercase text-zinc-400 space-y-1">
@@ -258,19 +259,39 @@ function ItemPreviewCard({ item, editable = false, onChange }: ItemPreviewCardPr
             className="w-full rounded border px-3 py-2 text-sm text-white"
           />
         </label>
-      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <label className="text-[11px] uppercase text-zinc-400 space-y-1">
-          <span>Dropped by</span>
-          <Input
-            value={item.droppedBy ?? ''}
-            onChange={(e) => updateItem({ droppedBy: e.target.value || undefined })}
-            className="w-full rounded border px-3 py-2 text-sm text-white"
-          />
-        </label>
+        {/* Only sure AC if the item is armor, since that should be the only place its applied? */}
+        {/* but then what about some held items, are they flagged as armor?  or do any weapons have ac maybe not knowing about? */}
+        {/* {item.type === 'armor' && ( */}
+          <label className="text-[11px] uppercase text-zinc-400 space-y-1">
+            <span>AC</span>
+            <Input
+              type="number"
+              value={stats.ac ?? ''}
+              onChange={(e) => {
+                const val = e.target.value;
+                updateStats({ ac: val === '' ? undefined : Number(val) });
+              }}
+              className="w-full rounded border px-3 py-2 text-sm text-white"
+            />
+          </label>
+        {/* )} */}
 
-        {/* We need to move isArtifact to the itemFlags instead but D1 needs adjusted */}
+        {/* Only show damage if the item type is weapon or wand (unsure if we need wand here but just incase for now) */}
+        {(item.type === 'weapon' || item.type === 'wand') && (
+          <label className="text-[11px] uppercase text-zinc-400 space-y-1">
+            <span>Damage</span>
+            <Input
+              value={stats.damage ?? ''}
+              placeholder="e.g. 2d5+3"
+              onChange={(e) => updateStats({ damage: e.target.value || undefined })}
+              className="w-full rounded border px-3 py-2 text-sm text-white"
+            />
+          </label>
+        )}
+
+
+        {/* Not 100% sure how the game marks artifacts anymore.. but this is just incase for now */}
         <label className="text-[11px] uppercase text-zinc-400 inline-flex items-center gap-2">
           <Checkbox
             checked={Boolean(item.isArtifact)}
@@ -282,6 +303,7 @@ function ItemPreviewCard({ item, editable = false, onChange }: ItemPreviewCardPr
 
       </div>
 
+
       {/* Adding affects  */}
       <div className="border border-zinc-800 rounded-lg p-3 space-y-2 bg-zinc-900/40">
         <div className="flex items-center justify-between">
@@ -289,7 +311,7 @@ function ItemPreviewCard({ item, editable = false, onChange }: ItemPreviewCardPr
           <Button
             size="sm"
             onClick={addAffect}
-            className="text-[11px] px-2 py-1 rounded bg-zinc-800 text-zinc-200 border border-zinc-700 hover:border-orange-500"
+            className="text-[11px] px-2 py-1 rounded bg-zinc-800 text-zinc-200 border border-orange-700 hover:border-orange-500"
           >
             Add
           </Button>
@@ -357,7 +379,7 @@ function ItemPreviewCard({ item, editable = false, onChange }: ItemPreviewCardPr
                   size="sm"
                   variant="danger"
                   onClick={() => removeAffect(idx)}
-                  className="text-[11px] px-2 py-1 rounded bg-zinc-900 text-zinc-300 border border-zinc-700 "
+                  className="text-[11px] px-2 py-1 rounded bg-zinc-900 text-zinc-300 border border-red-700 "
                 >
                   Remove
                 </Button>
@@ -365,6 +387,16 @@ function ItemPreviewCard({ item, editable = false, onChange }: ItemPreviewCardPr
             ))}
           </div>
         )}
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <label className="text-[11px] uppercase text-zinc-400 space-y-1">
+          <span>Dropped by</span>
+          <Input
+            value={item.droppedBy ?? ''}
+            onChange={(e) => updateItem({ droppedBy: e.target.value || undefined })}
+            className="w-full rounded border px-3 py-2 text-sm text-white"
+          />
+        </label>
       </div>
     </div>
   );

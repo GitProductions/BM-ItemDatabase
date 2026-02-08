@@ -120,7 +120,7 @@ const EditModal: React.FC<SuggestionModalProps> = ({ item, open, isSubmitting, f
 
   // Handle form submission
   const handleSubmit = async () => {
-    if (!item || !note.trim()) return;
+    if (!item || !reason.trim()) return;
 
     handleSetUserName(proposerLocked ?? name);
     await onSubmit({
@@ -169,7 +169,7 @@ const EditModal: React.FC<SuggestionModalProps> = ({ item, open, isSubmitting, f
       // await refresh();
       onClose();
       setAdminSaving(false);
-    } 
+    }
   };
 
   // Handle direct save (admin mode)
@@ -223,7 +223,7 @@ const EditModal: React.FC<SuggestionModalProps> = ({ item, open, isSubmitting, f
 
               {/* Our Editable Card */}
               <ItemPreviewCard
-                item ={draftItem ? draftItem : item}
+                item={draftItem ? draftItem : item}
                 editable={true}
                 onChange={setDraftItem}
               />
@@ -242,33 +242,33 @@ const EditModal: React.FC<SuggestionModalProps> = ({ item, open, isSubmitting, f
           )}
 
           <div className="space-y-1">
-            <label htmlFor="edit-note" className="block text-xs text-zinc-300 px-1">
-              Suggested edit <span className="text-yellow-400">*</span>
+            <label htmlFor="edit-reason" className="block text-xs text-zinc-300 px-1">
+              Reason for Edit <span className="text-orange-400">*</span>
             </label>
             <TextArea
-              id="edit-note"
+              id="edit-reason"
               required
               aria-required="true"
-              placeholder="Describe the edit you suggest..."
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              className={`w-full h-[4rem] min-h-[5rem] max-h-[8rem] ${!note.trim() ? 'border-yellow-500/70 focus:border-yellow-400 focus:ring-yellow-400' : ''}`}
+              placeholder="Reason (why this change is needed)"
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              className={`w-full h-[4rem] min-h-[5rem] max-h-[8rem] ${!reason.trim() ? 'border-red-500/70 focus:border-red-400 focus:ring-red-400' : ''}`}
             />
           </div>
 
-          <TextArea
+          {/* <TextArea
             placeholder="Reason (why this change is needed)"
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             className="w-full h-[4rem] min-h-[5rem] max-h-[8rem] "
-          />
+          /> */}
 
           {feedback && <div className="text-sm text-amber-300">{feedback}</div>}
         </div>
 
         <div className="sticky bottom-0 left-0 right-0 flex flex-wrap items-center gap-3 py-3 px-1 bg-zinc-950 border-t border-zinc-800">
-          
-          
+
+
           {/* Display 'Admin' checkbox if user is owner of the item or an admin */}
           {!hideAdminControls && (
             <>
@@ -303,27 +303,27 @@ const EditModal: React.FC<SuggestionModalProps> = ({ item, open, isSubmitting, f
           {adminMode && adminToken ? (
             <>
 
-            <Button
-              onClick={handleDeleteItem}
-              disabled={adminSaving || !draftItem}
-              className="px-4 py-2 text-sm rounded-md bg-red-600 hover:bg-red-500 text-white disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {adminSaving ? 'Deleting�' : 'Delete Item'}
-            </Button>
-            
-            <Button
-              onClick={handleDirectSave}
-              disabled={adminSaving || !draftItem}
-              className="px-4 py-2 text-sm rounded-md bg-orange-600 hover:bg-orange-500 text-white disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {adminSaving ? 'Saving�' : 'Save directly'}
-            </Button>
+              <Button
+                onClick={handleDeleteItem}
+                disabled={adminSaving || !draftItem}
+                className="px-4 py-2 text-sm rounded-md bg-red-600 hover:bg-red-500 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {adminSaving ? 'Deleting�' : 'Delete Item'}
+              </Button>
+
+              <Button
+                onClick={handleDirectSave}
+                disabled={adminSaving || !draftItem}
+                className="px-4 py-2 text-sm rounded-md bg-orange-600 hover:bg-orange-500 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {adminSaving ? 'Saving�' : 'Save directly'}
+              </Button>
             </>
           ) : (
 
             <Button
-              title={!note.trim() ? 'Please describe why you are making this edit before submitting' : ''}
-              disabled={isSubmitting || !note.trim()}
+              title={!reason.trim() ? 'Please describe why you are making this edit before submitting' : ''}
+              disabled={isSubmitting || !reason.trim()}
               onClick={handleSubmit}
               className="px-4 py-2 text-sm rounded-md bg-orange-600 hover:bg-orange-500 text-white disabled:opacity-50 disabled:cursor-not-allowed"
             >
