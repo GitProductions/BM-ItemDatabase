@@ -11,20 +11,24 @@ import { buildItemPath } from '@/lib/slug';
 
 const ITEMS_TAG = 'items';
 
+// Helper 
 const itemUrlFor = (request: NextRequest, id: string, keywords?: string | null) =>
   new URL(buildItemPath(id, keywords), request.url).toString();
 
+// Extract Bearer token from Authorization header if present
 const getBearer = (request: NextRequest) => {
   const header = request.headers.get('authorization');
   return header?.startsWith('Bearer ') ? header.slice(7).trim() : null;
 };
 
+// Check if SuperAdmin token is provided in the request (via Authorization header) to allow bypassing normal auth checks for trusted clients like CLI or Postman
 const isAdminRequest = (request: NextRequest) => {
   const token = getBearer(request);
   const secret = process.env.ADMIN_TOKEN;
   return Boolean(secret && token && token === secret);
 };
 
+// Returns requester info if valid session or API token is provided, otherwise null
 const resolveRequester = async (request: NextRequest) => {
   const bearer = getBearer(request);
   if (bearer) {
@@ -47,8 +51,9 @@ const resolveRequester = async (request: NextRequest) => {
 };
 
 
-
 // GET supports filtering by search query, type, flagged status, and id, as well as pagination via limit/offset
+// Example: GET /api/items?q=sword&type=weapon&flagged=true&limit=10&offset=20
+// Note: flagged=true returns items that are flagged for review, flagged=false returns items that are not flagged, and omitting flagged returns all items regardless of flag status
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const q = searchParams.get('q')?.trim() || undefined;
@@ -78,6 +83,7 @@ export async function GET(request: NextRequest) {
     NextResponse.json(payload, {
       status: 200,
       headers: {
+        //  --- Really cant decide how to handle caching.. to do or not to do.. and to what extent?
         // Avoid browser-level caching so UI reflects DB changes immediately
         'Cache-Control': 'public, max-age=3600',  // 1 hour
         // 'Cache-Control': 'public, max-age=3600, must-revalidate',  // 1 hour
@@ -98,6 +104,7 @@ type PostBody = {
   overrides?: Record<string, Partial<ItemInput>>;
 } & ItemInput;
 
+// When user submits an item, we want to attribute it to them if possible
 const applyRequester = (item: ItemInput, requester: Awaited<ReturnType<typeof resolveRequester>>): ItemInput => {
   if (!requester?.userId) return item;
   return {
@@ -120,7 +127,9 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // Hash the submitter's IP address for internal use (e.g. rate limiting, abuse detection) without storing raw IPs to protect user privacy
   const ipHash = hashIp(request.headers.get('x-real-ip') ?? '0.0.0.0');
+
   let payload: PostBody;
   const toItemUrl = (id: string, keywords?: string | null) => itemUrlFor(request, id, keywords);
 
@@ -130,7 +139,9 @@ export async function POST(request: NextRequest) {
     return withCors(NextResponse.json({ message: 'Invalid request payload' }, { status: 400 }));
   }
 
+  
   // 1) Client-supplied parsed items (keeps IDs/overrides intact)
+  // This would be when submitting directly from the UI Form, which allows multiple items to be submitted at once
   if (Array.isArray(payload.items) && payload.items.length) {
     const normalizedItems: Item[] = [];
     const submitter = requester?.userId
@@ -140,12 +151,16 @@ export async function POST(request: NextRequest) {
 
     for (const incoming of payload.items) {
       const incomingWithSubmitter = applyRequester({ ...incoming, submittedBy: submitter ?? incoming.submittedBy }, requester);
+      
+      // Apply overrides and normalize each item, ensuring that the submitter info is preserved and merged with any existing submittedBy/submittedByUserId on the item
       const normalized = normalizeItemInput(incomingWithSubmitter);
       if (!normalized.ok) {
         return withCors(NextResponse.json({ message: normalized.message }, { status: 400 }));
       }
       const item = normalized.item;
       const override = overrides[item.id] ?? {};
+
+      // Handling merges for worn slots, making sure to combine and deduplicate any slots from the original item and the override, while also normalizing the slot names to lowercase for consistency
       const mergedWorn = (() => {
         const base = Array.isArray(item.worn) ? item.worn : [];
         const over = Array.isArray(override.worn) ? override.worn : typeof override.worn === 'string' ? [override.worn] : [];
@@ -153,6 +168,7 @@ export async function POST(request: NextRequest) {
         return combined.length ? combined : undefined;
       })();
 
+      // Push the final merged item to the list of normalized items to be upserted
       normalizedItems.push({
         ...item,
         submittedBy: submitter ?? item.submittedBy,
@@ -162,25 +178,32 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // Taking the normalizedItems and upserting them into the database, then revalidating the cache and returning the relevant item URLs for the inserted/updated items in the response
     const storedResults = await upsertItems(normalizedItems, { submissionIpHash: ipHash });
     const storedIds: string[] = storedResults.map((entry) => entry.id);
+
     await revalidateTag(ITEMS_TAG);
-    const items = await searchItems();
-    const itemUrls = items
-      .filter((item) => storedIds.includes(item.id))
-      .map((item) => toItemUrl(item.id, item.keywords));
-    return withCors(NextResponse.json({ items, inserted: normalizedItems.length, itemIds: storedIds, itemUrls }));
+
+    // Generate item URLs for the submitted items to include in the response
+    const itemUrls = normalizedItems.map((item) => toItemUrl(item.id, item.keywords));
+    return withCors(NextResponse.json({ items: normalizedItems, inserted: normalizedItems.length, itemIds: storedIds, itemUrls }));
   }
 
-  // 2) Raw identify dump -> multiple items (fallback path)
+  
+  // 2) Raw identify dump -> multiple items
+  // This would primarily be when submitting directly from MUDLET where user is sending a raw identify dump + the items short description at the top to mimic how we submit items in the UI
   const cleanedInput = payload?.raw?.trim();
   if (cleanedInput) {
     const submitter = requester?.userId
       ? requester.name ?? payload.submittedBy?.trim() ?? requester.email ?? 'Unnamed'
       : payload.submittedBy?.trim();
+    
+    // Parsing the identify dump..
     const parsedItems = parseIdentifyDump(cleanedInput);
     if (parsedItems.length) {
       const overrides = payload.overrides ?? {};
+      
+
       const merged = parsedItems.map((item) => {
         const override = overrides[item.id] ?? {};
         const mergedWorn = (() => {
@@ -205,18 +228,20 @@ export async function POST(request: NextRequest) {
 
       const storedResults = await upsertItems(merged, { submissionIpHash: ipHash });
       const storedIds: string[] = storedResults.map((entry) => entry.id);
+
       await revalidateTag(ITEMS_TAG);
-      const items = await searchItems();
-      const itemUrls = items
-        .filter((item) => storedIds.includes(item.id))
-        .map((item) => toItemUrl(item.id, item.keywords));
+      
+      // Generate item URLs for the submitted items to include in the response
+      const itemUrls = merged.map((item) => toItemUrl(item.id, item.keywords));
+
       return withCors(NextResponse.json({  inserted: parsedItems.length, itemIds: storedIds, itemUrls }));
     }
 
-    // const items = await searchItems();
+    // If we did not parse any items from the raw input, return an empty response with a 200 status to indicate that the request was processed but no items were created
     return withCors(NextResponse.json({  inserted: parsedItems.length, itemIds: [], itemUrls: [] }));
   }
 
+  // If not a raw dump nor multiple items, treat it as a single item submission (e.g. from the UI Form when only one item is being submitted without using the "items" array in the payload)
   // 2) Direct single-item submission
   const candidateItem = applyRequester(payload.item ?? payload, requester);
   const normalized = normalizeItemInput(candidateItem);
@@ -227,11 +252,13 @@ export async function POST(request: NextRequest) {
   const [storedResult] = await upsertItems([normalized.item], { submissionIpHash: ipHash });
   await revalidateTag(ITEMS_TAG);
   const stableId = storedResult?.id ?? normalized.item.id;
-  const [saved] = await searchItems({ id: stableId });
-  const itemUrl = stableId ? toItemUrl(stableId, saved?.keywords ?? normalized.item.keywords) : undefined;
+
+  // const [saved] = await searchItems({ id: stableId });
+  // const itemUrl = stableId ? toItemUrl(stableId, saved?.keywords ?? normalized.item.keywords) : undefined;
+  const itemUrl = toItemUrl(stableId, normalized.item.keywords);
 
   return withCors(
-    NextResponse.json({ item: saved ?? normalized.item, itemId: stableId, itemUrl }, { status: 201 }),
+    NextResponse.json({ item: normalized.item, itemId: stableId, itemUrl }, { status: 201 }),
   );
 }
 
@@ -268,16 +295,24 @@ export async function PATCH(request: NextRequest) {
   const updatedIds: string[] = updatedResults.map((entry) => entry.id);
   await revalidateTag(ITEMS_TAG);
 
+
+  // const savedId = normalizedItems.length === 1 ? updatedIds[0] ?? normalizedItems[0].id : null;
+  // const saved = savedId ? await searchItems({ id: savedId }) : null;
+
+  // parse the itemURL from the single updated item if only one item was submitted, otherwise return an array of URLs for the batch update
   const savedId = normalizedItems.length === 1 ? updatedIds[0] ?? normalizedItems[0].id : null;
-  const saved = savedId ? await searchItems({ id: savedId }) : null;
+  const savedURL = savedId ? itemUrlFor(request, savedId, normalizedItems[0].keywords) : null;
+  
   const body =
     normalizedItems.length === 1
       ? {
-          item: saved?.[0] ?? normalizedItems[0],
+          // item: saved?.[0] ?? normalizedItems[0],
+          item: normalizedItems[0],
           itemId: savedId,
-          itemUrl: savedId
-            ? itemUrlFor(request, savedId, (saved?.[0] ?? normalizedItems[0])?.keywords)
-            : undefined,
+          itemURL: savedURL,
+          // itemUrl: savedId
+          //   ? itemUrlFor(request, savedId, (saved?.[0] ?? normalizedItems[0])?.keywords)
+          //   : undefined,
         }
       : {
           updated: normalizedItems.length,
