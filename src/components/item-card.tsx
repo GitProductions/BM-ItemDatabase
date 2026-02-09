@@ -200,7 +200,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item }) => {
       </div>
 
       {affects.length > 0 && (
-        <div className="bg-zinc-900/50 rounded p-2 text-sm border-l-2 border-orange-600 min-w-[150px] max-w-[190px] ">
+        <div className="bg-zinc-900/50 rounded p-2 text-sm border-l-2 border-orange-600 min-w-[150px] max-w-[230px] ">
           <div className="text-[10px] uppercase text-zinc-500 mb-1 font-bold">Affects</div>
           <ul className="space-y-1">
             {affects.map((affect, index) => (
