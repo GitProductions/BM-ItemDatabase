@@ -12,7 +12,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative h-[100dvh] min-h-0 bg-zinc-950 text-zinc-200 font-sans selection:bg-orange-500/30">
 
-      <div className="pointer-events-none fixed left-1/2 top-2/3 z-0 h-[600px] w-[900px] -translate-x-1/2 -translate-y-1/2 opacity-[0.06]">
+      <div className="pointer-events-none fixed left-1/2 top-1/2 z-50 h-[600px] w-[900px] -translate-x-1/2 -translate-y-1/2 opacity-[0.015]">
         <Image
           src="/bm-logo.webp"
           alt="Background Logo"

@@ -5,6 +5,14 @@ type OrcPhraseCategory = Partial<Record<AggroLevel, string[]>> & {
 };
 
 const orcPhrases = {
+  pageNotFound: {
+    // When user tries to access a page that doesn't exist
+    allLevels: [
+      "This page ain't here. You lost, soft-skin?",
+      "No such page. You sure you know where you're goin?",
+      "Page not found. Maybe you should stick to the basics, eh?",
+    ],
+  },
 
   notLoggedIn: {
     // When user has no account or is not authenticated
