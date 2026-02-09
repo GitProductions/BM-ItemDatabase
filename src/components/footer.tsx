@@ -3,7 +3,7 @@ import Link from 'next/link';
 
 function Footer() {
   return (
-    <footer className="w-full border-t border-zinc-700 mt-8 pb-2 text-center text-xs text-zinc-500 bg-zinc-900">
+    <footer className="w-full border-t border-zinc-700 pt-1 pb-3 text-center text-xs text-zinc-500 bg-zinc-900">
       <div className="space-x-4 p-2">
         <Link href="/" className="hover:underline hover:text-orange-600">
           Home
@@ -19,7 +19,7 @@ function Footer() {
         </Link>
       </div>
 
-      <p className="mt-2">Created by David &quot;Gitago&quot; Bell with love.</p>
+      <p className="mt-1 text-[10px]">Created by David &quot;Gitago&quot; Bell in collaboration with the GitProductions.</p>
     </footer>
   );
 }

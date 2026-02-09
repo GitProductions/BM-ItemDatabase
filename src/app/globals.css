@@ -33,12 +33,18 @@
   box-sizing: border-box;
 }
 
+html,
+body {
+  height: 100%;
+}
+
 body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
   font-family: var(--font-geist-sans), "Inter", system-ui, -apple-system, sans-serif;
-  min-height: 100vh;
+  min-height: 100%;
+  overflow: hidden;
   letter-spacing: -0.01em;
 }
 
