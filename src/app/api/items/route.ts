@@ -187,7 +187,7 @@ export async function POST(request: NextRequest) {
     revalidateTag(ITEMS_TAG);
 
     // Generate item URLs for the submitted items to include in the response
-    const itemUrls = normalizedItems.map((item) => toItemUrl(item.id, item.keywords));
+    const itemUrls = normalizedItems.map((item, idx) => toItemUrl(storedIds[idx] ?? item.id, item.keywords));
     return withCors(NextResponse.json({ items: normalizedItems, inserted: normalizedItems.length, itemIds: storedIds, itemUrls }));
   }
 
@@ -234,7 +234,7 @@ export async function POST(request: NextRequest) {
       revalidateTag(ITEMS_TAG);
       
       // Generate item URLs for the submitted items to include in the response
-      const itemUrls = merged.map((item) => toItemUrl(item.id, item.keywords));
+      const itemUrls = merged.map((item, idx) => toItemUrl(storedIds[idx] ?? item.id, item.keywords));
 
       return withCors(NextResponse.json({  inserted: parsedItems.length, itemIds: storedIds, itemUrls }));
     }
