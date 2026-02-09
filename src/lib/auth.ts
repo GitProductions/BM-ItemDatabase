@@ -44,7 +44,7 @@ export const authOptions: NextAuthOptions = {
         const ipHash = hashIp(ip);
 
         try {
-          await ensureOAuthUser('discord', {
+          const oauthUser = await ensureOAuthUser('discord', {
             id: String(account.providerAccountId),
             email: (profile as { email?: string }).email,
             name: (profile as { global_name?: string; username?: string; name?: string }).global_name
@@ -53,9 +53,7 @@ export const authOptions: NextAuthOptions = {
               ?? undefined,
             lastIpHash: ipHash,
           });
-          if (account.providerAccountId) {
-            await updateUserIp(`discord:${account.providerAccountId}`, ipHash);
-          }
+          await updateUserIp(oauthUser.id, ipHash);
         } catch (error) {
           console.error('Failed to upsert discord user', error);
           return false;
@@ -65,15 +63,7 @@ export const authOptions: NextAuthOptions = {
     },
     
     async jwt({ token, user, account, profile, trigger, session }) {
-      if (user) {
-        // Credentials flow provides a full user record
-        token.id = user.id;
-        token.name = user.name;
-        token.email = user.email;
-      }
-
-      // OAuth flow (e.g., Discord) may not populate user.id; derive a stable id
-      if (!token.id && account?.provider === 'discord' && account.providerAccountId) {
+      if (account?.provider === 'discord' && account.providerAccountId) {
         const discordId = `discord:${account.providerAccountId}`;
         const profileEmail = (profile as { email?: string })?.email?.toLowerCase();
 
@@ -96,6 +86,11 @@ export const authOptions: NextAuthOptions = {
             (profile as { username?: string })?.username ??
             (profile as { name?: string })?.name;
         }
+      } else if (user) {
+        // Credentials flow provides a full user record
+        token.id = user.id;
+        token.name = user.name;
+        token.email = user.email;
       }
 
       if (trigger === 'update' && session?.name) {
@@ -109,7 +104,14 @@ export const authOptions: NextAuthOptions = {
         session.user.email = token.email ?? session.user.email;
 
         // Refresh latest name from DB to reflect profile edits
-        const dbUser = token.id ? await findUserById(String(token.id)) : null;
+        const dbUserById = token.id ? await findUserById(String(token.id)) : null;
+        const dbUser =
+          dbUserById ??
+          (token.email ? await findUserByEmail(String(token.email).toLowerCase()) : null);
+
+        if (dbUser && dbUser.id) {
+          session.user.id = dbUser.id;
+        }
         session.user.name = dbUser?.name ?? (token.name ?? session.user.name);
         session.user.isAdmin = Boolean(dbUser?.isAdmin);
       }
