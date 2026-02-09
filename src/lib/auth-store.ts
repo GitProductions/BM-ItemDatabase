@@ -1,6 +1,6 @@
 import { getCloudflareContext } from '@opennextjs/cloudflare';
 import bcrypt from 'bcryptjs';
-import { createHash, randomBytes } from 'crypto';
+import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'crypto';
 
 const DB_BINDING = 'bm_itemdb';
 
@@ -31,6 +31,7 @@ export type ApiTokenRecord = {
   userId: string;
   label: string | null;
   tokenHash: string;
+  tokenEnc?: string | null;
   createdAt: string;
   lastUsedAt: string | null;
   revokedAt: string | null;
@@ -45,6 +46,36 @@ const getDatabase = async () => {
 
 const hashToken = (token: string) => createHash('sha256').update(token).digest('hex');
 const generateId = () => (crypto.randomUUID ? crypto.randomUUID() : randomBytes(16).toString('hex'));
+
+const getTokenKey = () => {
+  const secret = process.env.TOKEN_SECRET;
+  if (!secret) {
+    throw new Error('TOKEN_SECRET is not set');
+  }
+  return createHash('sha256').update(secret).digest();
+};
+
+const encryptToken = (token: string) => {
+  const key = getTokenKey();
+  const iv = randomBytes(12);
+  const cipher = createCipheriv('aes-256-gcm', key, iv);
+  const ciphertext = Buffer.concat([cipher.update(token, 'utf8'), cipher.final()]);
+  const tag = cipher.getAuthTag();
+  return `${iv.toString('base64')}:${tag.toString('base64')}:${ciphertext.toString('base64')}`;
+};
+
+const decryptToken = (payload: string) => {
+  const [ivB64, tagB64, dataB64] = payload.split(':');
+  if (!ivB64 || !tagB64 || !dataB64) throw new Error('Invalid token payload');
+  const key = getTokenKey();
+  const iv = Buffer.from(ivB64, 'base64');
+  const tag = Buffer.from(tagB64, 'base64');
+  const data = Buffer.from(dataB64, 'base64');
+  const decipher = createDecipheriv('aes-256-gcm', key, iv);
+  decipher.setAuthTag(tag);
+  const plaintext = Buffer.concat([decipher.update(data), decipher.final()]);
+  return plaintext.toString('utf8');
+};
 
 
 // User Management
@@ -190,20 +221,21 @@ export const createApiToken = async (params: { userId: string; label?: string })
 
   const token = randomBytes(32).toString('hex');
   const tokenHash = hashToken(token);
+  const tokenEnc = encryptToken(token);
 
   const id = generateId();
 
   await db
     .prepare(
       `
-      INSERT INTO api_tokens (id, userId, label, tokenHash, createdAt, lastUsedAt, revokedAt)
-      VALUES (?1, ?2, ?3, ?4, ?5, NULL, NULL);
+      INSERT INTO api_tokens (id, userId, label, tokenHash, tokenEnc, createdAt, lastUsedAt, revokedAt)
+      VALUES (?1, ?2, ?3, ?4, ?5, ?6, NULL, NULL);
     `,
     )
-    .bind(id, params.userId, params.label ?? null, tokenHash, now)
+    .bind(id, params.userId, params.label ?? null, tokenHash, tokenEnc, now)
     .run();
 
-  return { token, record: { id, userId: params.userId, label: params.label ?? null, tokenHash, createdAt: now, lastUsedAt: null, revokedAt: null } as ApiTokenRecord };
+  return { token, record: { id, userId: params.userId, label: params.label ?? null, tokenHash, tokenEnc, createdAt: now, lastUsedAt: null, revokedAt: null } as ApiTokenRecord };
 };
 
 export const listApiTokens = async (userId: string): Promise<ApiTokenRecord[]> => {
@@ -216,6 +248,16 @@ export const revokeApiToken = async (userId: string, tokenId: string) => {
   const db = await getDatabase();
   const now = new Date().toISOString();
   await db.prepare('UPDATE api_tokens SET revokedAt = ?1 WHERE id = ?2 AND userId = ?3;').bind(now, tokenId, userId).run();
+};
+
+export const getApiTokenForUser = async (userId: string, tokenId: string): Promise<ApiTokenRecord | null> => {
+  const db = await getDatabase();
+  const result = await db
+    .prepare('SELECT * FROM api_tokens WHERE id = ?1 AND userId = ?2 LIMIT 1;')
+    .bind(tokenId, userId)
+    .all<ApiTokenRecord>();
+  const row = (result.results ?? result.rows ?? [])[0] as ApiTokenRecord | undefined;
+  return row ?? null;
 };
 
 export const verifyApiToken = async (token: string): Promise<UserRecord | null> => {
@@ -236,3 +278,4 @@ export const verifyApiToken = async (token: string): Promise<UserRecord | null> 
 
 
 export const hashPersonalToken = hashToken;
+export const revealPersonalToken = (tokenEnc: string) => decryptToken(tokenEnc);
