@@ -8,9 +8,9 @@ import { useSession } from 'next-auth/react';
 import Button from './ui/Button';
 
 const navLinks = [
-  { href: '/', label: 'Items', icon: Search },
-  { href: '/gear-planner', label: 'Equipment', icon: Sparkles },
+  { href: '/', label: 'Search', icon: Search },
   { href: '/add-item', label: 'Add Items', icon: Plus },
+  { href: '/gear-planner', label: 'Equipment', icon: Sparkles },
   { href: '/about', label: 'About', icon: CircleQuestionMark },
 ];
 

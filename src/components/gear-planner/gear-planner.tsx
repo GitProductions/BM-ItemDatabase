@@ -22,6 +22,9 @@ const defaultIdState: Record<SlotKey, string | null> = SLOT_CONFIG.reduce((acc, 
   return acc;
 }, {} as Record<SlotKey, string | null>);
 
+// Later we can create a table in the D1 to hold the users equipment layout...
+// for now it needs some more ideas and fleshing out due the randomization of stats on items and the user may set their items here...
+// but the stats on THEIR ACTUAL item may differ slightly.. so they may want to adjust this manually to get accurate stat calculations.
 const STORAGE_KEY = 'bm-Equipment';
 const STORAGE_SETS_KEY = 'bm-EquipmentSets';
 const STORAGE_ACTIVE_KEY = 'bm-EquipmentActiveSet';
@@ -335,6 +338,15 @@ export const GearPlanner: React.FC<GearPlannerProps> = ({ items }) => {
   return (
     <section className="space-y-4">
 
+      {/* Under Construction / Need Ideas Banner */}
+      <p className="rounded-md border border-yellow-500 bg-yellow-500/20 text-yellow-300 px-4 py-3 text-sm">
+        This page is still in progress! If you have ideas or suggestions, please share them via Discord with Gitago
+        <p className="mt-2 text-xs text-white/80">
+          All data on this page is currently stored locally in your browser. Be aware if you clear your cache or switch browsers, your saved gear sets will be lost.
+        </p>
+
+      </p>
+
       {showResetConfirm ? (
         <ConfirmDialog
           title="Reset gear?"
@@ -398,10 +410,7 @@ export const GearPlanner: React.FC<GearPlannerProps> = ({ items }) => {
 
       <div className="rounded-2xl border border-zinc-800 bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950 shadow-2xl p-4">
         <div className="grid items-start gap-6 lg:grid-cols-[1.35fr,0.9fr]">
-          {/* Image backdrop */}
-          <div className="pointer-events-none absolute left-1/2 top-1/2 h-[300px] w-[600px] -translate-x-1/2 -translate-y-1/2 opacity-[0.03]">
-            <Image src="/bm-logo.webp" alt="Background Logo" width={800} height={800} loading="eager" />
-          </div>
+
 
           {/* Equipment Layout Panel */}
           <div className="relative overflow-hidden rounded-xl border border-zinc-800 bg-gradient-to-b from-orange-900/10 via-zinc-900/40 to-zinc-950/80 p-5">

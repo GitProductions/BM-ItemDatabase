@@ -5,6 +5,15 @@ type OrcPhraseCategory = Partial<Record<AggroLevel, string[]>> & {
 };
 
 const orcPhrases = {
+
+  notLoggedIn: {
+    // When user has no account or is not authenticated
+    allLevels: [
+      "A half-orc grunts: 'You ain't logged in. What you want from me?'",
+      "The half-orc glares: 'No account, no help. Get lost.'",
+      "Half-orc growls: 'You gotta log in before I help ye.'",
+    ],
+  },
   noSearchResults: {
     // When search returns 0 items
     mild: [
