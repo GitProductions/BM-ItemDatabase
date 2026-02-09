@@ -34,7 +34,7 @@ const isAdminRequest = async (request: NextRequest) => {
 const resolveRequester = async (request: NextRequest) => {
   const bearer = getBearer(request);
   if (bearer) {
-    if (isAdminRequest(request)) return { isAdmin: true };
+    if (await isAdminRequest(request)) return { isAdmin: true };
     const apiUser = await verifyApiToken(bearer);
     if (apiUser) return { isAdmin: false, userId: apiUser.id, name: apiUser.name, email: apiUser.email };
   }
