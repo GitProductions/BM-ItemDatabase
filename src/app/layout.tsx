@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers";
-import Image from "next/image";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -75,10 +74,6 @@ export default function RootLayout({
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         <Providers>{children}</Providers>
-
-        <div className="pointer-events-none absolute left-1/2 top-1/2 h-[300px] w-[600px] -translate-x-1/2 -translate-y-1/2 opacity-[0.02]">
-          <Image src="/bm-logo.webp" alt="Background Logo" width={800} height={800} loading="eager" />
-        </div>
       </body>
     </html>
   );
