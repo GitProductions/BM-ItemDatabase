@@ -23,6 +23,7 @@ export type UserRecord = {
   updatedAt: string;
   lastIpHash?: string | null;
   lastIpAt?: string | null;
+  isAdmin?: number | null;
 };
 
 export type ApiTokenRecord = {
@@ -65,6 +66,7 @@ const ensureSchema = async (db: D1Database) => {
             passwordHash TEXT NOT NULL,
             createdAt TEXT NOT NULL,
             updatedAt TEXT NOT NULL,
+            isAdmin INTEGER NOT NULL DEFAULT 0,
             lastIpHash TEXT,
             lastIpAt TEXT
           );
@@ -99,6 +101,7 @@ const ensureSchema = async (db: D1Database) => {
       // Backfill new columns if missing (added 1/30/2026)
       await db.prepare('ALTER TABLE users ADD COLUMN lastIpHash TEXT;').run().catch(() => {});
       await db.prepare('ALTER TABLE users ADD COLUMN lastIpAt TEXT;').run().catch(() => {});
+      await db.prepare('ALTER TABLE users ADD COLUMN isAdmin INTEGER NOT NULL DEFAULT 0;').run().catch(() => {});
     })();
   }
 
@@ -135,11 +138,11 @@ export const createUser = async (params: {
   await db
     .prepare(
       `
-      INSERT INTO users (id, email, name, passwordHash, createdAt, updatedAt, lastIpHash, lastIpAt)
-      VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8);
+      INSERT INTO users (id, email, name, passwordHash, createdAt, updatedAt, isAdmin, lastIpHash, lastIpAt)
+      VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9);
     `,
     )
-    .bind(id, email, name, passwordHash, now, now, params.lastIpHash ?? null, params.lastIpHash ? now : null)
+    .bind(id, email, name, passwordHash, now, now, 0, params.lastIpHash ?? null, params.lastIpHash ? now : null)
     .run();
 
   return {
@@ -151,6 +154,7 @@ export const createUser = async (params: {
     updatedAt: now,
     lastIpHash: params.lastIpHash ?? null,
     lastIpAt: params.lastIpHash ? now : null,
+    isAdmin: 0,
   } satisfies UserRecord;
 };
 
@@ -180,11 +184,11 @@ export const ensureOAuthUser = async (
   await db
     .prepare(
       `
-      INSERT INTO users (id, email, name, passwordHash, createdAt, updatedAt, lastIpHash, lastIpAt)
-      VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8);
+      INSERT INTO users (id, email, name, passwordHash, createdAt, updatedAt, isAdmin, lastIpHash, lastIpAt)
+      VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9);
     `,
     )
-    .bind(userId, email, name, passwordHash, now, now, profile.lastIpHash ?? null, profile.lastIpHash ? now : null)
+    .bind(userId, email, name, passwordHash, now, now, 0, profile.lastIpHash ?? null, profile.lastIpHash ? now : null)
     .run();
 
   return {
@@ -196,6 +200,7 @@ export const ensureOAuthUser = async (
     updatedAt: now,
     lastIpHash: profile.lastIpHash ?? null,
     lastIpAt: profile.lastIpHash ? now : null,
+    isAdmin: 0,
   } satisfies UserRecord;
 };
 

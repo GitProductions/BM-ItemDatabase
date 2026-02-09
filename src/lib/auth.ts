@@ -111,6 +111,7 @@ export const authOptions: NextAuthOptions = {
         // Refresh latest name from DB to reflect profile edits
         const dbUser = token.id ? await findUserById(String(token.id)) : null;
         session.user.name = dbUser?.name ?? (token.name ?? session.user.name);
+        session.user.isAdmin = Boolean(dbUser?.isAdmin);
       }
       return session;
     },

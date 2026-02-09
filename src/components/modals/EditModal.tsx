@@ -7,6 +7,7 @@ import TextArea from '../ui/TextArea';
 import Checkbox from '../ui/CheckBox';
 import ItemPreviewCard from '../ItemPreviewCard';
 import { useAppData } from '@/components/app-provider';
+import { useSession } from 'next-auth/react';
 
 type SuggestionPayload = {
   proposer?: string;
@@ -79,7 +80,9 @@ type SuggestionModalProps = {
 // ]  
 
 const EditModal: React.FC<SuggestionModalProps> = ({ item, open, isSubmitting, feedback, onSubmit, onClose, hideAdminControls = false, hideNameInput = false, proposerLocked }) => {
+  const { data: session } = useSession();
   const { userName, handleSetUserName, refresh, items, setItems } = useAppData();
+  const isAdminUser = Boolean(session?.user?.isAdmin);
   const [name, setName] = useState(proposerLocked ?? userName);
   const [note, setNote] = useState('');
   const [reason, setReason] = useState('');
@@ -100,11 +103,11 @@ const EditModal: React.FC<SuggestionModalProps> = ({ item, open, isSubmitting, f
       setName(proposerLocked ?? userName);
       setAdminStatus(null);
       setAdminError(null);
-      setAdminMode(false);
+      setAdminMode(isAdminUser);
       setDraftItem(item);
     }, 0);
     return () => clearTimeout(resetTimer);
-  }, [open, item, userName, proposerLocked]);
+  }, [open, item, userName, proposerLocked, isAdminUser]);
 
 
   // Load stored admin token from localStorage or env on open
@@ -132,7 +135,7 @@ const EditModal: React.FC<SuggestionModalProps> = ({ item, open, isSubmitting, f
 
   // Handle item deletion (admin mode)
   const handleDeleteItem = async () => {
-    if (!item || !adminToken.trim()) {
+    if (!item || (!adminToken.trim() && !isAdminUser)) {
       setAdminError('Admin token is required to delete an item.');
       return;
     }
@@ -146,7 +149,7 @@ const EditModal: React.FC<SuggestionModalProps> = ({ item, open, isSubmitting, f
         method: 'DELETE',
         headers: {
           'content-type': 'application/json',
-          authorization: `Bearer ${adminToken.trim()}`,
+          ...(adminToken.trim() ? { authorization: `Bearer ${adminToken.trim()}` } : {}),
         },
         body: JSON.stringify({ id: item.id }),
       });
@@ -174,7 +177,7 @@ const EditModal: React.FC<SuggestionModalProps> = ({ item, open, isSubmitting, f
 
   // Handle direct save (admin mode)
   const handleDirectSave = async () => {
-    if (!draftItem || !adminToken.trim()) {
+    if (!draftItem || (!adminToken.trim() && !isAdminUser)) {
       setAdminError('Admin token is required to save directly.');
       return;
     }
@@ -188,7 +191,7 @@ const EditModal: React.FC<SuggestionModalProps> = ({ item, open, isSubmitting, f
         method: 'PATCH',
         headers: {
           'content-type': 'application/json',
-          authorization: `Bearer ${adminToken.trim()}`,
+          ...(adminToken.trim() ? { authorization: `Bearer ${adminToken.trim()}` } : {}),
         },
         body: JSON.stringify({ item: draftItem }),
       });
@@ -198,7 +201,9 @@ const EditModal: React.FC<SuggestionModalProps> = ({ item, open, isSubmitting, f
         throw new Error(body?.message ?? 'Failed to save item');
       }
 
-      localStorage.setItem('bm-admin-token', adminToken.trim());
+      if (adminToken.trim()) {
+        localStorage.setItem('bm-admin-token', adminToken.trim());
+      }
       setAdminStatus('Saved directly to the database.');
       await refresh();
     } catch (error) {
@@ -281,7 +286,7 @@ const EditModal: React.FC<SuggestionModalProps> = ({ item, open, isSubmitting, f
                 Enable direct edit (admin)
               </label>
 
-              {adminMode && (
+              {adminMode && !isAdminUser && (
                 <div className="flex-1">
                   <Input
                     value={adminToken}
@@ -300,7 +305,7 @@ const EditModal: React.FC<SuggestionModalProps> = ({ item, open, isSubmitting, f
             Cancel
           </Button>
 
-          {adminMode && adminToken ? (
+          {adminMode && (adminToken || isAdminUser) ? (
             <>
 
               <Button

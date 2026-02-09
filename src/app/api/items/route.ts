@@ -22,10 +22,12 @@ const getBearer = (request: NextRequest) => {
 };
 
 // Check if SuperAdmin token is provided in the request (via Authorization header) to allow bypassing normal auth checks for trusted clients like CLI or Postman
-const isAdminRequest = (request: NextRequest) => {
+const isAdminRequest = async (request: NextRequest) => {
   const token = getBearer(request);
   const secret = process.env.ADMIN_TOKEN;
-  return Boolean(secret && token && token === secret);
+  if (secret && token && token === secret) return true;
+  const session = await getAuthSession();
+  return session?.user?.isAdmin === true;
 };
 
 // Returns requester info if valid session or API token is provided, otherwise null
@@ -266,7 +268,7 @@ export async function POST(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   // Only admins can directly overwrite items via the PATCH endpoint
-  if (!isAdminRequest(request)) {
+  if (!(await isAdminRequest(request))) {
     return withCors(NextResponse.json({ message: 'Unauthorized' }, { status: 401 }));
   }
 
@@ -331,7 +333,7 @@ type DeleteBody = {
 export async function DELETE(request: NextRequest) {
   // Require admin token to clear the database
   // Note: returning 401 rather than 403 to avoid leaking existence of the endpoint
-  if (!isAdminRequest(request)) {
+  if (!(await isAdminRequest(request))) {
     return withCors(NextResponse.json({ message: 'Unauthorized' }, { status: 401 }));
   }
   let payload
