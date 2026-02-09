@@ -43,71 +43,6 @@ const getDatabase = async () => {
   return db as D1Database;
 };
 
-let schemaReady: Promise<void> | null = null;
-// Avoid running D1 DDL on every production request; allow opt-in via env.
-// Defaults to true in dev/preview, false in production unless explicitly enabled.
-const shouldEnsureSchema =
-  process.env.NODE_ENV !== 'production' || process.env.ENABLE_D1_SCHEMA_BOOTSTRAP === 'true';
-
-
-const ensureSchema = async (db: D1Database) => {
-  if (!shouldEnsureSchema) return;
-  if (!schemaReady) {
-    schemaReady = (async () => {
-
-      // Creating the users table
-      await db
-        .prepare(
-          `
-          CREATE TABLE IF NOT EXISTS users (
-            id TEXT PRIMARY KEY,
-            email TEXT UNIQUE NOT NULL,
-            name TEXT NOT NULL,
-            passwordHash TEXT NOT NULL,
-            createdAt TEXT NOT NULL,
-            updatedAt TEXT NOT NULL,
-            isAdmin INTEGER NOT NULL DEFAULT 0,
-            lastIpHash TEXT,
-            lastIpAt TEXT
-          );
-        `,
-        )
-        .run();
-
-      // Preparing API tokens table
-      // Used for authenticating API requests for submitting items
-      await db
-        .prepare(
-          `
-          CREATE TABLE IF NOT EXISTS api_tokens (
-            id TEXT PRIMARY KEY,
-            userId TEXT NOT NULL,
-            label TEXT,
-            tokenHash TEXT NOT NULL,
-            createdAt TEXT NOT NULL,
-            lastUsedAt TEXT,
-            revokedAt TEXT,
-            FOREIGN KEY(userId) REFERENCES users(id)
-          );
-        `,
-        )
-        .run();
-
-      // Creating indexes for performance
-      await db.prepare('CREATE INDEX IF NOT EXISTS idx_api_tokens_userId ON api_tokens(userId);').run();
-      await db.prepare('CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);').run();
-
-
-      // Backfill new columns if missing (added 1/30/2026)
-      await db.prepare('ALTER TABLE users ADD COLUMN lastIpHash TEXT;').run().catch(() => {});
-      await db.prepare('ALTER TABLE users ADD COLUMN lastIpAt TEXT;').run().catch(() => {});
-      await db.prepare('ALTER TABLE users ADD COLUMN isAdmin INTEGER NOT NULL DEFAULT 0;').run().catch(() => {});
-    })();
-  }
-
-  return schemaReady;
-};
-
 const hashToken = (token: string) => createHash('sha256').update(token).digest('hex');
 const generateId = () => (crypto.randomUUID ? crypto.randomUUID() : randomBytes(16).toString('hex'));
 
@@ -121,7 +56,6 @@ export const createUser = async (params: {
   lastIpHash?: string | null;
 }) => {
   const db = await getDatabase();
-  await ensureSchema(db);
 
   const email = params.email.trim().toLowerCase();
   const name = params.name.trim();
@@ -164,7 +98,6 @@ export const ensureOAuthUser = async (
   profile: { id: string; email?: string | null; name?: string | null; lastIpHash?: string | null },
 ) => {
   const db = await getDatabase();
-  await ensureSchema(db);
 
   const userId = `${provider}:${profile.id}`;
   const existing = await findUserById(userId);
@@ -207,7 +140,6 @@ export const ensureOAuthUser = async (
 
 export const findUserByEmail = async (email: string): Promise<UserRecord | null> => {
   const db = await getDatabase();
-  await ensureSchema(db);
   const result = await db.prepare('SELECT * FROM users WHERE email = ?1 LIMIT 1;').bind(email.toLowerCase()).all<UserRecord>();
   const row = (result.results ?? result.rows ?? [])[0] as UserRecord | undefined;
   return row ?? null;
@@ -215,7 +147,6 @@ export const findUserByEmail = async (email: string): Promise<UserRecord | null>
 
 export const findUserById = async (id: string): Promise<UserRecord | null> => {
   const db = await getDatabase();
-  await ensureSchema(db);
   const result = await db.prepare('SELECT * FROM users WHERE id = ?1 LIMIT 1;').bind(id).all<UserRecord>();
   const row = (result.results ?? result.rows ?? [])[0] as UserRecord | undefined;
   return row ?? null;
@@ -226,7 +157,6 @@ export const verifyPassword = async (password: string, passwordHash: string) => 
 
 export const updateUserIp = async (userId: string, ipHash: string) => {
   const db = await getDatabase();
-  await ensureSchema(db);
   const now = new Date().toISOString();
   await db
     .prepare('UPDATE users SET lastIpHash = ?1, lastIpAt = ?2, updatedAt = ?2 WHERE id = ?3;')
@@ -236,7 +166,6 @@ export const updateUserIp = async (userId: string, ipHash: string) => {
 
 export const updateUserName = async (userId: string, name: string) => {
   const db = await getDatabase();
-  await ensureSchema(db);
   const trimmed = name.trim();
   if (!trimmed) throw new Error('Name is required');
   const now = new Date().toISOString();
@@ -248,7 +177,6 @@ export const updateUserName = async (userId: string, name: string) => {
 // API Token Management
 export const createApiToken = async (params: { userId: string; label?: string }) => {
   const db = await getDatabase();
-  await ensureSchema(db);
 
   // Ensure user exists to satisfy FK constraint
   const user = await findUserById(params.userId);
@@ -280,21 +208,18 @@ export const createApiToken = async (params: { userId: string; label?: string })
 
 export const listApiTokens = async (userId: string): Promise<ApiTokenRecord[]> => {
   const db = await getDatabase();
-  await ensureSchema(db);
   const result = await db.prepare('SELECT * FROM api_tokens WHERE userId = ?1 AND revokedAt IS NULL ORDER BY createdAt DESC;').bind(userId).all<ApiTokenRecord>();
   return (result.results ?? result.rows ?? []) as ApiTokenRecord[];
 };
 
 export const revokeApiToken = async (userId: string, tokenId: string) => {
   const db = await getDatabase();
-  await ensureSchema(db);
   const now = new Date().toISOString();
   await db.prepare('UPDATE api_tokens SET revokedAt = ?1 WHERE id = ?2 AND userId = ?3;').bind(now, tokenId, userId).run();
 };
 
 export const verifyApiToken = async (token: string): Promise<UserRecord | null> => {
   const db = await getDatabase();
-  await ensureSchema(db);
   const hash = hashToken(token);
   const result = await db
     .prepare('SELECT userId, revokedAt FROM api_tokens WHERE tokenHash = ?1 LIMIT 1;')

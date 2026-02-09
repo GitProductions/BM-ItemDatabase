@@ -75,99 +75,6 @@ const getDatabase = async () => {
   return db as D1Database;
 };
 
-let schemaReady: Promise<void> | null = null;
-
-
-// Avoid running D1 DDL on every production request; allow opt-in via env.
-// Defaults to true in dev/preview, false in production unless explicitly enabled.
-const shouldEnsureSchema =
-  process.env.NODE_ENV !== 'production' || process.env.ENABLE_D1_SCHEMA_BOOTSTRAP === 'true';
-
-
-
-const ensureSchema = async (db: D1Database) => {
-  if (!shouldEnsureSchema) return;
-  if (!schemaReady) {
-    schemaReady = (async () => {
-      await db
-        .prepare(
-          `
-          CREATE TABLE IF NOT EXISTS items (
-            id TEXT PRIMARY KEY,
-            name TEXT NOT NULL,
-            keywords TEXT NOT NULL,
-            type TEXT NOT NULL,
-            flags TEXT NOT NULL,
-            stats TEXT NOT NULL,
-            droppedBy TEXT,
-            worn TEXT,
-            ego TEXT,
-            isArtifact INTEGER DEFAULT 0,
-            raw TEXT,
-            flaggedForReview INTEGER DEFAULT 0,
-            duplicateOf TEXT,
-            createdAt TEXT NOT NULL,
-            updatedAt TEXT NOT NULL
-          );
-        `,
-        )
-        .run();
-
-      await db
-        .prepare('CREATE UNIQUE INDEX IF NOT EXISTS idx_items_identity ON items(name, keywords, type);')
-        .run();
-
-      await db
-        .prepare(
-          `
-          CREATE TABLE IF NOT EXISTS submissions (
-            id TEXT PRIMARY KEY,
-            itemId TEXT NOT NULL,
-            identityKey TEXT NOT NULL,
-            submittedBy TEXT,
-            submittedByUserId TEXT,
-            submittedAt TEXT NOT NULL,
-            raw TEXT,
-            ipHash TEXT
-          );
-        `,
-        )
-        .run();
-
-      // Backfill newly added columns if the table already exists
-      await db.prepare('ALTER TABLE items ADD COLUMN droppedBy TEXT;').run().catch(() => {});
-      await db.prepare('ALTER TABLE items ADD COLUMN worn TEXT;').run().catch(() => {});
-      await db.prepare('ALTER TABLE items ADD COLUMN egoMin TEXT;').run().catch(() => {});
-      await db.prepare('ALTER TABLE items ADD COLUMN egoMax TEXT;').run().catch(() => {});
-      await db.prepare('ALTER TABLE submissions ADD COLUMN submittedByUserId TEXT;').run().catch(() => {});
-      await db.prepare('ALTER TABLE submissions ADD COLUMN ipHash TEXT;').run().catch(() => {});
-      await db.prepare('CREATE INDEX IF NOT EXISTS idx_submissions_item_user ON submissions(itemId, submittedByUserId);').run();
-
-      await db
-        .prepare(
-          `
-          CREATE TABLE IF NOT EXISTS suggestions (
-            id TEXT PRIMARY KEY,
-            itemId TEXT NOT NULL,
-            proposer TEXT,
-            note TEXT NOT NULL,
-            status TEXT NOT NULL DEFAULT 'pending',
-            createdAt TEXT NOT NULL
-          );
-        `,
-        )
-        .run();
-
-      await db
-        .prepare('CREATE INDEX IF NOT EXISTS idx_suggestions_itemId ON suggestions(itemId);')
-        .run();
-    })();
-  }
-
-  return schemaReady;
-};
-
-
 // NOTE: D1 stores JSON in a TEXT column; this parses legacy shapes (string, CSV string, array)
 // into a normalized string[] so the rest of the app can treat worn as an array.
 const normalizeWorn = (input: unknown): string[] | undefined => {
@@ -354,7 +261,6 @@ export type UpsertResult = { id: string; duplicate: boolean; duplicateOf?: strin
  */
 export const fetchSubmitterLeaderboard = async (limit = 20): Promise<LeaderboardData> => {
   const db = await getDatabase();
-  await ensureSchema(db);
 
   const cappedLimit = Math.max(1, Math.min(limit, 100));
 
@@ -474,7 +380,6 @@ const sanitizeLimit = (value?: number) => {
 // Search items with optional filters
 export const searchItems = async (params: ItemSearchParams = {}): Promise<Item[]> => {
   const db = await getDatabase();
-  await ensureSchema(db);
 
   const where: string[] = [];
   const values: unknown[] = [];
@@ -569,7 +474,6 @@ export const searchItems = async (params: ItemSearchParams = {}): Promise<Item[]
 
 export const countItemsFiltered = async (params: ItemSearchParams = {}): Promise<number> => {
   const db = await getDatabase();
-  await ensureSchema(db);
 
   const where: string[] = [];
   const values: unknown[] = [];
@@ -622,7 +526,6 @@ export const countItems = async (): Promise<number> => {
 
   // wrangler d1 execute <DATABASE_NAME> --command="SELECT COUNT(*) FROM <TABLE_NAME>;" --remote
 
-  await ensureSchema(db);
 
   const result = await db.prepare('SELECT COUNT(*) AS count FROM items;').all<{ count: number }>();
   const row = (result.results ?? result.rows ?? [])[0] as { count: number } | undefined;
@@ -647,7 +550,6 @@ export const upsertItems = async (
   if (!items.length) return [];
 
   const db = await getDatabase();
-  await ensureSchema(db);
 
   const now = new Date().toISOString();
   const keywordCache = new Map<string, Item[]>();
@@ -869,7 +771,6 @@ export const upsertItems = async (
 // Delete all items from the database
 export const deleteAllItems = async () => {
   const db = await getDatabase();
-  await ensureSchema(db);
   await db.prepare('DELETE FROM items;').run();
 };
 
@@ -877,14 +778,12 @@ export const deleteAllItems = async () => {
 export const deleteItem = async (id: string) => {
   if (!id) return;
   const db = await getDatabase();
-  await ensureSchema(db);
   await db.prepare('DELETE FROM items WHERE id = ?1;').bind(id).run();
 };
 
 // Add a suggestion for an item aka, an edit proposal
 export const addSuggestion = async (suggestion: Suggestion) => {
   const db = await getDatabase();
-  await ensureSchema(db);
 
   const combinedNote = suggestion.reason
     ? `${suggestion.note}\n\nReason: ${suggestion.reason}`
