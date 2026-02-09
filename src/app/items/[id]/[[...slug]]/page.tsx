@@ -19,7 +19,7 @@ const fetchItem = cache(async (id: string) => {
   return items[0] ?? null;
 });
 
-const formatValueRange = ( value?: number, min?: number, max?: number, { signed = false }: { signed?: boolean } = {}): string => {
+const formatValueRange = (value?: number, min?: number, max?: number, { signed = false }: { signed?: boolean } = {}): string => {
   const fmt = (num?: number): string => {
     if (num === undefined || num === null) return '';
     const rounded = Number.isInteger(num) ? num.toString() : num.toFixed(1);
@@ -62,9 +62,9 @@ export async function generateMetadata({ params }: { params: Promise<RouteParams
   const guessedSlots = wornSlots.length
     ? wornSlots
     : (() => {
-        const guess = guessSlot(item);
-        return guess ? canonicalizeSlots([guess]) : [];
-      })();
+      const guess = guessSlot(item);
+      return guess ? canonicalizeSlots([guess]) : [];
+    })();
 
   const slotText = guessedSlots.map((slot) => slotLabel(slot)).join(', ');
   // const descParts = [
@@ -74,7 +74,7 @@ export async function generateMetadata({ params }: { params: Promise<RouteParams
   // ].filter(Boolean);
 
   const description = "Learn more item details for " + item.name + (slotText ? ` worn on ${slotText}` : '');
- 
+
   // if we create an image with all the details, people would be less likely to click through
   // const ogParams = new URLSearchParams({
   //   name: item.name,
@@ -108,28 +108,28 @@ export async function generateMetadata({ params }: { params: Promise<RouteParams
     openGraph: {
       title: `${item.name} | BlackMUD Item DB`,
       description: description || 'BlackMUD item details',
-    //   images: metaOGImage ? [
-    //         {
-    //           url: metaOGImage,
-    //           alt: item.name,
-    //         },
-    //       ]
-    //     : undefined,
-    // },
-    //  twitter: {
-    //   card: 'summary_large_image',
-    //   title: `${item.name} | BlackMUD Item DB`,
-    //   description: description || 'BlackMUD item details',
-    //   images: metaOGImage ? [
-    //         {
-    //           url: metaOGImage,
-    //           alt: item.name,
-    //         },
-    //       ]
-    //     : undefined,
+      //   images: metaOGImage ? [
+      //         {
+      //           url: metaOGImage,
+      //           alt: item.name,
+      //         },
+      //       ]
+      //     : undefined,
+      // },
+      //  twitter: {
+      //   card: 'summary_large_image',
+      //   title: `${item.name} | BlackMUD Item DB`,
+      //   description: description || 'BlackMUD item details',
+      //   images: metaOGImage ? [
+      //         {
+      //           url: metaOGImage,
+      //           alt: item.name,
+      //         },
+      //       ]
+      //     : undefined,
     },
-  };  
-    
+  };
+
 
 }
 
@@ -144,9 +144,9 @@ export default async function ItemPage({ params }: { params: Promise<RouteParams
   const displaySlots = wornSlots.length
     ? wornSlots
     : (() => {
-        const guess = guessSlot(item);
-        return guess ? canonicalizeSlots([guess]) : [];
-      })();
+      const guess = guessSlot(item);
+      return guess ? canonicalizeSlots([guess]) : [];
+    })();
 
   const itemUrl = buildItemPath(item.id, item.keywords);
 
@@ -225,7 +225,11 @@ export default async function ItemPage({ params }: { params: Promise<RouteParams
             <p className="text-sm text-zinc-300">
               Dropped by: <span className="text-white">{item.droppedBy}</span>
             </p>
-          ) : null}
+          ) :
+            <p className="text-sm text-zinc-300">
+              Dropped by: <span className="text-white">Unknown</span>
+            </p>
+          }
           {item.duplicateOf ? (
             <p className="text-sm text-zinc-400">
               Possible duplicate of{' '}
@@ -252,13 +256,13 @@ export default async function ItemPage({ params }: { params: Promise<RouteParams
               <p className="text-sm text-zinc-500">No flags recorded.</p>
             )}
           </div>
-          {item.ego ? <p className="text-sm text-zinc-300">Ego rating: {item.ego}</p> : null}
-          <p className="text-sm text-zinc-400">
+          {item.ego ? <p className="text-sm text-zinc-300">Ego: {item.egoMin} / {item.egoMax}</p> : null}
+          {/* <p className="text-sm text-zinc-400">
             Submissions logged: <span className="text-white">{item.submissionCount ?? '—'}</span>
-          </p>
+          </p> */}
         </div>
 
-        
+
         {/* Contributors  */}
         <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-4 space-y-3">
           <h2 className="text-sm font-semibold text-white">Contributors</h2>
@@ -281,10 +285,10 @@ export default async function ItemPage({ params }: { params: Promise<RouteParams
       </div>
 
 
-        {/*  Bottom Section */}
+      {/*  Bottom Section */}
       <section className="rounded-xl border border-zinc-800 bg-zinc-900/70 p-4 space-y-3">
-       
-        
+
+
         <div className="flex items-center justify-between gap-2">
           <h2 className="text-sm font-semibold text-white">Stats</h2>
           {damageStats ? (
