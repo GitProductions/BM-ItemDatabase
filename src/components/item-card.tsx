@@ -60,7 +60,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item }) => {
     if (slots.length) return slots;
     const guessed = guessSlot(item);
 
-  
+
     return guessed ? canonicalizeSlots([guessed]) : [];
   })();
   // const displayDroppedBy = item.droppedBy?.trim();
@@ -89,7 +89,10 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item }) => {
   }
 
   return (
-    <div className="relative bg-zinc-800 border border-zinc-700 rounded-lg p-4 mb-4 hover:border-zinc-500 transition-colors shadow-sm h-full">
+    <div className="relative h-full flex flex-col rounded-lg p-4 
+     bg-zinc-800 border border-zinc-700 hover:border-zinc-500 
+      transition-colors shadow-sm"
+    >
       <div className="flex justify-between items-start mb-2">
         <div className="flex items-start gap-3">
           <div className={`p-2 rounded-md bg-zinc-900 ${typeColor}`}>
@@ -197,7 +200,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item }) => {
       </div>
 
       {affects.length > 0 && (
-        <div className="bg-zinc-900/50 rounded p-2 text-sm border-l-2 border-orange-600">
+        <div className="bg-zinc-900/50 rounded p-2 text-sm border-l-2 border-orange-600 min-w-[150px] max-w-[190px] ">
           <div className="text-[10px] uppercase text-zinc-500 mb-1 font-bold">Affects</div>
           <ul className="space-y-1">
             {affects.map((affect, index) => (
@@ -223,14 +226,14 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item }) => {
         </div>
       )}
 
-      <div className="mt-2 flex flex-col gap-1 text-xs text-zinc-500">
+      <div className="mt-auto pt-2 gap-1 text-xs text-zinc-500 justify-end">
         <div className="flex justify-between gap-2">
           <div className="">
-          {/* <span>{displayWorn.length ? `Worn: ${displayWorn.map((slot) => slotLabel(slot)).join(', ')}` : ''}</span> */}
-           {/* {displayDroppedBy &&  */}
-           <p className="text-right italic">Dropped by: {item.droppedBy ? item.droppedBy : 'Unknown'}</p>
-           {/* } */}
-           </div>
+            {/* <span>{displayWorn.length ? `Worn: ${displayWorn.map((slot) => slotLabel(slot)).join(', ')}` : ''}</span> */}
+            {/* {displayDroppedBy &&  */}
+            <p className="text-right italic">Dropped by: {item.droppedBy ? item.droppedBy : 'Unknown'}</p>
+            {/* } */}
+          </div>
           <span className="flex items-center gap-2">
             <span>Submitted by:</span>
             {(() => {
@@ -266,7 +269,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item }) => {
             })()}
           </span>
         </div>
-       
+
       </div>
     </div>
   );

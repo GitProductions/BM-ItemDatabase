@@ -177,14 +177,11 @@ export const ItemDB: React.FC<ItemDBProps> = () => {
                     setSuggestItem(item);
                     setSuggestFeedback(null);
                   }}
-                  className='absolute bottom-1 left-2 inline-flex items-center gap-1 w-auto z-10  text-[11px] px-2 bg-transparent py-1 rounded
-                   text-white/30 hover:text-orange-400 hover:border-orange-500 hover:bg-transparent'
-                  // className="absolute bottom-2 left-2 inline-flex items-center gap-1 w-auto z-10
-                  // text-[11px] px-2 py-1 rounded
-                  // bg-zinc-900/80 border border-zinc-700 text-zinc-300 hover:text-white hover:border-orange-500 hover:bg-transparent 
-                  // transition-colors"
+                  className='absolute bottom-0 left-1/2 -translate-x-1/2 inline-flex items-center gap-1 w-auto z-10  text-[10px] px-2 bg-transparent py-1 rounded
+                   text-white/40 hover:text-orange-400 hover:border-orange-500 hover:bg-transparent'
+          
                 >
-                  Suggest an edit
+                  Edit Details
                 </Button>
 
               </div>
