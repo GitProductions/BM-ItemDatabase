@@ -208,7 +208,6 @@ export default function AccountPage() {
           
 
                 {/* Showing input when user wants to change display name */}
-
                 {nameEditing ? (
                   <div className="flex flex-col sm:flex-row gap-2">
                       <input
@@ -235,6 +234,11 @@ export default function AccountPage() {
                 )}
 
               <p className="text-sm text-zinc-500">{session.user?.email}</p>
+
+              {session?.user?.isAdmin && (
+                <p className="text-sm text-emerald-400">Admin</p>
+              )}
+              
             </div>
 
           </div>
