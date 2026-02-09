@@ -8,6 +8,8 @@
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
     "upload": "opennextjs-cloudflare build && opennextjs-cloudflare upload",
+    "schema:prod": "wrangler d1 execute bm_itemdb --remote --file=./d1-schema.sql",
+    "schema:local": "wrangler d1 execute bm_itemdb --local --file=./d1-schema.sql",
     "lint": "eslint"
   },
   "dependencies": {
