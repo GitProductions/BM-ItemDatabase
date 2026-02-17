@@ -53,6 +53,11 @@ export type LeaderboardData = {
   };
 };
 
+export type ItemsVersion = {
+  latestUpdatedAt: string | null;
+  totalAll: number;
+};
+
 export type ItemSearchParams = {
   q?: string;
   type?: string;
@@ -531,14 +536,23 @@ export const countItems = async (): Promise<number> => {
   const row = (result.results ?? result.rows ?? [])[0] as { count: number } | undefined;
   return row?.count ?? 0;
 
-}
+};
 
+export const fetchItemsVersion = async (): Promise<ItemsVersion> => {
+  // Lightweight freshness query used by API responses to coordinate client-side race protection.
+  // This is intentionally cheaper than fetching item rows.
+  const db = await getDatabase();
+  const result = await db
+    .prepare('SELECT MAX(updatedAt) AS latestUpdatedAt, COUNT(*) AS totalAll FROM items;')
+    .all<{ latestUpdatedAt: string | null; totalAll: number }>();
+  const row = (result.results ?? result.rows ?? [])[0] as
+    | { latestUpdatedAt: string | null; totalAll: number }
+    | undefined;
 
-
-// Fetch all items (for app initialization, caching, etc)
-export const fetchItems = async (): Promise<Item[]> => searchItems();
-
-
+  const latestUpdatedAt = row?.latestUpdatedAt ?? null;
+  const totalAll = row?.totalAll ?? 0;
+  return { latestUpdatedAt, totalAll };
+};
 // Insert into Items table with upsert on unique identity (name, keywords, type)
 // We update all fields on conflict to ensure latest data is stored
 // including flags, stats, ego, isArtifact, raw, flaggedForReview, duplicateOf, and updatedAt

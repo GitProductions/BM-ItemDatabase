@@ -35,6 +35,16 @@ pnpm build
 
 ### Public API (for Mudlet or other clients)
 
+### Caching Notes (`/api/items`)
+
+- Read responses are cached via Next/OpenNext tag cache in `src/app/api/items/route.ts` using tag `items`.
+- Cache entries are invalidated on writes (`POST`, `PATCH`, `DELETE`) via `revalidateTag('items')`.
+- `?_fresh=<timestamp>` bypasses tag cache for one request and forces a direct DB read.
+- Client-side race guard in `src/components/app-provider.tsx` uses `latestUpdatedAt` to ignore late stale responses.
+
+When it is safe to remove `_fresh` and the `latestUpdatedAt` guard:
+- only if the app enforces strict request ordering so an older response can never overwrite newer state.
+
 ### API Schema for Cloudflare (OpenAPI 3.0.3)
 
 - Source-of-truth schemas use `zod` in `src/lib/api-schema/`.
