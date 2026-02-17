@@ -39,11 +39,11 @@ export default function SubmissionsSection({ onEdit, refreshKey }: SubmissionsSe
                 <div>
                   <p className="text-zinc-100 font-medium">{item.name}</p>
                   <p className="text-xs text-zinc-500">
-                    {item.type} â€¢ keywords: {item.keywords || 'n/a'}
+                    {item.type} • keywords: {item.keywords || 'n/a'}
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="text-[11px] text-zinc-400">Updated {item.submissionCount ?? ''}</span>
+                  {/* <span className="text-[11px] text-zinc-400">Updated {item.submissionCount ?? ''}</span> */}
                   <Button size="sm" variant="primary" onClick={() => onEdit(item)}>
                     Edit
                   </Button>
