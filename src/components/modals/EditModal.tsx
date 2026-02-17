@@ -9,6 +9,7 @@ import ItemPreviewCard from '../ItemPreviewCard';
 import { useAppData } from '@/components/app-provider';
 import { useSession } from 'next-auth/react';
 import { ItemInput } from '@/lib/items-api';
+import { Loader2 } from "lucide-react"; 
 
 type SuggestionPayload = {
   proposer?: string;
@@ -333,7 +334,8 @@ const EditModal: React.FC<SuggestionModalProps> = ({ item, open, isSubmitting, f
                 disabled={adminSaving || !draftItem}
                 className="px-4 py-2 text-sm rounded-md bg-red-600 hover:bg-red-500 text-white disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {adminSaving ? 'Deleting�' : 'Delete Item'}
+                {adminSaving ? 'Deleting...' : 'Delete Item'}
+                <Loader2 className={`ml-2 h-4 w-4 animate-spin ${adminSaving ? 'inline-block' : 'hidden'}`} />
               </Button>
 
               <Button
@@ -341,7 +343,9 @@ const EditModal: React.FC<SuggestionModalProps> = ({ item, open, isSubmitting, f
                 disabled={adminSaving || !draftItem}
                 className="px-4 py-2 text-sm rounded-md bg-orange-600 hover:bg-orange-500 text-white disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {adminSaving ? 'Saving�' : 'Save directly'}
+
+                {adminSaving ? 'Saving... ' : 'Save directly'}
+                <Loader2 className={`ml-2 h-4 w-4 animate-spin ${adminSaving ? 'inline-block' : 'hidden'}`} />
               </Button>
             </>
           ) : (

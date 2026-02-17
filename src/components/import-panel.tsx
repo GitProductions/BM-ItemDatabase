@@ -224,7 +224,8 @@ export const ImportPanel: React.FC<ImportPanelProps> = ({
               disabled={shouldShowLoading || !rawInput.trim() || hasMissingNames}
               className="px-6 py-2 rounded-lg bg-orange-600 hover:bg-orange-500 text-white font-bold transition-colors shadow-lg shadow-orange-900/50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
-              <Save size={18} /> Check & Import
+              {shouldShowLoading ? <><Loader2 className="animate-spin h-4 w-4" /> Submitting </>  : <><Save size={18} /> Check & Import  </>}
+              
             </Button>
             {hasMissingNames ? (
               <p className="text-[11px] text-amber-400">Add a name for every item before continuing.</p>
