@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchSubmitterLeaderboard } from '@/lib/d1';
 import { withCors } from '@/lib/items-api';
+import { parseLeaderboardQuery } from '@/lib/api-schema/leaderboard';
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const limitParam = Number(searchParams.get('limit') ?? undefined);
-  const limit = Number.isFinite(limitParam) ? limitParam : 20;
+  const parsed = parseLeaderboardQuery(searchParams);
+  if (!parsed.ok) {
+    return withCors(NextResponse.json({ message: parsed.message }, { status: 400 }));
+  }
+
+  const limit = parsed.data.limit ?? 20;
 
   const { entries, totals } = await fetchSubmitterLeaderboard(limit);
 

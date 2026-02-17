@@ -8,6 +8,14 @@ import { getAuthSession } from '@/lib/auth';
 import { verifyApiToken } from '@/lib/auth-store';
 import { hashIp } from '@/lib/ip-hash';
 import { buildItemPath } from '@/lib/slug';
+import {
+  ItemsPatchRequest,
+  ItemsPostRequest,
+  parseItemsDeleteBody,
+  parseItemsGetQuery,
+  parseItemsPatchBody,
+  parseItemsPostBody,
+} from '@/lib/api-schema/items';
 
 const ITEMS_TAG = 'items';
 
@@ -58,26 +66,57 @@ const resolveRequester = async (request: NextRequest) => {
 // Note: flagged=true returns items that are flagged for review, flagged=false returns items that are not flagged, and omitting flagged returns all items regardless of flag status
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const q = searchParams.get('q')?.trim() || undefined;
-  const type = searchParams.get('type')?.trim() || undefined;
-  const flagged = parseBooleanParam(searchParams.get('flagged'));
-  const id = searchParams.get('id')?.trim() || undefined;
+  const parsedQuery = parseItemsGetQuery(searchParams);
+  if (!parsedQuery.ok) {
+    return withCors(NextResponse.json({ message: parsedQuery.message }, { status: 400 }));
+  }
+  const { q, type, flagged, id, limit, offset } = parsedQuery.data;
+  const flaggedFilter = parseBooleanParam(flagged ?? null);
+  const qProvided = searchParams.has('q');
+  const hasKnownFilter = Boolean(q || type || id || flaggedFilter !== undefined);
+  const hasPaging = limit !== undefined || offset !== undefined;
 
-  const limitParam = Number(searchParams.get('limit') ?? undefined);
-  const offsetParam = Number(searchParams.get('offset') ?? undefined);
+  // Reject broad list dumps when no query/filter/pagination is provided.
+  if (!hasKnownFilter && !hasPaging) {
+    return withCors(
+      NextResponse.json(
+        { message: "At least one of 'q', 'type', 'id', 'flagged', 'limit', or 'offset' is required." },
+        { status: 400 },
+      ),
+    );
+  }
+
+  // Treat explicit empty/too-short q as a search miss instead of falling back to broad listing.
+  if (qProvided && (!q || q.length < 2)) {
+    const totalAll = await countItems();
+    return withCors(
+      NextResponse.json(
+        { items: [], count: 0, total: 0, totalAll },
+        {
+          status: 200,
+          headers: {
+            'Cache-Control': 'public, max-age=60',
+            'Content-Type': 'application/json',
+          },
+        },
+      ),
+    );
+  }
+
+  const effectiveLimit = limit ?? (hasKnownFilter ? 100 : 20);
 
   const items = await searchItems({
     q,
     type,
-    flagged,
+    flagged: flaggedFilter,
     id,
-    limit: Number.isFinite(limitParam) ? limitParam : undefined,
-    offset: Number.isFinite(offsetParam) ? offsetParam : undefined,
+    limit: effectiveLimit,
+    offset,
   });
 
   const [totalAll, totalMatching] = await Promise.all([
     countItems(),
-    countItemsFiltered({ q, type, flagged, id }),
+    countItemsFiltered({ q, type, flagged: flaggedFilter, id }),
   ]);
 
   const payload = { items, count: items.length, total: totalMatching, totalAll };
@@ -97,14 +136,8 @@ export async function GET(request: NextRequest) {
   );
 }
 
-type PostBody = {
-  raw?: string;
-  submittedBy?: string;
-  submittedByUserId?: string;
-  item?: ItemInput;
-  items?: ItemInput[];
-  overrides?: Record<string, Partial<ItemInput>>;
-} & ItemInput;
+type PostBody = ItemsPostRequest;
+type PatchBody = ItemsPatchRequest;
 
 // When user submits an item, we want to attribute it to them if possible
 const applyRequester = (item: ItemInput, requester: Awaited<ReturnType<typeof resolveRequester>>): ItemInput => {
@@ -132,26 +165,32 @@ export async function POST(request: NextRequest) {
   // Hash the submitter's IP address for internal use (e.g. rate limiting, abuse detection) without storing raw IPs to protect user privacy
   const ipHash = hashIp(request.headers.get('x-real-ip') ?? '0.0.0.0');
 
-  let payload: PostBody;
   const toItemUrl = (id: string, keywords?: string | null) => itemUrlFor(request, id, keywords);
 
-  try {
-    payload = (await request.json()) as PostBody;
-  } catch {
-    return withCors(NextResponse.json({ message: 'Invalid request payload' }, { status: 400 }));
+  const parsedPayload = await parseItemsPostBody(request);
+  if (!parsedPayload.ok) {
+    return withCors(NextResponse.json({ message: parsedPayload.message }, { status: 400 }));
   }
+  const payload: PostBody = parsedPayload.data;
+  const post = payload as {
+    items?: ItemInput[];
+    raw?: string;
+    item?: ItemInput;
+    submittedBy?: string;
+    overrides?: Record<string, Partial<ItemInput>>;
+  };
 
   
   // 1) Client-supplied parsed items (keeps IDs/overrides intact)
   // This would be when submitting directly from the UI Form, which allows multiple items to be submitted at once
-  if (Array.isArray(payload.items) && payload.items.length) {
+  if (Array.isArray(post.items) && post.items.length) {
     const normalizedItems: Item[] = [];
     const submitter = requester?.userId
-      ? requester.name ?? payload.submittedBy?.trim() ?? requester.email ?? 'Unnamed'
-      : payload.submittedBy?.trim();
-    const overrides = payload.overrides ?? {};
+      ? requester.name ?? post.submittedBy?.trim() ?? requester.email ?? 'Unnamed'
+      : post.submittedBy?.trim();
+    const overrides = (post.overrides ?? {}) as Record<string, Partial<ItemInput>>;
 
-    for (const incoming of payload.items) {
+    for (const incoming of post.items) {
       const incomingWithSubmitter = applyRequester({ ...incoming, submittedBy: submitter ?? incoming.submittedBy }, requester);
       
       // Apply overrides and normalize each item, ensuring that the submitter info is preserved and merged with any existing submittedBy/submittedByUserId on the item
@@ -194,16 +233,16 @@ export async function POST(request: NextRequest) {
   
   // 2) Raw identify dump -> multiple items
   // This would primarily be when submitting directly from MUDLET where user is sending a raw identify dump + the items short description at the top to mimic how we submit items in the UI
-  const cleanedInput = payload?.raw?.trim();
+  const cleanedInput = typeof post.raw === 'string' ? post.raw.trim() : undefined;
   if (cleanedInput) {
     const submitter = requester?.userId
-      ? requester.name ?? payload.submittedBy?.trim() ?? requester.email ?? 'Unnamed'
-      : payload.submittedBy?.trim();
+      ? requester.name ?? post.submittedBy?.trim() ?? requester.email ?? 'Unnamed'
+      : post.submittedBy?.trim();
     
     // Parsing the identify dump..
     const parsedItems = parseIdentifyDump(cleanedInput);
     if (parsedItems.length) {
-      const overrides = payload.overrides ?? {};
+      const overrides = (post.overrides ?? {}) as Record<string, Partial<ItemInput>>;
       
 
       const merged = parsedItems.map((item) => {
@@ -245,7 +284,7 @@ export async function POST(request: NextRequest) {
 
   // If not a raw dump nor multiple items, treat it as a single item submission (e.g. from the UI Form when only one item is being submitted without using the "items" array in the payload)
   // 2) Direct single-item submission
-  const candidateItem = applyRequester(payload.item ?? payload, requester);
+  const candidateItem = applyRequester((post.item ? post.item : payload) as ItemInput, requester);
   const normalized = normalizeItemInput(candidateItem);
   if (!normalized.ok) {
     return withCors(NextResponse.json({ message: normalized.message }, { status: 400 }));
@@ -272,15 +311,21 @@ export async function PATCH(request: NextRequest) {
     return withCors(NextResponse.json({ message: 'Unauthorized' }, { status: 401 }));
   }
 
-  let payload: { items?: ItemInput[]; item?: ItemInput } & ItemInput;
-
-  try {
-    payload = (await request.json()) as typeof payload;
-  } catch {
-    return withCors(NextResponse.json({ message: 'Invalid request payload' }, { status: 400 }));
+  const parsedPayload = await parseItemsPatchBody(request);
+  if (!parsedPayload.ok) {
+    return withCors(NextResponse.json({ message: parsedPayload.message }, { status: 400 }));
   }
+  const payload: PatchBody = parsedPayload.data;
+  const patch = payload as {
+    items?: ItemInput[];
+    item?: ItemInput;
+  };
 
-  const incomingItems = payload.items ?? (payload.item ? [payload.item] : [payload]);
+  const incomingItems: ItemInput[] = Array.isArray(patch.items)
+    ? patch.items
+    : patch.item
+      ? [patch.item as ItemInput]
+      : [payload as ItemInput];
   const normalizedItems: Item[] = [];
 
   for (const incoming of incomingItems) {
@@ -327,23 +372,17 @@ export async function PATCH(request: NextRequest) {
   return withCors(NextResponse.json(body, { status: 200 }));
 }
 
-type DeleteBody = {
-  id?: string;
-};
 export async function DELETE(request: NextRequest) {
   // Require admin token to clear the database
   // Note: returning 401 rather than 403 to avoid leaking existence of the endpoint
   if (!(await isAdminRequest(request))) {
     return withCors(NextResponse.json({ message: 'Unauthorized' }, { status: 401 }));
   }
-  let payload
-  try {
-    payload = (await request.json()) as DeleteBody;
-  } catch {
-    return withCors(NextResponse.json({ message: 'Invalid request payload' }, { status: 400 }));
+  const parsedPayload = await parseItemsDeleteBody(request);
+  if (!parsedPayload.ok) {
+    return withCors(NextResponse.json({ message: parsedPayload.message }, { status: 400 }));
   }
-
-  const id = payload?.id?.trim();
+  const id = parsedPayload.data.id.trim();
 
   if (id) {
     await deleteItem(id);

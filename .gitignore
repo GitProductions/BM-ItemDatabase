@@ -43,6 +43,7 @@ yarn-error.log*
 next-env.d.ts
 /.open-next
 /.wrangler
+.tmp-openapi/
 wrangler.jsonc
 *.jsonc
 database.sql
