@@ -25,7 +25,6 @@ export interface ItemStats {
 export interface Item {
   id: string;
   name: string;
-  nameMissing?: boolean;
   keywords: string;
   type: string;
   flags: string[];

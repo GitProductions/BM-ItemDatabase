@@ -2,22 +2,20 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createUser, findUserByEmail } from '@/lib/auth-store';
 import { withCors } from '@/lib/items-api';
 import { hashIp } from '@/lib/ip-hash';
+import { parseRegisterBody } from '@/lib/api-schema/auth';
 
 export async function POST(request: NextRequest) {
   try {
-    const body = (await request.json()) as { email?: string; name?: string; password?: string };
-    const email = body.email?.trim().toLowerCase();
-    const name = body.name?.trim();
-    const password = body.password ?? '';
-
-    if (!email || !name || password.length < 8) {
+    const parsed = await parseRegisterBody(request);
+    if (!parsed.ok) {
       return withCors(
         NextResponse.json(
-          { message: 'Name, email, and a password of at least 8 characters are required.' },
+          { message: parsed.message },
           { status: 400 },
         ),
       );
     }
+    const { email, name, password } = parsed.data;
 
     const existing = await findUserByEmail(email);
     if (existing) {

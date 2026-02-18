@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { addSuggestion } from '@/lib/d1';
 import { Suggestion } from '@/types/suggestions';
+import { parseSuggestionBody } from '@/lib/api-schema/suggestions';
 
 const generateId = () => {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
@@ -11,15 +12,9 @@ const generateId = () => {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = (await request.json()) as { itemId?: string; note?: string; proposer?: string; reason?: string };
-    const itemId = body.itemId?.trim();
-    const note = body.note?.trim();
-    const reason = body.reason?.trim();
-    const proposer = body.proposer?.trim() || undefined;
-
-    if (!itemId || !note) {
-      return NextResponse.json({ message: 'itemId and note are required' }, { status: 400 });
-    }
+    const parsed = await parseSuggestionBody(request);
+    if (!parsed.ok) return NextResponse.json({ message: parsed.message }, { status: 400 });
+    const { itemId, note, reason, proposer } = parsed.data;
 
     const suggestion: Suggestion = {
       id: generateId(),

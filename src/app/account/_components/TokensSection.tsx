@@ -41,7 +41,7 @@ export default function TokensSection() {
           <div>
             Copy this token now:{' '}
             <span className="font-mono">
-              {showToken ? newToken : 'â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢'}
+              {showToken ? newToken : '•••••••••••••••••••••••••'}
             </span>
             {copyStatus ? <span className="ml-2 text-emerald-300">{copyStatus}</span> : null}
           </div>
@@ -77,7 +77,7 @@ export default function TokensSection() {
       <div className="flex gap-2 items-end">
         {tokens.length === 0 && (
           <Button onClick={createToken} disabled={loading} variant="primary">
-            {loading ? 'Creatingâ€¦' : 'Create token'}
+            {loading ? 'Creating...' : 'Create token'}
           </Button>
         )}
       </div>
@@ -95,7 +95,7 @@ export default function TokensSection() {
                 <div className="space-y-0.5">
                   <p className="text-zinc-200">{token.label || 'Personal token'}</p>
                   <p className="text-xs text-zinc-500">
-                    Created {new Date(token.createdAt).toLocaleString()} â€¢ Last used{' '}
+                    Created {new Date(token.createdAt).toLocaleString()} • Last used{' '}
                     {token.lastUsedAt ? new Date(token.lastUsedAt).toLocaleString() : 'Never'}
                   </p>
                 </div>
@@ -105,7 +105,7 @@ export default function TokensSection() {
                     onClick={() => revealToken(token.id)}
                     disabled={loading || revealLoading === token.id}
                   >
-                    {revealLoading === token.id ? 'Revealingâ€¦' : 'Reveal'}
+                    {revealLoading === token.id ? 'Revealing...' : 'Reveal'}
                   </Button>
                   <Button variant="secondary" onClick={() => revokeToken(token.id)} disabled={loading}>
                     Revoke

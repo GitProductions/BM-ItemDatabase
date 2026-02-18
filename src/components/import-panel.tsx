@@ -75,7 +75,7 @@ export const ImportPanel: React.FC<ImportPanelProps> = ({
 
   const resolveName = (item: Item) => {
     const override = overrides[item.id] ?? {};
-    return override.name?.trim() || (item.nameMissing ? '' : item.name);
+    return override.name?.trim() || item.name || '';
   };
 
   const hasMissingNames = previewItems.some((item) => !resolveName(item));
@@ -248,7 +248,7 @@ export const ImportPanel: React.FC<ImportPanelProps> = ({
                 const guessedSlot = guessSlot(item);
                 const selectedWorn = override.worn ?? item.worn ?? (guessedSlot ? [guessedSlot] : []);
                 const resolvedName = resolveName(item);
-                const needsName = item.nameMissing && !resolvedName;
+                const needsName = !resolvedName.trim();
                 return (
                   <div key={item.id} className="border border-zinc-800 rounded-lg p-3 bg-zinc-950/60 flex flex-col gap-3">
                     <label className="flex flex-col text-xs text-zinc-400">
@@ -259,7 +259,7 @@ export const ImportPanel: React.FC<ImportPanelProps> = ({
                         type="text"
                         value={resolvedName}
                         onChange={(e) => onOverrideChange(item.id, { name: e.target.value })}
-                        placeholder={item.nameMissing ? 'Name not provided in dump' : 'Item name'}
+                        placeholder={needsName ? 'Name not provided in dump' : 'Item name'}
                       />
                       {needsName ? (
                         <span className="mt-1 text-[11px] text-amber-400">Dump started with &quot;Object&quot; so please supply a name.</span>

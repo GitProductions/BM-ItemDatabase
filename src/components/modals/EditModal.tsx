@@ -8,6 +8,7 @@ import Checkbox from '../ui/CheckBox';
 import ItemPreviewCard from '../ItemPreviewCard';
 import { useAppData } from '@/components/app-provider';
 import { useSession } from 'next-auth/react';
+import { ItemInput } from '@/lib/items-api';
 
 type SuggestionPayload = {
   proposer?: string;
@@ -92,6 +93,26 @@ const EditModal: React.FC<SuggestionModalProps> = ({ item, open, isSubmitting, f
   const [adminError, setAdminError] = useState<string | null>(null);
   const [adminSaving, setAdminSaving] = useState(false);
   const [draftItem, setDraftItem] = useState<Item | null>(item);
+
+  const toPatchItem = (source: Item): ItemInput => ({
+    id: source.id,
+    name: source.name,
+    keywords: source.keywords,
+    type: source.type,
+    flags: source.flags,
+    stats: source.stats,
+    submittedBy: source.submittedBy,
+    submittedByUserId: source.submittedByUserId,
+    droppedBy: source.droppedBy,
+    worn: source.worn,
+    ego: source.ego,
+    egoMin: source.egoMin,
+    egoMax: source.egoMax,
+    isArtifact: source.isArtifact,
+    raw: source.raw,
+    flaggedForReview: source.flaggedForReview,
+    duplicateOf: source.duplicateOf,
+  });
 
 
   // Reset form to default on open
@@ -193,7 +214,7 @@ const EditModal: React.FC<SuggestionModalProps> = ({ item, open, isSubmitting, f
           'content-type': 'application/json',
           ...(adminToken.trim() ? { authorization: `Bearer ${adminToken.trim()}` } : {}),
         },
-        body: JSON.stringify({ item: draftItem }),
+        body: JSON.stringify({ item: toPatchItem(draftItem) }),
       });
 
       if (!response.ok) {
@@ -295,7 +316,6 @@ const EditModal: React.FC<SuggestionModalProps> = ({ item, open, isSubmitting, f
                     className="max-w-[200px] rounded border border-zinc-700 bg-zinc-900 px-2 py-1.5 text-sm text-white"
                   />
                   {adminStatus && <span className="text-xs text-green-300">{adminStatus}</span>}
-                  {adminError && <span className="text-xs text-rose-300">{adminError}</span>}
                 </div>
               )}
             </>
@@ -334,6 +354,12 @@ const EditModal: React.FC<SuggestionModalProps> = ({ item, open, isSubmitting, f
             >
               Submit
             </Button>
+          )}
+          {adminMode && (
+            <div className="basis-full">
+              {adminStatus && <span className="text-xs text-green-300">{adminStatus}</span>}
+              {adminError && <span className="text-xs text-rose-300">{adminError}</span>}
+            </div>
           )}
         </div>
       </div>

@@ -113,13 +113,13 @@ export const parseIdentifyDump = (text: string): Item[] => {
 
     const hasNameLine = i > 0 && !objectLineRegex.test(lines[i - 1]);
     const rawName = hasNameLine ? lines[i - 1] : '';
-    const { label: name, condition } = stripCondition(rawName || 'Unknown Item');
+    const { label: parsedName, condition } = stripCondition(rawName || '');
+    const name = hasNameLine ? parsedName : '';
     
 
     const currentItem: Item = {
       id: generateId(),
       name,
-      nameMissing: !hasNameLine,
       keywords,
       type,
       flags: [],

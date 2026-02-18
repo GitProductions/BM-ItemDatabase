@@ -35,6 +35,35 @@ pnpm build
 
 ### Public API (for Mudlet or other clients)
 
+### API Schema for Cloudflare (OpenAPI 3.0.3)
+
+- Source-of-truth schemas use `zod` in `src/lib/api-schema/`.
+- OpenAPI is generated from Zod using `@asteasolutions/zod-to-openapi`.
+- Build the schema artifact:
+
+```bash
+npm run schema:api:build
+```
+
+- Generated file: `openapi/openapi.v1.json`
+- Versioning rule: bump `info.version` in `src/lib/api-schema/build-openapi.ts` whenever request contracts change.
+
+#### Drift checks
+
+```bash
+npm run schema:api:test
+npm run schema:api:check
+```
+
+#### Upload to Cloudflare Dashboard (manual)
+
+1. Open Cloudflare dashboard for your zone (`gitago.dev`).
+2. Go to `Security` -> `API Shield` -> `Schema Validation`.
+3. Choose `Upload schema` and select `openapi/openapi.v1.json`.
+4. Attach schema to host `bm-itemdb.gitago.dev`.
+5. Set enforcement to monitoring/log-only for initial rollout.
+6. Review mismatch logs for 7-14 days before enabling blocking per endpoint.
+
 # Auth for destructive actions
 - Set `ADMIN_TOKEN` in `.env` (e.g., `ADMIN_TOKEN="SECRET_TOKEN"`).
 - DELETE `/api/items` requires header `Authorization: Bearer <ADMIN_TOKEN>`.
@@ -60,6 +89,15 @@ curl -X POST http://localhost:3000/api/items \
 
 
 <!-- we need to cleanup stuff.. my brain hurts -->
+
+<!--
+ see isr examples and determine if we can use it with the api routes properly and users still see an instant update after adding an item to db?
+https://opennext.js.org/cloudflare/former-releases/0.5/caching#incremental-static-regeneration-isr
+
+do we need to make KV cache instead??  
+
+also maybe we can just cache the backend api endpoint for when people use it directly ? ..
+ -->
 
 
 ## Mudlet Alias to Search for Items in Game
@@ -175,3 +213,10 @@ tempTimer(0.05, function() getHTTP(url) end)
 
 
 ## Mudlet Script - Item Submission
+
+
+
+
+
+
+
