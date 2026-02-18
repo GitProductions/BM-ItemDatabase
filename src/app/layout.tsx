@@ -21,7 +21,7 @@ export const metadata: Metadata = {
     template: "%s | Blackmud Item Database",
   },
   description:
-    "The Blackmud Item Database is a community-built reference for BlackMUD players. Browse and search a comprehensive catalog of weapons, armor, and equipment. Compare item stats, explore drop submissions contributed by the community, and look forward to an equipment planner currently in development.",
+    "Community-driven item database for BlackMUD players: Explore player-submitted weapons, armor, and gear - compare stats & check drop history contributed by the community!",
 
   applicationName: "Blackmud Item Database",
   keywords: [
@@ -50,7 +50,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Blackmud Item Database",
     description:
-      "A community-built item reference for BlackMUD. Browse weapons, armor, and gear- compare stats, explore drop history, and stay tuned for an equipment planner coming soon.",
+      "A community-built item reference for BlackMUD. Browse weapons, armor, and gear - compare stats, explore drop history, and stay tuned for an equipment planner coming soon.",
     type: "website",
     locale: "en_US",
     url: "https://bm-itemdb.gitago.dev",
@@ -69,7 +69,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Blackmud Item Database",
     description:
-      "A community-built item reference for BlackMUD. Browse weapons, armor, and gear- compare stats, explore drop history, and stay tuned for an equipment planner coming soon.",
+      "Community-driven item database for BlackMUD players: Explore player-submitted weapons, armor, and gear - compare stats & check drop history contributed by the community!",
     images: [
       {
         url: "https://bm-itemdb.gitago.dev/bm-itemdb-ogimage.jpg",
