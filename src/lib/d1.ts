@@ -959,7 +959,7 @@ export const upsertItems = async (
       if (!submitterName && !submitterId) return null;
 
       const identityKey = submissionIdentity(item);
-      const submissionId = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2, 11);
+      const submissionId = generateShortId(8);
       const mergedId = persisted[idx]?.id ?? item.id ?? (await ensureId(undefined));
 
       if (persisted[idx]) {
