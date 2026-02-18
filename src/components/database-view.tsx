@@ -1,5 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { Search } from 'lucide-react';
+import PageHeader from './ui/PageHeader';
+import { Search, DatabaseSearch } from 'lucide-react';
 import Link from 'next/link';
 import { buildItemPath } from '@/lib/slug';
 import { Item } from '@/types/items';
@@ -98,6 +99,12 @@ export const ItemDB: React.FC<ItemDBProps> = () => {
 
   return (
     <div className="">
+
+      <PageHeader
+        title="Item Database"
+        description="Browse, filter, and search the community BlackMUD item database"
+        icons={<DatabaseSearch className="text-orange-400" size={24} />}
+        />
       <div className="bg-zinc-900 p-4 rounded-xl border border-zinc-800 shadow-sm flex flex-col md:flex-row gap-4 md:items-end">
 
         {/* Main Search  */}

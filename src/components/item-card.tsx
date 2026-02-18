@@ -101,7 +101,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item, hideSubmittedBy, full 
             <Icon size={20} />
           </div>
           <div>
-            <h3 className="font-bold text-white text-md md:text-lg leading-tight">{item.name}</h3>
+            <h2 className="font-bold text-white text-md md:text-lg leading-tight">{item.name}</h2>
             <div className="text-xs text-zinc-500 mt-1 font-mono">
               {item.keywords} • <span className="uppercase text-zinc-400">{item.type}</span>
               {displayWorn.length ? (

@@ -2,9 +2,11 @@
 
 import { useState } from 'react';
 import { useSession, signIn, signOut } from 'next-auth/react';
+import { User } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import { Item } from '@/types/items';
 import EditModal from '@/components/modals/EditModal';
+import PageHeader from '@/components/ui/PageHeader';
 import Image from 'next/image';
 import { getRandomOrcPhrase } from '@/lib/orc-phrases';
 import ProfileHeader from './_components/ProfileHeader';
@@ -79,7 +81,13 @@ export default function AccountPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="max-w-5xl mx-auto px-4 py-6 space-y-8">
+      <PageHeader
+        title="My Account"
+        description="Manage your profile and contributions"
+        icons={<User size={24} className="text-orange-400" />}
+      />
+
       <ProfileHeader
         session={session}
         update={update}

@@ -174,8 +174,7 @@ export const ImportPanel: React.FC<ImportPanelProps> = ({
       <div className="bg-zinc-900 rounded-xl border border-zinc-800 p-6 shadow-lg">
         {shouldShowOverlay ? <LoadingOverlay message={waitingPhrase} /> : null}
         <div className="flex items-center gap-3 mb-4">
-          <Terminal className="text-orange-500" />
-        <h2 className="text-lg font-bold text-white">Import Identify Data</h2>
+        <h2 className="text-lg font-bold text-white ps-2">Import Identify Data</h2>
       </div>
 
       {/* Tips/Notes */}

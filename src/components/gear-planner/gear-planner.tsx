@@ -387,15 +387,7 @@ export const GearPlanner: React.FC<GearPlannerProps> = ({ items }) => {
       ) : null}
 
       
-      <div className="flex items-center gap-3">
-        <Sparkles className="text-orange-400" />
-        <div>
-          <h2 className="text-xl font-bold text-white">Equipment & Stats</h2>
-          <p className="text-sm text-zinc-400">
-            Assign gear from the Item-DB and see a compact rollup of AC, damage, item-stats, and weight.
-          </p>
-        </div>
-      </div>
+
 
       {/* Summary Panel */}
       <Summary

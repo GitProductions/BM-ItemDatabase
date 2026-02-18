@@ -2,6 +2,9 @@
 
 import { GearPlanner } from '@/components/gear-planner/gear-planner';
 import { useAppData } from '@/components/app-provider';
+import PageHeader from '@/components/ui/PageHeader';
+import { Sparkles } from 'lucide-react';
+import { NotebookPen } from 'lucide-react';
 
 export default function GearPlannerPage() {
   const { items, loading, error } = useAppData();
@@ -18,5 +21,16 @@ export default function GearPlannerPage() {
     );
   }
 
-  return <GearPlanner items={items} />;
+  return (
+    <div className="max-w-7xl mx-auto px-4 ">
+      
+      <PageHeader
+        title="Gear Planner"
+        description="Build and compare equipment loadouts with stat calculations"
+        icons={<Sparkles className="text-orange-400" size={24} />}
+      />
+
+      <GearPlanner items={items} />
+    </div>
+  );
 }

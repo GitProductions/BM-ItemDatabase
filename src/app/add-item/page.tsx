@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useMemo, useState } from 'react';
+import PageHeader from '@/components/ui/PageHeader';
+import { Scroll } from 'lucide-react';
 import { ImportPanel } from '@/components/import-panel';
 import { Item } from '@/types/items';
 import { parseIdentifyDump, findDuplicate } from '@/lib/parse-identify-dump';
@@ -195,6 +197,16 @@ export default function AddItemPage() {
 
   return (
     <>
+      <div className="max-w-7xl mx-auto px-4">
+       
+        <PageHeader
+          title="Contribute Items"
+          description="Add new items or update existing ones in the database"
+          icons={<Scroll size={24} className="text-orange-400" />}
+        />
+
+       
+      </div>
       {statusMessage && (
         <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-3 text-sm text-rose-400">
           {statusMessage}
