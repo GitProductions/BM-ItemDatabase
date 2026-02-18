@@ -23,10 +23,10 @@ export const RecentDropsList = ({
   const displayed = recentVariants.slice(0, 5);
 
   return (
-    <div className="w-full max-w-md pt-5">
+    <div className="w-full max-w-md">
       {/* Section Header */}
-      <div className="flex items-center justify-between mb-4 px-1">
-        <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">
+      <div className="flex items-center justify-between mb-3 px-1">
+        <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-zinc-500">
           Recent Drops
         </h3>
         {submissionCount > displayed.length && (
@@ -52,7 +52,7 @@ export const RecentDropsList = ({
             return (
               <div
                 key={variant.submissionId}
-                className="group flex items-center gap-4 py-5 hover:pl-1 transition-all duration-200"
+                className="group flex items-center gap-4 py-2 hover:pl-1 transition-all duration-200"
               >
                 {/* Left Aligned Circle Indicator */}
                 <div className="shrink-0">

@@ -167,7 +167,7 @@ export default async function ItemPage({ params }: { params: Promise<RouteParams
     <div className="max-w-5xl mx-auto space-y-6">
 
       {/* Item / Page Navigation */}
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center justify-between gap-3 pt-4">
         <Link href="/" className="inline-flex items-center gap-2 text-sm text-zinc-300 hover:text-white">
           <ArrowLeft size={16} />
           Back to items
@@ -177,45 +177,53 @@ export default async function ItemPage({ params }: { params: Promise<RouteParams
         </div>
       </div>
 
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900/70 p-4 space-y-3">
-        <div className="flex flex-wrap items-start justify-between gap-3">
+      {/* Item card + Recent Drops side by side */}
+      <div className="flex items-start gap-4">
 
-          <div>
-            <p className="text-[11px] uppercase tracking-[0.18em] text-orange-300">Item</p>
-            <h1 className="text-3xl font-bold text-white leading-tight">{item.name || 'Unnamed item'}</h1>
+        {/* Item card */}
+        <div className="flex-1 rounded-xl border border-zinc-800 bg-zinc-900/70 p-4 space-y-3">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.18em] text-orange-300">Item</p>
+              <h1 className="text-3xl font-bold text-white leading-tight">{item.name || 'Unnamed item'}</h1>
+            </div>
           </div>
 
-          <div className="flex flex-col items-end gap-2 text-right">
+          <div className="flex items-center justify-between">
             <span className="text-[11px] text-zinc-500 font-mono">ID: {item.id}</span>
-           
             <ItemHeaderBadges
               isArtifact={item.isArtifact}
               isMergedView={isMergedView}
               flaggedForReview={item.flaggedForReview}
             />
-
           </div>
+
+          <ItemCard item={item} hideSubmittedBy={true} />
         </div>
 
-        <ItemCard item={item} />
+        {/* Recent Drops + Contributors */}
+        {shouldShowRecentDrops && (
+          <div className="w-72 shrink-0 space-y-4">
+            <div className="rounded-xl border border-zinc-800 bg-zinc-900/70 p-4">
+              <RecentDropsList
+                itemId={id}
+                recentVariants={recentVariants}
+                submissionCount={submissionCount}
+                variantsHref={variantsHref}
+              />
+            </div>
+            <div className="rounded-xl ">
+              <ItemContributors primarySubmitter={primarySubmitter} extraSubmitters={extraSubmitters} />
+            </div>
+          </div>
+        )}
 
-        
-        {/* Recent Item Drop */}
-        {shouldShowRecentDrops ? (
-          <RecentDropsList
-            itemId={id}
-            recentVariants={recentVariants}
-            submissionCount={submissionCount}
-            variantsHref={variantsHref}
-          />
-        ) : null}
+
+
       </div>
-
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2">
         <ItemWornSource displaySlots={displaySlots} droppedBy={item.droppedBy} duplicateOf={item.duplicateOf} />
         <ItemTraitsFlags flags={item.flags} ego={item.ego} egoMin={item.egoMin} egoMax={item.egoMax} />
-        <ItemContributors primarySubmitter={primarySubmitter} extraSubmitters={extraSubmitters} />
-
       </div>
 
 
@@ -229,7 +237,7 @@ export default async function ItemPage({ params }: { params: Promise<RouteParams
 
       {/* If theres a raw dump then show it */}
       <IdentifyDump raw={item.raw} />
-      
+
     </div>
   );
 }

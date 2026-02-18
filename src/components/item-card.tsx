@@ -6,6 +6,7 @@ import { StatBadge } from './stat-badge';
 
 type ItemCardProps = {
   item: Item;
+  hideSubmittedBy?: boolean;
 };
 
 type DamageStats = {
@@ -48,7 +49,7 @@ const formatValueRange = (
   return value !== undefined ? fmt(value) : '';
 };
 
-export const ItemCard: React.FC<ItemCardProps> = ({ item }) => {
+export const ItemCard: React.FC<ItemCardProps> = ({ item, hideSubmittedBy }) => {
   let Icon = Database;
   let typeColor = 'text-zinc-400';
 
@@ -234,40 +235,47 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item }) => {
             <p className="text-right italic">Dropped by: {item.droppedBy ? item.droppedBy : 'Unknown'}</p>
             {/* } */}
           </div>
-          <span className="flex items-center gap-2">
-            <span>Submitted by:</span>
-            {(() => {
-              const names = item.contributors ?? [];
-              const primary = names[0] ?? item.submittedBy;
-              if (!primary) return <span>Unknown</span>;
 
-              const extras = names.slice(1);
+          {/* Option to hide the Submitted by Label/Section */}
+          {!hideSubmittedBy && (
+            <span className="flex items-center gap-2">
 
-              return (
-                <div className="relative group inline-flex items-center gap-2">
-                  <span className="font-semibold text-zinc-200">{primary}</span>
-                  {extras.length > 0 && (
-                    <>
-                      <button
-                        type="button"
-                        className="text-[11px] text-zinc-400 underline-offset-2 hover:underline"
-                      >
-                        (+{extras.length} more)
-                      </button>
-                      <div className="absolute right-0 top-[120%] hidden group-hover:block bg-zinc-900 border border-zinc-700 rounded shadow-lg p-2 text-[11px] text-zinc-200 z-30 min-w-[160px]">
-                        <div className="font-semibold text-orange-300 mb-1">Other submitters</div>
-                        <ul className="space-y-0.5">
-                          {extras.map((name) => (
-                            <li key={name}>{name}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    </>
-                  )}
-                </div>
-              );
-            })()}
-          </span>
+              <span>Submitted by:</span>
+
+              {(() => {
+                const names = item.contributors ?? [];
+                const primary = names[0] ?? item.submittedBy;
+                if (!primary) return <span>Unknown</span>;
+
+                const extras = names.slice(1);
+
+                return (
+                  <div className="relative group inline-flex items-center gap-2">
+                    <span className="font-semibold text-zinc-200">{primary}</span>
+                    {extras.length > 0 && (
+                      <>
+                        <button
+                          type="button"
+                          className="text-[11px] text-zinc-400 underline-offset-2 hover:underline"
+                        >
+                          (+{extras.length} more)
+                        </button>
+                        <div className="absolute right-0 top-[120%] hidden group-hover:block bg-zinc-900 border border-zinc-700 rounded shadow-lg p-2 text-[11px] text-zinc-200 z-30 min-w-[160px]">
+                          <div className="font-semibold text-orange-300 mb-1">Other submitters</div>
+                          <ul className="space-y-0.5">
+                            {extras.map((name) => (
+                              <li key={name}>{name}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                );
+              })()}
+
+            </span>
+          )}
         </div>
 
       </div>
