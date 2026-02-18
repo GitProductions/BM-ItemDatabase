@@ -90,7 +90,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item, hideSubmittedBy }) => 
   }
 
   return (
-    <div className="relative h-full flex flex-col rounded-lg p-4 
+    <div className="relative flex flex-col rounded-lg p-4 
      bg-zinc-800 border border-zinc-700 hover:border-zinc-500 
       transition-colors shadow-sm"
     >

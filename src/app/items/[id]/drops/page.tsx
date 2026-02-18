@@ -28,63 +28,90 @@ export default async function ItemDropsPage({ params }: { params: Promise<RouteP
   const mergedItemUrl = buildItemPath(item.id, item.keywords);
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
+    <div className="max-w-7xl mx-auto space-y-6">
+
+      {/* Nav */}
       <div className="flex items-center justify-between gap-3">
-        <Link href={mergedItemUrl} className="inline-flex items-center gap-2 text-sm text-zinc-300 hover:text-white">
+        <Link href={mergedItemUrl} className="inline-flex items-center gap-2 text-sm text-zinc-300 hover:text-white transition-colors">
           <ArrowLeft size={16} />
           Back to item
         </Link>
         <span className="text-xs text-zinc-500 font-mono">ID: {item.id}</span>
       </div>
 
-      <section className="rounded-xl border border-zinc-800 bg-zinc-900/70 p-4 space-y-3">
-        <div className="flex flex-col gap-2">
-          <ItemHeaderBadges
-            align="left"
-            isArtifact={item.isArtifact}
-            isMergedView
-            flaggedForReview={item.flaggedForReview}
-          />
-          <h1 className="text-lg font-semibold text-white">Merged/Combined view</h1>
-        </div>
-        <ItemCard item={item} />
-      </section>
+      {/* Page title */}
+      <div>
+        <p className="text-[11px] uppercase tracking-widest text-orange-300 mb-1">Item Drop List & Comparison</p>
+        <h1 className="text-2xl font-bold text-white leading-tight">{item.name}</h1>
 
-      <section className="space-y-3">
-        <div className="flex items-center justify-between gap-2">
-          <h2 className="text-sm font-semibold text-white">Original drops</h2>
-          <span className="text-xs text-zinc-500">{variants.length} recorded</span>
-        </div>
+      </div>
 
-        {variants.length ? (
-          <div className="space-y-4">
-            {variants.map((variant) => (
-              <article key={variant.submissionId} className="rounded-xl border border-zinc-800 bg-zinc-950/70 p-4 space-y-3">
-              
+      {/* Comparison grid — merged + all drops side by side */}
+      <div className="overflow-x-auto pb-2">
+        <div
+          className="grid gap-3 min-w-0 items-stretch"
+          style={{ gridTemplateColumns: `repeat(${variants.length + 1}, minmax(280px, 1fr))` }}
+        >
 
-                {/* IsOriginal Badge & TimeStamp */}
-                <OriginalDropMeta submittedAt={variant.submittedAt} submittedBy={variant.submittedBy} />
+          {/* Merged view — pinned first column */}
+          <div className="flex flex-col gap-3 h-full">
+            <div className="rounded-xl border border-orange-800/50 bg-zinc-900/70 p-4 space-y-3 flex flex-col h-full">
+              <div className="flex flex-col gap-2">
+                <ItemHeaderBadges
+                  align="left"
+                  isArtifact={item.isArtifact}
+                  isMergedView
+                  flaggedForReview={item.flaggedForReview}
+                  hideBadges={true}
+                />
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-widest text-orange-400">Overall Stats</p>
+                  <p className="text-[11px] text-zinc-500 mt-0.5">Combined from all drops for possible min/max outcomes</p>
+                </div>
+              </div>
+              <ItemCard item={item} />
+            </div>
+          </div>
 
-                {/* Link to individual drop view */}
-                <div className="text-xs text-zinc-400">
-                  <Link href={`/items/${id}/drops/${variant.submissionId}`} className="text-orange-300 hover:underline">
-                    View this drop
-                  </Link>
+          {/* Individual drops */}
+          {variants.map((variant, i) => (
+            <div key={variant.submissionId} className="flex flex-col gap-3 h-full">
+              <div className="rounded-xl border border-zinc-800 bg-zinc-950/70 p-4 space-y-3 flex flex-col h-full">
+
+                {/* Drop header */}
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-semibold uppercase tracking-widest text-zinc-500">
+                      Drop #{i + 1}
+                    </span>
+                    <Link
+                      href={`/items/${id}/drops/${variant.submissionId}`}
+                      className="text-xs font-medium text-orange-400 hover:text-orange-300 transition-colors"
+                    >
+                      View →
+                    </Link>
+                  </div>
+                  <OriginalDropMeta submittedAt={variant.submittedAt} submittedBy={variant.submittedBy} />
                 </div>
 
-                {/* If theres a parsedItem then we can show an item card */}
+                {/* Item card */}
                 {variant.parsedItem ? <ItemCard item={variant.parsedItem} /> : null}
 
+                {/* Raw dump collapsible */}
+                {/* <IdentifyDump raw={variant.raw} collapsible /> */}
 
-                {/* If theres a raw dump then show it */}
-                <IdentifyDump raw={variant.raw} collapsible />
-              </article>
-            ))}
-          </div>
-        ) : (
-          <p className="text-sm text-zinc-500">No original drops recorded yet.</p>
-        )}
-      </section>
+              </div>
+            </div>
+          ))}
+
+        </div>
+      </div>
+
+      {/* Empty state */}
+      {variants.length === 0 && (
+        <p className="text-sm text-zinc-500">No original drops recorded yet.</p>
+      )}
+
     </div>
   );
 }
