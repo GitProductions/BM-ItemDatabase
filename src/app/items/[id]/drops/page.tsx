@@ -6,6 +6,7 @@ import { ArrowLeft } from 'lucide-react';
 import { fetchItemVariants, searchItems } from '@/lib/d1';
 import { ItemCard } from '@/components/item-card';
 import { buildItemPath } from '@/lib/slug';
+import DropsPagination from './_components/DropsPagination';
 
 import { OriginalDropMeta, IdentifyDump, ItemHeaderBadges } from '@/components/item-details';
 
@@ -19,12 +20,32 @@ const fetchItem = cache(async (id: string) => {
 
 type RouteParams = { id: string };
 
-export default async function ItemDropsPage({ params }: { params: Promise<RouteParams> }) {
-  const { id } = await params;
+type SearchParams = Record<string, string | string[] | undefined>;
+
+const toSingleParam = (value: string | string[] | undefined) => (Array.isArray(value) ? value[0] : value);
+
+const resolvePage = (rawPage: string | undefined, totalItems: number, pageSize: number) => {
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  const parsed = Number.parseInt(rawPage ?? '1', 10);
+  const page = Number.isFinite(parsed) ? Math.min(Math.max(parsed, 1), totalPages) : 1;
+  const pageStart = (page - 1) * pageSize;
+
+  return { page, totalPages, pageStart };
+};
+
+export default async function ItemDropsPage({ params, searchParams}: { params: Promise<RouteParams>; searchParams?: Promise<SearchParams>}) {
+  const [{ id }, resolvedSearchParams] = await Promise.all([params, searchParams]);
   const item = await fetchItem(id);
   if (!item) notFound();
 
   const variants = (await fetchItemVariants(id)).filter((variant) => Boolean(variant.parsedItem));
+  const dropsPerPage = 6;
+  const { page, totalPages, pageStart } = resolvePage(
+    toSingleParam(resolvedSearchParams?.page),
+    variants.length,
+    dropsPerPage,
+  );
+  const pageVariants = variants.slice(pageStart, pageStart + dropsPerPage);
   const mergedItemUrl = buildItemPath(item.id, item.keywords);
 
   return (
@@ -47,11 +68,8 @@ export default async function ItemDropsPage({ params }: { params: Promise<RouteP
       </div>
 
       {/* Comparison grid — merged + all drops side by side */}
-      <div className="overflow-x-auto pb-2">
-        <div
-          className="grid gap-3 min-w-0 items-stretch"
-          style={{ gridTemplateColumns: `repeat(${variants.length + 1}, minmax(280px, 1fr))` }}
-        >
+      <div className="pb-2">
+        <div className="grid gap-3 min-w-0 items-stretch grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
 
           {/* Merged view — pinned first column */}
           <div className="flex flex-col gap-3 h-full">
@@ -74,7 +92,7 @@ export default async function ItemDropsPage({ params }: { params: Promise<RouteP
           </div>
 
           {/* Individual drops */}
-          {variants.map((variant, i) => (
+          {pageVariants.map((variant, i) => (
             <div key={variant.submissionId} className="flex flex-col gap-3 h-full">
               <div className="rounded-xl border border-zinc-800 bg-zinc-950/70 p-4 space-y-3 flex flex-col h-full">
 
@@ -82,7 +100,7 @@ export default async function ItemDropsPage({ params }: { params: Promise<RouteP
                 <div className="flex flex-col gap-2">
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-xs font-semibold uppercase tracking-widest text-zinc-500">
-                      Drop #{i + 1}
+                      Drop #{pageStart + i + 1}
                     </span>
                     <Link
                       href={`/items/${id}/drops/${variant.submissionId}`}
@@ -106,6 +124,10 @@ export default async function ItemDropsPage({ params }: { params: Promise<RouteP
 
         </div>
       </div>
+
+      {totalPages > 1 && (
+        <DropsPagination total={variants.length} page={page} pageSize={dropsPerPage} />
+      )}
 
       {/* Empty state */}
       {variants.length === 0 && (
