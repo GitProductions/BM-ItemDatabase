@@ -1,6 +1,7 @@
 # 1. Create timestamped backup directory
-mkdir -p $(date +%Y%m%d-%H%M%S)
-cd $(date +%Y%m%d-%H%M%S)
+BACKUP_TS=$(date +%Y%m%d-%H%M%S)
+mkdir -p "$BACKUP_TS"
+cd "$BACKUP_TS"
 
 # 2. Backup all tables with timestamp
 wrangler d1 execute bm_itemdb --command="SELECT * FROM items;" --json --remote > items.json
