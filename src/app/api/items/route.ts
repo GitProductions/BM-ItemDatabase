@@ -98,6 +98,9 @@ const invalidateItemsCache = () => revalidateTag(ITEMS_TAG);
 const itemUrlFor = (request: NextRequest, id: string, keywords?: string | null) =>
   new URL(buildItemPath(id, keywords), request.url).toString();
 
+const submissionUrlFor = (request: NextRequest, itemId: string, submissionId: string) =>
+  new URL(`/items/${itemId}/drops/${submissionId}`, request.url).toString();
+
 // Extract Bearer token from Authorization header if present
 const getBearer = (request: NextRequest) => {
   const header = request.headers.get('authorization');
@@ -295,13 +298,26 @@ export async function POST(request: NextRequest) {
     // Taking the normalizedItems and upserting them into the database, then revalidating the cache and returning the relevant item URLs for the inserted/updated items in the response
     const storedResults = await upsertItems(normalizedItems, { submissionIpHash: ipHash });
     const storedIds: string[] = storedResults.map((entry) => entry.id);
+    const submissionIds = storedResults.map((entry) => entry.submissionId ?? null);
 
     // Revalidate all cached item query variants.
     invalidateItemsCache();
 
     // Generate item URLs for the submitted items to include in the response
     const itemUrls = normalizedItems.map((item, idx) => toItemUrl(storedIds[idx] ?? item.id, item.keywords));
-    return withCors(NextResponse.json({ items: normalizedItems, inserted: normalizedItems.length, itemIds: storedIds, itemUrls }));
+    const submissionUrls = submissionIds.map((submissionId, idx) =>
+      submissionId && storedIds[idx] ? submissionUrlFor(request, storedIds[idx], submissionId) : null,
+    );
+    return withCors(
+      NextResponse.json({
+        items: normalizedItems,
+        inserted: normalizedItems.length,
+        itemIds: storedIds,
+        itemUrls,
+        submissionIds,
+        submissionUrls,
+      }),
+    );
   }
 
   
@@ -343,18 +359,32 @@ export async function POST(request: NextRequest) {
 
       const storedResults = await upsertItems(merged, { submissionIpHash: ipHash });
       const storedIds: string[] = storedResults.map((entry) => entry.id);
+      const submissionIds = storedResults.map((entry) => entry.submissionId ?? null);
 
       // Revalidate all cached item query variants.
       invalidateItemsCache();
       
       // Generate item URLs for the submitted items to include in the response
       const itemUrls = merged.map((item, idx) => toItemUrl(storedIds[idx] ?? item.id, item.keywords));
+      const submissionUrls = submissionIds.map((submissionId, idx) =>
+        submissionId && storedIds[idx] ? submissionUrlFor(request, storedIds[idx], submissionId) : null,
+      );
 
-      return withCors(NextResponse.json({  inserted: parsedItems.length, itemIds: storedIds, itemUrls }));
+      return withCors(
+        NextResponse.json({
+          inserted: parsedItems.length,
+          itemIds: storedIds,
+          itemUrls,
+          submissionIds,
+          submissionUrls,
+        }),
+      );
     }
 
     // If we did not parse any items from the raw input, return an empty response with a 200 status to indicate that the request was processed but no items were created
-    return withCors(NextResponse.json({  inserted: parsedItems.length, itemIds: [], itemUrls: [] }));
+    return withCors(
+      NextResponse.json({ inserted: parsedItems.length, itemIds: [], itemUrls: [], submissionIds: [], submissionUrls: [] }),
+    );
   }
 
   // If not a raw dump nor multiple items, treat it as a single item submission (e.g. from the UI Form when only one item is being submitted without using the "items" array in the payload)
@@ -375,9 +405,11 @@ export async function POST(request: NextRequest) {
   // const [saved] = await searchItems({ id: stableId });
   // const itemUrl = stableId ? toItemUrl(stableId, saved?.keywords ?? normalized.item.keywords) : undefined;
   const itemUrl = toItemUrl(stableId, normalized.item.keywords);
+  const submissionId = storedResult?.submissionId ?? null;
+  const submissionUrl = submissionId ? submissionUrlFor(request, stableId, submissionId) : null;
 
   return withCors(
-    NextResponse.json({ item: normalized.item, itemId: stableId, itemUrl }, { status: 201 }),
+    NextResponse.json({ item: normalized.item, itemId: stableId, itemUrl, submissionId, submissionUrl }, { status: 201 }),
   );
 }
 

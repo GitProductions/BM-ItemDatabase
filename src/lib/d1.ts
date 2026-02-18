@@ -69,6 +69,15 @@ export type ItemVariant = {
   parsedItem?: Item;
 };
 
+export type RecentSubmission = {
+  submissionId: string;
+  itemId: string;
+  submittedAt: string;
+  submittedBy?: string;
+  submittedByUserId?: string;
+  parsedItem?: Item;
+};
+
 export type ItemSearchParams = {
   q?: string;
   type?: string;
@@ -292,7 +301,7 @@ const normalizeRaw = (raw?: string[]) =>
 
 const isExactRawMatch = (a?: string[], b?: string[]) => normalizeRaw(a) !== '' && normalizeRaw(a) === normalizeRaw(b);
 
-export type UpsertResult = { id: string; duplicate: boolean; duplicateOf?: string };
+export type UpsertResult = { id: string; duplicate: boolean; duplicateOf?: string; submissionId?: string };
 
 
 /**
@@ -655,6 +664,56 @@ export const fetchItemVariant = async (itemId: string, submissionId: string): Pr
   };
 };
 
+export const fetchRecentSubmissions = async (limit = 5): Promise<RecentSubmission[]> => {
+  const db = await getDatabase();
+  const cappedLimit = Math.max(1, Math.min(limit, 20));
+
+  const result = await db
+    .prepare(
+      `
+        SELECT id, itemId, submittedBy, submittedByUserId, submittedAt, parsedItem
+        FROM submissions
+        ORDER BY submittedAt DESC, id DESC
+        LIMIT ?1;
+      `,
+    )
+    .bind(cappedLimit)
+    .all<{
+      id: string;
+      itemId: string;
+      submittedBy: string | null;
+      submittedByUserId: string | null;
+      submittedAt: string;
+      parsedItem: string | null;
+    }>();
+
+  const rows = (result.results ?? result.rows ?? []) as {
+    id: string;
+    itemId: string;
+    submittedBy: string | null;
+    submittedByUserId: string | null;
+    submittedAt: string;
+    parsedItem: string | null;
+  }[];
+
+  return rows.map((row) => {
+    const parsedItem = parseJson<Item>(row.parsedItem);
+    if (parsedItem) {
+      parsedItem.flags = parsedItem.flags ?? [];
+      parsedItem.stats = parsedItem.stats ?? { affects: [], weight: 0 };
+    }
+
+    return {
+      submissionId: row.id,
+      itemId: row.itemId,
+      submittedAt: row.submittedAt,
+      submittedBy: row.submittedBy ?? undefined,
+      submittedByUserId: row.submittedByUserId ?? undefined,
+      parsedItem: parsedItem ?? undefined,
+    };
+  });
+};
+
 export const countItemsFiltered = async (params: ItemSearchParams = {}): Promise<number> => {
   const db = await getDatabase();
   const { joins, where, values } = buildItemQueryFilters(params);
@@ -672,17 +731,17 @@ export const countItemsFiltered = async (params: ItemSearchParams = {}): Promise
 };
 
 
-export const countItems = async (): Promise<number> => {
-  const db = await getDatabase();
+// export const countItems = async (): Promise<number> => {
+//   const db = await getDatabase();
 
-  // wrangler d1 execute <DATABASE_NAME> --command="SELECT COUNT(*) FROM <TABLE_NAME>;" --remote
+//   // wrangler d1 execute <DATABASE_NAME> --command="SELECT COUNT(*) FROM <TABLE_NAME>;" --remote
 
 
-  const result = await db.prepare('SELECT COUNT(*) AS count FROM items;').all<{ count: number }>();
-  const row = (result.results ?? result.rows ?? [])[0] as { count: number } | undefined;
-  return row?.count ?? 0;
+//   const result = await db.prepare('SELECT COUNT(*) AS count FROM items;').all<{ count: number }>();
+//   const row = (result.results ?? result.rows ?? [])[0] as { count: number } | undefined;
+//   return row?.count ?? 0;
 
-};
+// };
 
 export const fetchItemsVersion = async (): Promise<ItemsVersion> => {
   // Lightweight freshness query used by API responses to coordinate client-side race protection.
@@ -902,6 +961,12 @@ export const upsertItems = async (
       const identityKey = submissionIdentity(item);
       const submissionId = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2, 11);
       const mergedId = persisted[idx]?.id ?? item.id ?? (await ensureId(undefined));
+
+      if (persisted[idx]) {
+        persisted[idx].submissionId = submissionId;
+      } else {
+        persisted[idx] = { id: mergedId, duplicate: false, submissionId };
+      }
 
       return db
         .prepare(

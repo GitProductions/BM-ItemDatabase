@@ -11,6 +11,7 @@ import {
   itemsPostBodySchema,
 } from './items';
 import { leaderboardQuerySchema } from './leaderboard';
+import { submissionsQuerySchema } from './submissions';
 import { suggestionBodySchema } from './suggestions';
 
 const registry = new OpenAPIRegistry();
@@ -35,6 +36,8 @@ const itemsBatchResponseSchema = z
     inserted: z.number(),
     itemIds: z.array(z.string()),
     itemUrls: z.array(z.string()),
+    submissionIds: z.array(z.string().nullable()),
+    submissionUrls: z.array(z.string().nullable()),
   })
   .openapi('ItemsBatchResponse');
 
@@ -43,6 +46,8 @@ const itemCreatedResponseSchema = z
     item: z.unknown(),
     itemId: z.string(),
     itemUrl: z.string(),
+    submissionId: z.string().nullable(),
+    submissionUrl: z.string().nullable(),
   })
   .openapi('ItemCreatedResponse');
 
@@ -70,6 +75,12 @@ const leaderboardResponseSchema = z
     totals: z.unknown(),
   })
   .openapi('LeaderboardResponse');
+
+const submissionsResponseSchema = z
+  .object({
+    submissions: z.array(z.unknown()),
+  })
+  .openapi('SubmissionsResponse');
 
 const okResponseSchema = z
   .object({
@@ -150,7 +161,13 @@ registry.registerPath({
       content: {
         'application/json': {
           schema: itemsBatchResponseSchema,
-          example: { inserted: 2, itemIds: ['abc123', 'def456'], itemUrls: ['/items/abc123', '/items/def456'] },
+          example: {
+            inserted: 2,
+            itemIds: ['abc123', 'def456'],
+            itemUrls: ['/items/abc123', '/items/def456'],
+            submissionIds: ['sub1', 'sub2'],
+            submissionUrls: ['/items/abc123/drops/sub1', '/items/def456/drops/sub2'],
+          },
         },
       },
     },
@@ -159,7 +176,13 @@ registry.registerPath({
       content: {
         'application/json': {
           schema: itemCreatedResponseSchema,
-          example: { item: { name: 'Shiny Dagger', type: 'weapon' }, itemId: 'abc123', itemUrl: '/items/abc123' },
+          example: {
+            item: { name: 'Shiny Dagger', type: 'weapon' },
+            itemId: 'abc123',
+            itemUrl: '/items/abc123',
+            submissionId: 'sub1',
+            submissionUrl: '/items/abc123/drops/sub1',
+          },
         },
       },
     },
@@ -301,6 +324,38 @@ registry.registerPath({
         'application/json': {
           schema: leaderboardResponseSchema,
           example: { submitters: [], totals: {} },
+        },
+      },
+    },
+    400: {
+      description: 'Invalid query parameters',
+      content: {
+        'application/json': {
+          schema: messageResponseSchema,
+          example: { message: 'Invalid query parameters' },
+        },
+      },
+    },
+  },
+});
+
+registry.registerPath({
+  method: 'get',
+  path: '/api/submissions',
+  tags: ['Submissions'],
+  summary: 'Fetch recent submissions',
+  operationId: 'getRecentSubmissions',
+  description: 'Fetch the most recent item submissions for external clients.',
+  request: {
+    query: submissionsQuerySchema,
+  },
+  responses: {
+    200: {
+      description: 'Recent submissions',
+      content: {
+        'application/json': {
+          schema: submissionsResponseSchema,
+          example: { submissions: [] },
         },
       },
     },
