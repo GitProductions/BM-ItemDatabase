@@ -9,7 +9,7 @@ import ItemPreviewCard from '../ItemPreviewCard';
 import { useAppData } from '@/components/app-provider';
 import { useSession } from 'next-auth/react';
 import { ItemInput } from '@/lib/items-api';
-import { Loader2 } from "lucide-react"; 
+import { Loader2 } from 'lucide-react';
 
 type SuggestionPayload = {
   proposer?: string;
