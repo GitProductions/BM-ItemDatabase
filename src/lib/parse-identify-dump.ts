@@ -1,13 +1,16 @@
 import { Item, ItemAffect } from '@/types/items';
+import { generateShortId } from '@/lib/id';
 
-const objectLineRegex = /Object '([^']+)', Item type: (.+)/;
+// Capture the whole keyword blob up to ", Item type" so embedded apostrophes don't break parsing
+const objectLineRegex = /Object '(.+?)', Item type: (.+)/;
 
-const generateId = () => {
-  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
-    return crypto.randomUUID();
-  }
-  return Math.random().toString(36).slice(2, 11);
-};
+const generateId = () => generateShortId(6);
+
+// common line splits or extra lines when copy/pasted we can attempt to filter our before submission
+// const commonMistakes = [
+//   "You feel informed:"
+      // "hums powerfully.",
+// ]
 
 const parseStatAffect = (line: string): ItemAffect | null => {
   const statMatch = line.match(/Type:\s+(.+?)\s+Value:\s+(-?\d+)/i);
@@ -31,11 +34,8 @@ const parseSpellAffect = (line: string): ItemAffect => {
   };
 };
 
-// todo: 
+
 // strip hum or glow conditions
-// ..They glow blue
-// ..They glow softly
-// ..It hums powerfully
 const nameDescriptorRegex = /(.*?)\s*\(([^)]+)\)\s*$/;
 const descriptorLineRegex = /^\.\.(.+)$/;
 const descriptorSuffixRegex = /(\.\.[^.]+)+$/g;
@@ -50,20 +50,49 @@ const stripCondition = (value: string) => {
   return { label: match[1].trim(), condition: match[2].trim() };
 };
 
+// discard/filter stats/effects for enchanted items
+// if item has Armor +1 +2 or +3 and has a Save_all -1, -2, -3 effect, then we can assume this is an enchanted item
+// There is no need to share 'enchanted' info for the user.
+
+const isArmorEnchant = (affect: ItemAffect) =>
+  affect.type === 'stat' &&
+  affect.stat?.toLowerCase().includes('armor') &&
+  (affect.value === 1 || affect.value === 2 || affect.value === 3);
+
+const isSaveAllEnchant = (affect: ItemAffect) =>
+  affect.type === 'stat' &&
+  affect.stat?.toLowerCase() === 'save_all' &&
+  (affect.value === -1 || affect.value === -2 || affect.value === -3);
+
+export const filterEnchanted = (affects: ItemAffect[]): boolean => {
+  const armorAffects = affects.filter(isArmorEnchant);
+  const saveAllAffects = affects.filter(isSaveAllEnchant);
+  return armorAffects.length > 0 && saveAllAffects.length > 0;
+};
+
 /**
- * Detects potential duplicates by comparing name, keywords, and type
- * Returns the ID of the matching item or undefined if no match found
+ * Detects potential duplicates by comparing identity *and* stats.
+ * We now treat an item as a duplicate only when the core identity AND stats match,
+ * so variants with the same keywords/name/type but differing rolls are allowed through.
  */
 export const findDuplicate = (newItem: Item, existingItems: Item[]): string | undefined => {
-  return existingItems.find((existing) => {
-    const nameSimilarity =
-      existing.name.toLowerCase().trim() === newItem.name.toLowerCase().trim();
-    const keywordsSimilarity =
-      existing.keywords.toLowerCase().trim() === newItem.keywords.toLowerCase().trim();
-    const typeSimilarity = existing.type.toLowerCase().trim() === newItem.type.toLowerCase().trim();
+  const normalize = (text?: string) => (text ?? '').toLowerCase().trim();
 
-    // Match if name and type are the same, or if all three match
-    return (nameSimilarity && typeSimilarity) || (nameSimilarity && keywordsSimilarity && typeSimilarity);
+  return existingItems.find((existing) => {
+    const sameIdentity =
+      normalize(existing.name) === normalize(newItem.name) &&
+      normalize(existing.keywords) === normalize(newItem.keywords) &&
+      normalize(existing.type) === normalize(newItem.type);
+
+    if (!sameIdentity) return false;
+
+    // Deep compare stats + flags to decide if it's truly the same record
+    const sameFlags = JSON.stringify(existing.flags ?? []) === JSON.stringify(newItem.flags ?? []);
+    const sameStats = JSON.stringify(existing.stats ?? {}) === JSON.stringify(newItem.stats ?? {});
+    const sameEgo = normalize(existing.ego) === normalize(newItem.ego);
+    const sameArtifact = Boolean(existing.isArtifact) === Boolean(newItem.isArtifact);
+
+    return sameFlags && sameStats && sameEgo && sameArtifact;
   })?.id;
 };
 
@@ -81,12 +110,16 @@ export const parseIdentifyDump = (text: string): Item[] => {
 
     const keywords = match[1];
     const type = match[2].trim().toLowerCase();
-    const rawName = i > 0 ? lines[i - 1] : 'Unknown Item';
-    const { label: name, condition } = stripCondition(rawName);
+
+    const hasNameLine = i > 0 && !objectLineRegex.test(lines[i - 1]);
+    const rawName = hasNameLine ? lines[i - 1] : '';
+    const { label: name, condition } = stripCondition(rawName || 'Unknown Item');
+    
 
     const currentItem: Item = {
       id: generateId(),
       name,
+      nameMissing: !hasNameLine,
       keywords,
       type,
       flags: [],
@@ -96,11 +129,24 @@ export const parseIdentifyDump = (text: string): Item[] => {
         condition,
       },
       raw: [],
+      submittedBy: undefined,
+      droppedBy: undefined,
+      worn: undefined,
     };
+
+    // Preserve the full identify header in raw: name line + Object line
+    if (hasNameLine) {
+      currentItem.raw?.push(name);
+    }
+    currentItem.raw?.push(lines[i]);
 
     let j = i + 1;
     while (j < lines.length) {
       const nextLine = lines[j];
+      const upcomingIsObjectLine = j + 1 < lines.length && objectLineRegex.test(lines[j + 1]);
+
+      // Stop before we consume the next item's display name (which precedes its Object line)
+      if (upcomingIsObjectLine) break;
       if (nextLine.match(objectLineRegex)) break;
 
       if (nextLine.startsWith('Weight:')) {
@@ -124,14 +170,23 @@ export const parseIdentifyDump = (text: string): Item[] => {
           if (statAffect) currentItem.stats.affects.push(statAffect);
         }
       } else if (nextLine.includes("This item's ego")) {
+        
         const egoMatch = nextLine.match(/This item's ego is of\s+(.+)/i);
         if (egoMatch) {
-          currentItem.ego = egoMatch[1];
+          // removing 'proportions' from the ego name if present
+          currentItem.ego = egoMatch[1].replace(/proportions./gi, '').trim();
         }
       }
 
       currentItem.raw?.push(nextLine);
       j += 1;
+    }
+
+    // If the affects indicate an enchanted item (last entries), strip the enchant-only lines but keep other stats
+    if (filterEnchanted(currentItem.stats.affects)) {
+      currentItem.stats.affects = currentItem.stats.affects.filter(
+        (affect) => !isArmorEnchant(affect) && !isSaveAllEnchant(affect),
+      );
     }
 
     items.push(currentItem);

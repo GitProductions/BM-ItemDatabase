@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { Providers } from "@/components/providers";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -12,15 +13,49 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+
+
 export const metadata: Metadata = {
-  title: "Gitproductions · Esports, Web & Apps",
-  description:
-    "Portfolio and showcase for Gitproductions — website design, esports production and admin, application development, and on-call graphic support.",
+  title: "Blackmud Item Database",
+  description: "An item database and equipment calculator for the BlackMUD Community.",
+
+  openGraph: {
+    title: "Blackmud Item Database",
+    description: "An item database and equipment calculator for the BlackMUD Community.",
+    type: "website",
+    locale: "en_US",
+    images: [
+      {
+        url: "https://bm-itemdb.gitago.dev/bm-itemdb-ogimage.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Blackmud Item Database",
+      },
+    ],
+  },
+
+  twitter: {
+    card: "summary_large_image",
+    title: "Blackmud Item Database",
+    description: "An item database and equipment calculator for the BlackMUD Community.",
+    images: [
+      {
+        url: "https://bm-itemdb.gitago.dev/bm-itemdb-ogimage.jpg",
+        alt: "Blackmud Item Database",
+      },
+    ],
+  },
+
+  alternates: {
+    canonical: "https://bm-itemdb.gitago.dev",
+  },
+
+
 };
 
 const themeInitScript = `(() => {
   try {
-    const stored = localStorage.getItem('gitproductions-theme');
+    const stored = localStorage.getItem('blackmud-item-database-theme');
     const system = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     const theme = stored === 'dark' || stored === 'light' ? stored : system;
     document.documentElement.dataset.theme = theme;
@@ -38,7 +73,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
-        {children}
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
