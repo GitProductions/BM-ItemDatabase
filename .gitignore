@@ -46,3 +46,5 @@ next-env.d.ts
 wrangler.jsonc
 *.jsonc
 database.sql
+/backups
+src/app/api/admin/backfill-parsed-items/route.ts
