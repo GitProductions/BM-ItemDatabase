@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { revalidateTag } from 'next/cache';
+import { revalidateTag, unstable_cache } from 'next/cache';
 import { parseIdentifyDump } from '@/lib/parse-identify-dump';
-import { countItems, countItemsFiltered, deleteItem, searchItems, upsertItems } from '@/lib/d1';
+import { countItemsFiltered, deleteItem, fetchItemsVersion, searchItems, upsertItems } from '@/lib/d1';
 import { ItemInput, normalizeItemInput, parseBooleanParam, withCors } from '@/lib/items-api';
 import { Item } from '@/types/items';
 import { getAuthSession } from '@/lib/auth';
@@ -18,6 +18,81 @@ import {
 } from '@/lib/api-schema/items';
 
 const ITEMS_TAG = 'items';
+const ITEMS_CACHE_CONTROL = 'public, max-age=0, s-maxage=60, stale-while-revalidate=300';
+// Client can set this query param to force a direct DB read for one request.
+// We use it after writes so the user can see latest data immediately.
+const BYPASS_CACHE_QUERY_PARAM = '_fresh';
+
+type ItemsQueryCacheInput = {
+  q?: string;
+  type?: string;
+  flagged?: boolean;
+  id?: string;
+  limit: number;
+  offset?: number;
+};
+
+const runItemsQuery = async (input: ItemsQueryCacheInput) => {
+  const items = await searchItems({
+    q: input.q,
+    type: input.type,
+    flagged: input.flagged,
+    id: input.id,
+    limit: input.limit,
+    offset: input.offset,
+  });
+
+  const [totalMatching, versionInfo] = await Promise.all([
+    countItemsFiltered({ q: input.q, type: input.type, flagged: input.flagged, id: input.id }),
+    fetchItemsVersion(),
+  ]);
+
+  return {
+    items,
+    count: items.length,
+    total: totalMatching,
+    totalAll: versionInfo.totalAll,
+    latestUpdatedAt: versionInfo.latestUpdatedAt,
+  };
+};
+
+// Core strategy:
+// - Read paths use tag cache (indefinite TTL) to reduce D1 load.
+// - Write paths call revalidateTag(ITEMS_TAG) to invalidate every cached variant.
+const getCachedItemsQuery = unstable_cache(
+  async (input: ItemsQueryCacheInput) => runItemsQuery(input),
+  ['api-items-query-v1'],
+  { tags: [ITEMS_TAG], revalidate: false },
+);
+
+const getCachedShortQueryMiss = unstable_cache(
+  async () => {
+    const versionInfo = await fetchItemsVersion();
+    return {
+      items: [],
+      count: 0,
+      total: 0,
+      totalAll: versionInfo.totalAll,
+      latestUpdatedAt: versionInfo.latestUpdatedAt,
+    };
+  },
+  ['api-items-short-query-miss-v1'],
+  { tags: [ITEMS_TAG], revalidate: false },
+);
+
+// Bypass helpers intentionally skip unstable_cache and hit DB directly.
+const runShortQueryMiss = async () => {
+  const versionInfo = await fetchItemsVersion();
+  return {
+    items: [],
+    count: 0,
+    total: 0,
+    totalAll: versionInfo.totalAll,
+    latestUpdatedAt: versionInfo.latestUpdatedAt,
+  };
+};
+
+const invalidateItemsCache = () => revalidateTag(ITEMS_TAG);
 
 // Helper 
 const itemUrlFor = (request: NextRequest, id: string, keywords?: string | null) =>
@@ -66,6 +141,7 @@ const resolveRequester = async (request: NextRequest) => {
 // Note: flagged=true returns items that are flagged for review, flagged=false returns items that are not flagged, and omitting flagged returns all items regardless of flag status
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
+  const bypassCache = searchParams.has(BYPASS_CACHE_QUERY_PARAM);
   const parsedQuery = parseItemsGetQuery(searchParams);
   if (!parsedQuery.ok) {
     return withCors(NextResponse.json({ message: parsedQuery.message }, { status: 400 }));
@@ -88,14 +164,14 @@ export async function GET(request: NextRequest) {
 
   // Treat explicit empty/too-short q as a search miss instead of falling back to broad listing.
   if (qProvided && (!q || q.length < 2)) {
-    const totalAll = await countItems();
+    const payload = bypassCache ? await runShortQueryMiss() : await getCachedShortQueryMiss();
     return withCors(
       NextResponse.json(
-        { items: [], count: 0, total: 0, totalAll },
+        payload,
         {
           status: 200,
           headers: {
-            'Cache-Control': 'public, max-age=60',
+            'Cache-Control': ITEMS_CACHE_CONTROL,
             'Content-Type': 'application/json',
           },
         },
@@ -104,33 +180,30 @@ export async function GET(request: NextRequest) {
   }
 
   const effectiveLimit = limit ?? (hasKnownFilter ? 100 : 20);
-
-  const items = await searchItems({
-    q,
-    type,
-    flagged: flaggedFilter,
-    id,
-    limit: effectiveLimit,
-    offset,
-  });
-
-  const [totalAll, totalMatching] = await Promise.all([
-    countItems(),
-    countItemsFiltered({ q, type, flagged: flaggedFilter, id }),
-  ]);
-
-  const payload = { items, count: items.length, total: totalMatching, totalAll };
+  const payload = bypassCache
+    ? await runItemsQuery({
+        q,
+        type,
+        flagged: flaggedFilter,
+        id,
+        limit: effectiveLimit,
+        offset,
+      })
+    : await getCachedItemsQuery({
+        q,
+        type,
+        flagged: flaggedFilter,
+        id,
+        limit: effectiveLimit,
+        offset,
+      });
   return withCors(
     NextResponse.json(payload, {
       status: 200,
       headers: {
-        //  --- Really cant decide how to handle caching.. to do or not to do.. and to what extent?
-        // Avoid browser-level caching so UI reflects DB changes immediately
-        'Cache-Control': 'public, max-age=3600',  // 1 hour
-        // 'Cache-Control': 'public, max-age=3600, must-revalidate',  // 1 hour
+        // Allow short-lived CDN caching while keeping browsers revalidating.
+        'Cache-Control': ITEMS_CACHE_CONTROL,
         'Content-Type': 'application/json',
-        // 'Cache-Control': 'no-store',
-        // 'X-Cache': 'MISS',
       },
     }),
   );
@@ -223,7 +296,8 @@ export async function POST(request: NextRequest) {
     const storedResults = await upsertItems(normalizedItems, { submissionIpHash: ipHash });
     const storedIds: string[] = storedResults.map((entry) => entry.id);
 
-    revalidateTag(ITEMS_TAG);
+    // Revalidate all cached item query variants.
+    invalidateItemsCache();
 
     // Generate item URLs for the submitted items to include in the response
     const itemUrls = normalizedItems.map((item, idx) => toItemUrl(storedIds[idx] ?? item.id, item.keywords));
@@ -270,7 +344,8 @@ export async function POST(request: NextRequest) {
       const storedResults = await upsertItems(merged, { submissionIpHash: ipHash });
       const storedIds: string[] = storedResults.map((entry) => entry.id);
 
-      revalidateTag(ITEMS_TAG);
+      // Revalidate all cached item query variants.
+      invalidateItemsCache();
       
       // Generate item URLs for the submitted items to include in the response
       const itemUrls = merged.map((item, idx) => toItemUrl(storedIds[idx] ?? item.id, item.keywords));
@@ -292,7 +367,8 @@ export async function POST(request: NextRequest) {
 
   const [storedResult] = await upsertItems([normalized.item], { submissionIpHash: ipHash });
 
-  revalidateTag(ITEMS_TAG);
+  // Revalidate all cached item query variants.
+  invalidateItemsCache();
 
   const stableId = storedResult?.id ?? normalized.item.id;
 
@@ -343,7 +419,8 @@ export async function PATCH(request: NextRequest) {
   });
   const updatedIds: string[] = updatedResults.map((entry) => entry.id);
 
-  revalidateTag(ITEMS_TAG);
+  // Revalidate all cached item query variants.
+  invalidateItemsCache();
 
   // const savedId = normalizedItems.length === 1 ? updatedIds[0] ?? normalizedItems[0].id : null;
   // const saved = savedId ? await searchItems({ id: savedId }) : null;
@@ -387,7 +464,8 @@ export async function DELETE(request: NextRequest) {
   if (id) {
     await deleteItem(id);
 
-    revalidateTag(ITEMS_TAG);
+    // Revalidate all cached item query variants.
+    invalidateItemsCache();
     
     return withCors(NextResponse.json({ deleted: true, id }));
   }

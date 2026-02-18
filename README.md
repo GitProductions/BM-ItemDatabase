@@ -1,4 +1,17 @@
-## Blackmud Item Database (Next.js 16 + Tailwind CSS)
+### TO DO
+
+<!-- -- it seems we need to look into why we are calling `SELECT COUNT(*) AS count FROM items ;` it seems to be when we either search for items or maybe its when we go to an item page.  it seems tot rigger 2-4 times which is no good as we can make this count othe rplaces or other ways with no additional cost..   -->
+
+-- need to clean up and reuse some sections in our original items endpoint to reuse them in our drops item page.. 
+
+-- need to just revisit the design on these far as positioning the badge to show its an "original"d rop or ot
+-- need to change wording as 'Merged item' doesn sound right.. also back to 'merged view' seems wrong also.. 
+
+
+
+
+
+## Blackmud Item Database (Next.js 15.5.10 + Tailwind CSS)
 
 Item database created for the Blackmud Community.
 
@@ -35,6 +48,31 @@ pnpm build
 
 ### Public API (for Mudlet or other clients)
 
+### Caching Notes (`/api/items`)
+
+- Read responses are cached via Next/OpenNext tag cache in `src/app/api/items/route.ts` using tag `items`.
+- Cache entries are invalidated on writes (`POST`, `PATCH`, `DELETE`) via `revalidateTag('items')`.
+- `?_fresh=<timestamp>` bypasses tag cache for one request and forces a direct DB read.
+- Client-side race guard in `src/components/app-provider.tsx` uses `latestUpdatedAt` to ignore late stale responses.
+
+When it is safe to remove `_fresh` and the `latestUpdatedAt` guard:
+- only if the app enforces strict request ordering so an older response can never overwrite newer state.
+
+### Database Search Index (D1 FTS5)
+
+- `items` is the source-of-truth table.
+- `items_fts` is an FTS5 full-text index used for `q` search.
+- `searchItems()` uses `items_fts MATCH ?` and joins back to `items` for filtered results.
+
+#### FTS sync triggers
+
+- `items_ai`: after insert on `items`, adds the new row to `items_fts`.
+- `items_ad`: after delete on `items`, removes the row from `items_fts`.
+- `items_au`: after update on `items`, deletes old indexed text and inserts updated text.
+
+These triggers keep search index data synchronized automatically without app-side index maintenance.
+
+
 ### API Schema for Cloudflare (OpenAPI 3.0.3)
 
 - Source-of-truth schemas use `zod` in `src/lib/api-schema/`.
@@ -54,168 +92,6 @@ npm run schema:api:build
 npm run schema:api:test
 npm run schema:api:check
 ```
-
-#### Upload to Cloudflare Dashboard (manual)
-
-1. Open Cloudflare dashboard for your zone (`gitago.dev`).
-2. Go to `Security` -> `API Shield` -> `Schema Validation`.
-3. Choose `Upload schema` and select `openapi/openapi.v1.json`.
-4. Attach schema to host `bm-itemdb.gitago.dev`.
-5. Set enforcement to monitoring/log-only for initial rollout.
-6. Review mismatch logs for 7-14 days before enabling blocking per endpoint.
-
-# Auth for destructive actions
-- Set `ADMIN_TOKEN` in `.env` (e.g., `ADMIN_TOKEN="SECRET_TOKEN"`).
-- DELETE `/api/items` requires header `Authorization: Bearer <ADMIN_TOKEN>`.
-  - Delete single item: `DELETE /api/items?id=<ITEM_ID>`
-  - Full wipe (admin only): `DELETE /api/items?all=true`
-- Regular GET/POST continue to allow read/add without the token.
-
-# Search
-curl "http://localhost:3000/api/items?q=broadsword&type=weapon&limit=20"
-
-# Import identify dump
-curl -X POST http://localhost:3000/api/items \
-  -H "Content-Type: application/json" \
-  -d '{"raw":"...identify output...","submittedBy":"mudlet_user","droppedBy":"orc shaman","worn":"neck"}'
-
-# Submit a single item
-curl -X POST http://localhost:3000/api/items \
-  -H "Content-Type: application/json" \
-  -d '{"item":{"name":"Shiny Dagger","keywords":"dagger shiny","type":"weapon","flags":["glow"],"worn":"wield","stats":{"damage":"2d4","affects":[]},"droppedBy":"goblin"},"submittedBy":"mudlet_user"}'
-
-
-
-
-
-<!-- we need to cleanup stuff.. my brain hurts -->
-
-<!--
- see isr examples and determine if we can use it with the api routes properly and users still see an instant update after adding an item to db?
-https://opennext.js.org/cloudflare/former-releases/0.5/caching#incremental-static-regeneration-isr
-
-do we need to make KV cache instead??  
-
-also maybe we can just cache the backend api endpoint for when people use it directly ? ..
- -->
-
-
-## Mudlet Alias to Search for Items in Game
-
-pattern: `^search-db\s+(.+)$`
-code: 
-```lua
--- search-db <term>
-local query = matches[2]:trim()
-if query == "" then
-    cecho("<orange>Usage: search-db <item name / keyword>\n")
-    return
-end
-
--- URL-encode query
-local encoded = query:gsub("([^%w ])", function(c) return string.format("%%%02X", c:byte()) end):gsub(" ", "+")
-local url = "https://bm-itemdb.gitago.dev/api/items?q=" .. encoded
-cecho(string.format("<gray>Sending search for '<wheat>%s<gray>' → %s\n", query, url))
-
--- Success handler (named - automatically replaces previous registration)
-registerNamedEventHandler("searchDb", "searchDbSuccess", "sysGetHttpDone", function(event, respUrl, body)
-    if respUrl ~= url then return end
-    
-    cecho("<spring_green>──────────────────── Results for '" .. query .. "' ────────────────────\n\n")
-    
-    local ok, data = pcall(yajl.to_value, body)
-    if not ok or type(data) ~= "table" or type(data.items) ~= "table" then
-        cecho("<red>Failed to parse JSON.\n")
-        cecho("<dark_orange>Raw snippet: " .. body:sub(1, 600) .. "\n")
-        cecho("<spring_green>──────────────────────────────────────\n")
-        return
-    end
-    
-    if #data.items == 0 then
-        cecho("<khaki>No items match '" .. query .. "'.\n\n")
-    else
-        for i, item in ipairs(data.items) do
-            local name = item.name or "<unknown>"
-            local owner = item.owner or "?"
-            
-            -- Calculate available space for the title
-            local available_width = 58
-            local submitted_text = " Submitted by: "
-            
-            -- Calculate space needed for owner section
-            local owner_section = ""
-            if owner ~= "?" then
-                owner_section = submitted_text .. owner
-            end
-            
-            -- Calculate how much space we have for the name
-            local owner_section_len = utf8.len(owner_section)
-            local name_max_width = available_width - owner_section_len
-            
-            -- Truncate name if needed
-            local display_name = name
-            if utf8.len(name) > name_max_width then
-                display_name = utf8.sub(name, 1, name_max_width - 3) .. "..."
-            end
-            
-            -- Build title with proper spacing
-            local title = string.format("<wheat>%s", display_name)
-            if owner ~= "?" then
-                -- Add padding between name and owner
-                local padding_needed = available_width - utf8.len(display_name) - owner_section_len
-                title = title .. string.rep(" ", padding_needed) .. "<gray>" .. owner_section
-            else
-                -- Just pad the name to fill the width
-                local padding_needed = available_width - utf8.len(display_name)
-                title = title .. string.rep(" ", padding_needed)
-            end
-            
-            -- Top border + title
-            cecho("<light_blue>┌────────────────────────────────────────────────────────────┐\n")
-            cecho("<light_blue>│ " .. title .. "\n")
-            
-            -- Separator under title
-            cecho("<light_blue>├────────────────────────────────────────────────────────────┤\n")
-            
-            -- Raw lines (content)
-            if type(item.raw) == "table" and #item.raw > 0 then
-                for _, line in ipairs(item.raw) do
-                    -- Pad/truncate to fit ~58 chars wide
-                    local padded = line
-                    local line_len = utf8.len(line)
-                    if line_len < 58 then
-                        padded = line .. string.rep(" ", 58 - line_len)
-                    elseif line_len > 58 then
-                        padded = utf8.sub(line, 1, 55) .. "..."
-                    end
-                    cecho(string.format("<light_blue>│ <white>%s\n", padded))
-                end
-            else
-                cecho("<light_blue>│ <khaki> (No raw identify lines available)\n")
-            end
-            
-            -- Bottom border
-            cecho("<light_blue>└────────────────────────────────────────────────────────────┘\n\n")
-        end
-    end
-    cecho("<spring_green>────────────────────────────────────────────────────────────────────────────\n")
-end)
-
--- Error handler (named)
-registerNamedEventHandler("searchDb", "searchDbError", "sysGetHttpError", function(event, errMsg, respUrl)
-    if respUrl ~= url then return end
-    cecho("<red>Request failed: " .. (errMsg or "unknown error") .. "\n")
-end)
-
-tempTimer(0.05, function() getHTTP(url) end)
-```
-
-
-
-## Mudlet Script - Item Submission
-
-
-
 
 
 

@@ -23,6 +23,7 @@ type StoredItemRow = {
   name: string;
   keywords: string;
   type: string;
+  identityKey: string | null;
   flags: string | null;
   stats: string | null;
   droppedBy: string | null;
@@ -51,6 +52,21 @@ export type LeaderboardData = {
     submissions: number;
     distinctItems: number;
   };
+};
+
+export type ItemsVersion = {
+  latestUpdatedAt: string | null;
+  totalAll: number;
+};
+
+export type ItemVariant = {
+  submissionId: string;
+  itemId: string;
+  submittedAt: string;
+  submittedBy?: string;
+  submittedByUserId?: string;
+  raw?: string[];
+  parsedItem?: Item;
 };
 
 export type ItemSearchParams = {
@@ -243,6 +259,30 @@ const decodeItem = (row: StoredItemRow): Item => ({
 const submissionIdentity = (item: Item) =>
   `${item.name.toLowerCase().trim()}|${item.keywords.toLowerCase().trim()}|${item.type.toLowerCase().trim()}`;
 
+const normalizeSubmitterKey = (name?: string | null) => (name ?? '').trim().toLowerCase();
+
+const parseJson = <T>(value?: string | null): T | undefined => {
+  if (!value) return undefined;
+  try {
+    return JSON.parse(value) as T;
+  } catch {
+    return undefined;
+  }
+};
+
+const toFtsQuery = (raw: string): string | null => {
+  const tokens = raw
+    .toLowerCase()
+    .trim()
+    .split(/\s+/)
+    .map((token) => token.replace(/[^a-z0-9_*]/g, ''))
+    .filter(Boolean)
+    .slice(0, 8);
+
+  if (!tokens.length) return null;
+  return tokens.map((token) => (token.endsWith('*') ? token : `${token}*`)).join(' AND ');
+};
+
 // Normalize raw identify dumps for equality checks
 const normalizeRaw = (raw?: string[]) =>
   (raw ?? [])
@@ -268,13 +308,34 @@ export const fetchSubmitterLeaderboard = async (limit = 20): Promise<Leaderboard
   const result = await db
     .prepare(
       `
+        WITH aggregated AS (
+          SELECT
+            submittedByKey,
+            COUNT(*) AS submissionCount,
+            COUNT(DISTINCT itemId) AS itemCount,
+            MAX(submittedAt) AS lastSubmittedAt
+          FROM submissions
+          GROUP BY submittedByKey
+        ),
+        latest_name AS (
+          SELECT
+            submittedByKey,
+            COALESCE(NULLIF(TRIM(submittedBy), ''), 'Unknown') AS name,
+            ROW_NUMBER() OVER (
+              PARTITION BY submittedByKey
+              ORDER BY submittedAt DESC, id DESC
+            ) AS rn
+          FROM submissions
+        )
         SELECT
-          COALESCE(NULLIF(TRIM(submittedBy), ''), 'Unknown') AS name,
-          COUNT(*) AS submissionCount,
-          COUNT(DISTINCT itemId) AS itemCount,
-          MAX(submittedAt) AS lastSubmittedAt
-        FROM submissions
-        GROUP BY LOWER(COALESCE(NULLIF(TRIM(submittedBy), ''), 'Unknown'))
+          COALESCE(n.name, 'Unknown') AS name,
+          a.submissionCount,
+          a.itemCount,
+          a.lastSubmittedAt
+        FROM aggregated a
+        LEFT JOIN latest_name n
+          ON n.submittedByKey = a.submittedByKey
+         AND n.rn = 1
         ORDER BY submissionCount DESC, lastSubmittedAt DESC
         LIMIT ?1;
       `,
@@ -323,6 +384,7 @@ const encodeItem = (item: Item, timestamp?: string) => {
     name: item.name,
     keywords: item.keywords,
     type: item.type,
+    identityKey: submissionIdentity(item),
     flags: JSON.stringify(item.flags ?? []),
     stats: JSON.stringify(item.stats ?? { affects: [], weight: 0 }),
     droppedBy: item.droppedBy ?? null,
@@ -376,27 +438,29 @@ const sanitizeLimit = (value?: number) => {
   return Math.min(Math.max(1, Math.floor(value)), 1000);
 };
 
-
-// Search items with optional filters
-export const searchItems = async (params: ItemSearchParams = {}): Promise<Item[]> => {
-  const db = await getDatabase();
-
+const buildItemQueryFilters = (params: ItemSearchParams) => {
+  const joins: string[] = [];
   const where: string[] = [];
   const values: unknown[] = [];
 
+  if (params.q) {
+    const ftsQuery = toFtsQuery(params.q);
+    if (!ftsQuery) {
+      where.push('1 = 0');
+    } else {
+      joins.push('INNER JOIN items_fts ON items_fts.rowid = items.rowid');
+      where.push('items_fts MATCH ?');
+      values.push(ftsQuery);
+    }
+  }
+
   if (params.id) {
-    where.push('id = ?');
+    where.push('items.id = ?');
     values.push(params.id);
   }
 
-  if (params.q) {
-    const like = `%${params.q.toLowerCase()}%`;
-    where.push('(LOWER(name) LIKE ? OR LOWER(keywords) LIKE ? OR LOWER(type) LIKE ? OR LOWER(flags) LIKE ?)');
-    values.push(like, like, like, like);
-  }
-
   if (params.type) {
-    where.push('LOWER(type) LIKE ?');
+    where.push('LOWER(items.type) LIKE ?');
     values.push(`%${params.type.toLowerCase()}%`);
   }
 
@@ -406,23 +470,32 @@ export const searchItems = async (params: ItemSearchParams = {}): Promise<Item[]
   }
 
   if (params.submittedBy) {
-    where.push('EXISTS (SELECT 1 FROM submissions s WHERE s.itemId = items.id AND LOWER(IFNULL(s.submittedBy, \"\")) = LOWER(?))');
-    values.push(params.submittedBy.trim());
+    where.push('EXISTS (SELECT 1 FROM submissions s WHERE s.itemId = items.id AND s.submittedByKey = ?)');
+    values.push(normalizeSubmitterKey(params.submittedBy));
   }
-
 
   if (typeof params.flagged === 'boolean') {
-    where.push('flaggedForReview = ?');
+    where.push('items.flaggedForReview = ?');
     values.push(params.flagged ? 1 : 0);
   }
+
+  return { joins, where, values };
+};
+
+
+// Search items with optional filters
+export const searchItems = async (params: ItemSearchParams = {}): Promise<Item[]> => {
+  const db = await getDatabase();
+  const { joins, where, values } = buildItemQueryFilters(params);
 
   const limit = sanitizeLimit(params.limit);
   const offset = Number.isFinite(params.offset) && (params.offset ?? 0) > 0 ? Math.floor(params.offset ?? 0) : 0;
 
   const sql = `
-    SELECT * FROM items
+    SELECT items.* FROM items
+    ${joins.length ? joins.join('\n') : ''}
     ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
-    ORDER BY updatedAt DESC
+    ORDER BY items.updatedAt DESC
     LIMIT ? OFFSET ?;
   `;
 
@@ -472,46 +545,124 @@ export const searchItems = async (params: ItemSearchParams = {}): Promise<Item[]
   return items;
 };
 
-export const countItemsFiltered = async (params: ItemSearchParams = {}): Promise<number> => {
+export const fetchItemVariants = async (itemId: string, limit = 200): Promise<ItemVariant[]> => {
+  if (!itemId) return [];
+  const db = await getDatabase();
+  const cappedLimit = Math.max(1, Math.min(limit, 500));
+
+  const result = await db
+    .prepare(
+      `
+        SELECT id, itemId, submittedBy, submittedByUserId, submittedAt, raw, parsedItem
+        FROM submissions
+        WHERE itemId = ?1
+        ORDER BY submittedAt DESC, id DESC
+        LIMIT ?2;
+      `,
+    )
+    .bind(itemId, cappedLimit)
+    .all<{
+      id: string;
+      itemId: string;
+      submittedBy: string | null;
+      submittedByUserId: string | null;
+      submittedAt: string;
+      raw: string | null;
+      parsedItem: string | null;
+    }>();
+
+  const rows = (result.results ?? result.rows ?? []) as {
+    id: string;
+    itemId: string;
+    submittedBy: string | null;
+    submittedByUserId: string | null;
+    submittedAt: string;
+    raw: string | null;
+    parsedItem: string | null;
+  }[];
+
+  return rows.map((row) => {
+    const parsedItem = parseJson<Item>(row.parsedItem);
+    if (parsedItem) {
+      parsedItem.flags = parsedItem.flags ?? [];
+      parsedItem.stats = parsedItem.stats ?? { affects: [], weight: 0 };
+    }
+
+    return {
+      submissionId: row.id,
+      itemId: row.itemId,
+      submittedAt: row.submittedAt,
+      submittedBy: row.submittedBy ?? undefined,
+      submittedByUserId: row.submittedByUserId ?? undefined,
+      raw: parseJson<string[]>(row.raw),
+      parsedItem: parsedItem ?? undefined,
+    };
+  });
+};
+
+export const fetchItemVariant = async (itemId: string, submissionId: string): Promise<ItemVariant | null> => {
+  if (!itemId || !submissionId) return null;
   const db = await getDatabase();
 
-  const where: string[] = [];
-  const values: unknown[] = [];
+  const result = await db
+    .prepare(
+      `
+        SELECT id, itemId, submittedBy, submittedByUserId, submittedAt, raw, parsedItem
+        FROM submissions
+        WHERE itemId = ?1 AND id = ?2
+        LIMIT 1;
+      `,
+    )
+    .bind(itemId, submissionId)
+    .all<{
+      id: string;
+      itemId: string;
+      submittedBy: string | null;
+      submittedByUserId: string | null;
+      submittedAt: string;
+      raw: string | null;
+      parsedItem: string | null;
+    }>();
 
-  if (params.id) {
-    where.push('id = ?');
-    values.push(params.id);
+  const row = (result.results ?? result.rows ?? [])[0] as
+    | {
+        id: string;
+        itemId: string;
+        submittedBy: string | null;
+        submittedByUserId: string | null;
+        submittedAt: string;
+        raw: string | null;
+        parsedItem: string | null;
+      }
+    | undefined;
+
+  if (!row) return null;
+
+  const parsedItem = parseJson<Item>(row.parsedItem);
+  if (parsedItem) {
+    parsedItem.flags = parsedItem.flags ?? [];
+    parsedItem.stats = parsedItem.stats ?? { affects: [], weight: 0 };
   }
 
-  if (params.q) {
-    const like = `%${params.q.toLowerCase()}%`;
-    where.push('(LOWER(name) LIKE ? OR LOWER(keywords) LIKE ? OR LOWER(type) LIKE ? OR LOWER(flags) LIKE ?)');
-    values.push(like, like, like, like);
-  }
+  return {
+    submissionId: row.id,
+    itemId: row.itemId,
+    submittedAt: row.submittedAt,
+    submittedBy: row.submittedBy ?? undefined,
+    submittedByUserId: row.submittedByUserId ?? undefined,
+    raw: parseJson<string[]>(row.raw),
+    parsedItem: parsedItem ?? undefined,
+  };
+};
 
-  if (params.type) {
-    where.push('LOWER(type) LIKE ?');
-    values.push(`%${params.type.toLowerCase()}%`);
-  }
-
-  if (params.submittedByUserId) {
-    where.push('EXISTS (SELECT 1 FROM submissions s WHERE s.itemId = items.id AND s.submittedByUserId = ?)');
-    values.push(params.submittedByUserId);
-  }
-
-  if (params.submittedBy) {
-    where.push('EXISTS (SELECT 1 FROM submissions s WHERE s.itemId = items.id AND LOWER(IFNULL(s.submittedBy, "")) = LOWER(?))');
-    values.push(params.submittedBy.trim());
-  }
-
-  if (typeof params.flagged === 'boolean') {
-    where.push('flaggedForReview = ?');
-    values.push(params.flagged ? 1 : 0);
-  }
+export const countItemsFiltered = async (params: ItemSearchParams = {}): Promise<number> => {
+  const db = await getDatabase();
+  const { joins, where, values } = buildItemQueryFilters(params);
 
   const sql = `
     SELECT COUNT(*) AS count
     FROM items
+    ${joins.length ? joins.join('\n') : ''}
     ${where.length ? `WHERE ${where.join(' AND ')}` : ''};
   `;
 
@@ -531,17 +682,25 @@ export const countItems = async (): Promise<number> => {
   const row = (result.results ?? result.rows ?? [])[0] as { count: number } | undefined;
   return row?.count ?? 0;
 
-}
+};
 
+export const fetchItemsVersion = async (): Promise<ItemsVersion> => {
+  // Lightweight freshness query used by API responses to coordinate client-side race protection.
+  // This is intentionally cheaper than fetching item rows.
+  const db = await getDatabase();
+  const result = await db
+    .prepare('SELECT MAX(updatedAt) AS latestUpdatedAt, COUNT(*) AS totalAll FROM items;')
+    .all<{ latestUpdatedAt: string | null; totalAll: number }>();
+  const row = (result.results ?? result.rows ?? [])[0] as
+    | { latestUpdatedAt: string | null; totalAll: number }
+    | undefined;
 
-
-// Fetch all items (for app initialization, caching, etc)
-export const fetchItems = async (): Promise<Item[]> => searchItems();
-
-
-// Insert into Items table with upsert on unique identity (name, keywords, type)
-// We update all fields on conflict to ensure latest data is stored
-// including flags, stats, ego, isArtifact, raw, flaggedForReview, duplicateOf, and updatedAt
+  const latestUpdatedAt = row?.latestUpdatedAt ?? null;
+  const totalAll = row?.totalAll ?? 0;
+  return { latestUpdatedAt, totalAll };
+};
+// Insert into items with upsert on normalized identityKey.
+// We update all mutable fields on conflict to ensure latest data is stored.
 // Returns the stable item IDs (existing or newly created) in the same order as the input.
 export const upsertItems = async (
   items: Item[],
@@ -570,8 +729,8 @@ export const upsertItems = async (
 
   const fetchExistingByIdentity = async (item: Item): Promise<Item | undefined> => {
     const result = await db
-      .prepare('SELECT * FROM items WHERE name = ?1 AND keywords = ?2 AND type = ?3 LIMIT 1;')
-      .bind(item.name, item.keywords, item.type)
+      .prepare('SELECT * FROM items WHERE identityKey = ?1 LIMIT 1;')
+      .bind(submissionIdentity(item))
       .all<StoredItemRow>();
     const row = (result.results ?? result.rows ?? [])[0] as StoredItemRow | undefined;
     return row ? decodeItem(row) : undefined;
@@ -644,18 +803,19 @@ export const upsertItems = async (
               name = ?2,
               keywords = ?3,
               type = ?4,
-              flags = ?5,
-              stats = ?6,
-              droppedBy = ?7,
-              worn = ?8,
-              ego = ?9,
-              egoMin = ?10,
-              egoMax = ?11,
-              isArtifact = ?12,
-              raw = ?13,
-              flaggedForReview = ?14,
-              duplicateOf = ?15,
-              updatedAt = ?16
+              identityKey = ?5,
+              flags = ?6,
+              stats = ?7,
+              droppedBy = ?8,
+              worn = ?9,
+              ego = ?10,
+              egoMin = ?11,
+              egoMax = ?12,
+              isArtifact = ?13,
+              raw = ?14,
+              flaggedForReview = ?15,
+              duplicateOf = ?16,
+              updatedAt = ?17
             WHERE id = ?1;
           `,
           )
@@ -664,6 +824,7 @@ export const upsertItems = async (
             values.name,
             values.keywords,
             values.type,
+            values.identityKey,
             values.flags,
             values.stats,
             values.droppedBy,
@@ -683,14 +844,15 @@ export const upsertItems = async (
         .prepare(
           `
         INSERT INTO items (
-          id, name, keywords, type, flags, stats, droppedBy, worn, ego, egoMin, egoMax, isArtifact, raw,
-          flaggedForReview, duplicateOf, createdAt, updatedAt
+          id, name, keywords, type, identityKey, flags, stats, droppedBy, worn, ego, egoMin, egoMax, isArtifact,
+          raw, flaggedForReview, duplicateOf, createdAt, updatedAt
         )
-        VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17)
-        ON CONFLICT(name, keywords, type) DO UPDATE SET
+        VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18)
+        ON CONFLICT(identityKey) DO UPDATE SET
           name=excluded.name,
           keywords=excluded.keywords,
           type=excluded.type,
+          identityKey=excluded.identityKey,
           flags=excluded.flags,
           stats=excluded.stats,
           droppedBy=excluded.droppedBy,
@@ -710,6 +872,7 @@ export const upsertItems = async (
         values.name,
         values.keywords,
         values.type,
+        values.identityKey,
         values.flags,
         values.stats,
         values.droppedBy,
@@ -743,8 +906,10 @@ export const upsertItems = async (
       return db
         .prepare(
           `
-          INSERT INTO submissions (id, itemId, identityKey, submittedBy, submittedByUserId, submittedAt, raw, ipHash)
-          VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8);
+          INSERT INTO submissions (
+            id, itemId, identityKey, submittedBy, submittedByKey, submittedByUserId, submittedAt, raw, parsedItem, ipHash
+          )
+          VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10);
         `,
         )
         .bind(
@@ -752,9 +917,11 @@ export const upsertItems = async (
           mergedId,
           identityKey,
           submitterName,
+          normalizeSubmitterKey(submitterName),
           submitterId ?? null,
           now,
           item.raw ? JSON.stringify(item.raw) : null,
+          JSON.stringify(item),
           context?.submissionIpHash ?? null,
         );
     }),

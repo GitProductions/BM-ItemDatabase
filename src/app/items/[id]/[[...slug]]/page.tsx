@@ -2,14 +2,15 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { cache } from 'react';
-import { AlertTriangle, ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 
-import { searchItems } from '@/lib/d1';
+import { fetchItemVariants, searchItems } from '@/lib/d1';
 import { ItemCard } from '@/components/item-card';
-import { StatBadge } from '@/components/stat-badge';
-import { canonicalizeSlots, guessSlot, normalizeWornSlots, slotLabel } from '@/lib/slots';
+import { canonicalizeSlots, guessSlot, normalizeWornSlots } from '@/lib/slots';
 import CopyButton from '@/components/ui/CopyButton';
 import { buildItemPath } from '@/lib/slug';
+import { IdentifyDump, ItemWornSource, ItemTraitsFlags, ItemContributors, ItemStatsSection, RecentDropsList, ItemHeaderBadges } from '@/components/item-details';
+import { slotLabel } from '@/lib/slots';
 
 export const revalidate = 0;
 export const dynamic = 'force-dynamic';
@@ -48,6 +49,7 @@ const calculateDamage = (damage: string): DamageStats | null => {
   const lowDamage = numDice * 1 + modifier;
   return { average: averageDamage.toFixed(2), high: highDamage, low: lowDamage };
 };
+
 
 
 type RouteParams = { id: string; slug?: string[] };
@@ -138,6 +140,8 @@ export default async function ItemPage({ params }: { params: Promise<RouteParams
   const item = await fetchItem(id);
   if (!item) notFound();
 
+  const recentVariants = (await fetchItemVariants(id, 3)).filter((variant) => Boolean(variant.parsedItem));
+
   const stats = item.stats ?? { affects: [], weight: 0 };
   const affects = stats.affects ?? [];
   const wornSlots = canonicalizeSlots(normalizeWornSlots(item.worn));
@@ -154,9 +158,15 @@ export default async function ItemPage({ params }: { params: Promise<RouteParams
   const contributors = item.contributors ?? [];
   const primarySubmitter = contributors[0] ?? item.submittedBy ?? 'Unknown';
   const extraSubmitters = contributors.slice(1);
+  const submissionCount = item.submissionCount ?? 0;
+  const isMergedView = submissionCount > 1;
+  const variantsHref = `/items/${item.id}/drops`;
+  const shouldShowRecentDrops = submissionCount > 1 && recentVariants.length > 0;
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
+
+      {/* Item / Page Navigation */}
       <div className="flex items-center justify-between gap-3">
         <Link href="/" className="inline-flex items-center gap-2 text-sm text-zinc-300 hover:text-white">
           <ArrowLeft size={16} />
@@ -164,196 +174,62 @@ export default async function ItemPage({ params }: { params: Promise<RouteParams
         </Link>
         <div className="flex items-center gap-2">
           <CopyButton value={itemUrl} />
-          {/* <Link
-            href={itemUrl}
-            className="inline-flex items-center gap-2 rounded-md border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 hover:border-orange-500 transition-colors"
-          >
-            <ExternalLink size={14} />
-            Open page
-          </Link> */}
         </div>
       </div>
 
       <div className="rounded-xl border border-zinc-800 bg-zinc-900/70 p-4 space-y-3">
         <div className="flex flex-wrap items-start justify-between gap-3">
+
           <div>
             <p className="text-[11px] uppercase tracking-[0.18em] text-orange-300">Item</p>
             <h1 className="text-3xl font-bold text-white leading-tight">{item.name || 'Unnamed item'}</h1>
-            {/* <p className="text-sm text-zinc-400 font-mono">
-              {item.keywords || 'No keywords'} • <span className="uppercase text-zinc-300">{item.type}</span>
-            </p> */}
           </div>
+
           <div className="flex flex-col items-end gap-2 text-right">
             <span className="text-[11px] text-zinc-500 font-mono">ID: {item.id}</span>
-            <div className="flex flex-wrap gap-2 justify-end">
-              {item.isArtifact && (
-                <span className="text-[11px] uppercase bg-amber-900/40 border border-amber-700 px-2 py-1 rounded-md text-amber-200">
-                  Artifact
-                </span>
-              )}
-              {item.flaggedForReview && (
-                <span className="inline-flex items-center gap-1 text-[11px] uppercase bg-rose-900/40 border border-rose-700 px-2 py-1 rounded-md text-rose-200">
-                  <AlertTriangle size={12} />
-                  Needs review
-                </span>
-              )}
-            </div>
+           
+            <ItemHeaderBadges
+              isArtifact={item.isArtifact}
+              isMergedView={isMergedView}
+              flaggedForReview={item.flaggedForReview}
+            />
+
           </div>
         </div>
 
         <ItemCard item={item} />
+
+        
+        {/* Recent Item Drop */}
+        {shouldShowRecentDrops ? (
+          <RecentDropsList
+            itemId={id}
+            recentVariants={recentVariants}
+            submissionCount={submissionCount}
+            variantsHref={variantsHref}
+          />
+        ) : null}
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
-        <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-4 space-y-3">
-          <h2 className="text-sm font-semibold text-white">Worn & Source</h2>
-          <div className="flex flex-wrap gap-2">
-            {displaySlots.length ? (
-              displaySlots.map((slot) => (
-                <span
-                  key={slot}
-                  className="text-xs bg-zinc-800 text-zinc-200 border border-zinc-700 px-2 py-1 rounded-full"
-                >
-                  {slotLabel(slot)}
-                </span>
-              ))
-            ) : (
-              <p className="text-sm text-zinc-500">Slot unknown</p>
-            )}
-          </div>
-          {item.droppedBy ? (
-            <p className="text-sm text-zinc-300">
-              Dropped by: <span className="text-white">{item.droppedBy}</span>
-            </p>
-          ) :
-            <p className="text-sm text-zinc-300">
-              Dropped by: <span className="text-white">Unknown</span>
-            </p>
-          }
-          {item.duplicateOf ? (
-            <p className="text-sm text-zinc-400">
-              Possible duplicate of{' '}
-              <Link href={buildItemPath(item.duplicateOf, undefined)} className="text-orange-300 hover:underline">
-                {item.duplicateOf}
-              </Link>
-            </p>
-          ) : null}
-        </div>
-
-        <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-4 space-y-3">
-          <h2 className="text-sm font-semibold text-white">Traits & Flags</h2>
-          <div className="flex flex-wrap gap-2">
-            {item.flags.length ? (
-              item.flags.map((flag) => (
-                <span
-                  key={flag}
-                  className="text-[11px] uppercase border border-zinc-700 text-zinc-200 px-2 py-1 rounded-md"
-                >
-                  {flag}
-                </span>
-              ))
-            ) : (
-              <p className="text-sm text-zinc-500">No flags recorded.</p>
-            )}
-          </div>
-          {item.ego ? <p className="text-sm text-zinc-300">Ego: {item.egoMin} / {item.egoMax}</p> : null}
-          {/* <p className="text-sm text-zinc-400">
-            Submissions logged: <span className="text-white">{item.submissionCount ?? '—'}</span>
-          </p> */}
-        </div>
-
-
-        {/* Contributors  */}
-        <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-4 space-y-3">
-          <h2 className="text-sm font-semibold text-white">Contributors</h2>
-          <p className="text-sm text-zinc-300">
-            Primary: <span className="text-white">{primarySubmitter}</span>
-          </p>
-          {extraSubmitters.length ? (
-            <div className="flex flex-wrap gap-2">
-              {extraSubmitters.map((name) => (
-                <span key={name} className="text-xs bg-zinc-800 border border-zinc-700 px-2 py-1 rounded-full text-zinc-200">
-                  {name}
-                </span>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-zinc-500">No additional contributors listed.</p>
-          )}
-        </div>
+        <ItemWornSource displaySlots={displaySlots} droppedBy={item.droppedBy} duplicateOf={item.duplicateOf} />
+        <ItemTraitsFlags flags={item.flags} ego={item.ego} egoMin={item.egoMin} egoMax={item.egoMax} />
+        <ItemContributors primarySubmitter={primarySubmitter} extraSubmitters={extraSubmitters} />
 
       </div>
 
 
-      {/*  Bottom Section */}
-      <section className="rounded-xl border border-zinc-800 bg-zinc-900/70 p-4 space-y-3">
+      {/* Bottom */}
+      <ItemStatsSection
+        stats={stats}
+        affects={affects}
+        damageStats={damageStats}
+        formatValueRange={formatValueRange}
+      />
 
-
-        <div className="flex items-center justify-between gap-2">
-          <h2 className="text-sm font-semibold text-white">Stats</h2>
-          {damageStats ? (
-            <p className="text-xs text-zinc-400 font-mono">
-              Avg {damageStats.average} • Range {damageStats.low}–{damageStats.high}
-            </p>
-          ) : null}
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {stats.weight !== undefined ? (
-            <StatBadge
-              label="Weight"
-              value={formatValueRange(stats.weight, stats.weightMin, stats.weightMax)}
-              color="bg-yellow-900/50 border border-yellow-800"
-            />
-          ) : null}
-          {stats.ac !== undefined ? (
-            <StatBadge
-              label="AC"
-              value={formatValueRange(stats.ac, stats.acMin, stats.acMax, { signed: true })}
-              color="bg-blue-900/50 border border-blue-800"
-            />
-          ) : null}
-          {stats.damage ? (
-            <StatBadge label="Damage" value={stats.damage} color="bg-red-900/50 border border-red-800" />
-          ) : null}
-        </div>
-
-        {affects.length ? (
-          <ul className="grid gap-2 md:grid-cols-2">
-            {affects.map((affect, index) => (
-              <li
-                key={`${affect.type}-${index}`}
-                className="flex items-center justify-between rounded-md border border-zinc-800 bg-zinc-950/50 px-3 py-2 text-xs text-zinc-300"
-              >
-                <div className="flex flex-col">
-                  <span className="text-[11px] uppercase text-zinc-500">{affect.type}</span>
-                  <span className="text-white">
-                    {affect.type === 'spell' ? affect.spell : affect.stat}
-                    {affect.level ? ` (lvl ${affect.level})` : ''}
-                  </span>
-                </div>
-                <span className={(affect.max ?? affect.value ?? 0) >= 0 ? 'text-orange-300' : 'text-rose-300'}>
-                  {formatValueRange(affect.value, affect.min, affect.max, { signed: true })}
-                </span>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-sm text-zinc-500">No affects recorded.</p>
-        )}
-      </section>
-
-      {item.raw?.length ? (
-        <section className="rounded-xl border border-zinc-800 bg-zinc-950/70 p-4 space-y-2">
-          <h2 className="text-sm font-semibold text-white">Identify dump</h2>
-          <div className="rounded-lg border border-zinc-800 bg-black/50 p-3">
-            <pre className="whitespace-pre-wrap text-sm font-mono leading-relaxed text-emerald-100">
-              {/* removing last line which has the items name, which isnt part of the orignal identify */}
-              {/* {item.raw.slice(0, -1).join('\n')} */}
-              {item.raw.join('\n')}
-            </pre>
-          </div>
-        </section>
-      ) : null}
+      {/* If theres a raw dump then show it */}
+      <IdentifyDump raw={item.raw} />
+      
     </div>
   );
 }

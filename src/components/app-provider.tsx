@@ -14,6 +14,15 @@ type FetchOptions = {
   silent?: boolean;
 };
 
+type ItemsApiResponse = {
+  items?: Item[];
+  totalAll?: number;
+  total?: number;
+  latestUpdatedAt?: string | null;
+};
+
+const BYPASS_CACHE_QUERY_PARAM = '_fresh';
+
 const AppDataContext = createContext<{
   setItems: (items: Item[]) => void;
   items: Item[];
@@ -37,6 +46,16 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
   const [userName, setUserName] = useState<string>('');
   const lastRequestRef = useRef<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  // Tracks the newest payload timestamp we have applied.
+  // Prevents a later-arriving stale cached response from replacing fresher UI state.
+  const latestUpdatedAtRef = useRef<number | null>(null);
+
+  const updateLatestUpdatedAt = useCallback((nextUpdatedAt: string | null | undefined) => {
+    if (!nextUpdatedAt) return;
+    const parsed = Date.parse(nextUpdatedAt);
+    if (Number.isNaN(parsed)) return;
+    latestUpdatedAtRef.current = parsed;
+  }, []);
 
   const handleSetUserName = useCallback(
     (name: string) => {
@@ -61,8 +80,6 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     setUserName(storedUserName);
   }, [session?.user?.name]);
 
-
-
   const refresh = useCallback(async (options: FetchOptions = {}) => {
     const params = new URLSearchParams();
     if (options.q) params.set('q', options.q);
@@ -72,6 +89,8 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     const resolvedLimit = options.limit ?? (options.q ? undefined : 20);
     if (resolvedLimit) params.set('limit', String(resolvedLimit));
     if (Number.isFinite(options.offset)) params.set('offset', String(options.offset));
+    // Force-refresh path bypasses server-side tag cache once.
+    if (options.force) params.set(BYPASS_CACHE_QUERY_PARAM, Date.now().toString());
 
     const queryString = params.toString();
     const url = queryString ? `/api/items?${queryString}` : '/api/items';
@@ -92,15 +111,28 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     abortRef.current = controller;
 
     try {
-      const response = await fetch(url, { signal: controller.signal, 
-        cache: 'no-store' 
-      });
+      const response = await fetch(url, { signal: controller.signal });
       if (!response.ok) throw new Error('Failed to load items');
-      const data = await response.json();
+      const data = (await response.json()) as ItemsApiResponse;
+      const incomingUpdatedAtMs = data.latestUpdatedAt ? Date.parse(data.latestUpdatedAt) : NaN;
+      const currentUpdatedAtMs = latestUpdatedAtRef.current;
+
+      // Safety guard: keep newest-applied payload in memory.
+      // Remove this only if request sequencing guarantees stale responses can never win the race.
+      if (
+        !options.force &&
+        Number.isFinite(incomingUpdatedAtMs) &&
+        Number.isFinite(currentUpdatedAtMs ?? NaN) &&
+        incomingUpdatedAtMs < (currentUpdatedAtMs as number)
+      ) {
+        return;
+      }
+
       const fetchedItems = data.items ?? [];
       setItems(fetchedItems);
       setTotalCount(typeof data.totalAll === 'number' ? data.totalAll : 0);
       setResultCount(typeof data.total === 'number' ? data.total : 0);
+      updateLatestUpdatedAt(data.latestUpdatedAt ?? null);
     } catch (err) {
       if ((err as Error)?.name === 'AbortError') return;
       console.error('Failed to load items', err);
@@ -111,7 +143,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
       }
       if (!options.silent) setLoading(false);
     }
-  }, []);
+  }, [updateLatestUpdatedAt]);
 
   const searchItems = useCallback(
     async (query: string, limit?: number) => {
@@ -127,7 +159,18 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AppDataContext.Provider
-      value={{ setItems, items, loading, error, refresh, searchItems, totalCount, resultCount, userName, handleSetUserName }}
+      value={{
+        setItems,
+        items,
+        loading,
+        error,
+        refresh,
+        searchItems,
+        totalCount,
+        resultCount,
+        userName,
+        handleSetUserName,
+      }}
     >
       {children}
     </AppDataContext.Provider>

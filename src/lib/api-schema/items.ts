@@ -11,6 +11,7 @@ export const itemsGetQuerySchema = z
     type: z.string().optional(),
     flagged: booleanLikeSchema.optional(),
     id: z.string().optional(),
+    _fresh: z.string().optional(),
     limit: optionalNumericParam,
     offset: optionalNumericParam,
   })
