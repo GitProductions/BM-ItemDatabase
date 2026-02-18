@@ -48,43 +48,35 @@ export default async function ItemDropPage({ params }: { params: Promise<RoutePa
     const mergedItemUrl = buildItemPath(variant.itemId, variant.parsedItem.keywords);
 
     return (
-        <div className="max-w-8xl mx-auto space-y-6">
-
-              <div className="flex items-center justify-between gap-3">
-
-                <div className="flex items-center gap-3">
-                    <FileText className="text-orange-400" size={24} />
-                    <div>
-                        <h1 className="text-2xl font-bold text-white">Original drop submission</h1>
-                        <p className="text-sm text-zinc-400">Submitted by <span className="font-semibold text-orange-400">{variant.submittedBy}</span></p>
-                    </div>
-                </div>
-                {/* <PageHeader
-                    title="Original drop submission"
-                    description={`Submitted by ${variant.submittedBy} ${formatSubmittedAt(variant.submittedAt, { relativeWithinHours: 24 })}. View the original unmerged drop data for this submission, compare its stats against the other identical drop variants.`}
-                    icons={<FileText size={24} className="text-orange-400" />}
-                /> */}
-
-                <div className="text-xs text-zinc-500 text-right">
-                    <OriginalDropMeta submittedAt={variant.submittedAt} submittedBy={variant.submittedBy} />
+        <div className="max-w-5xl mx-auto space-y-6">
+        <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+                <FileText className="text-orange-400" size={24} />
+                <div>
+                    <h1 className="text-2xl font-bold text-white">Original drop submission</h1>
+                    <p className="text-sm text-zinc-400">Submitted by <span className="font-semibold text-orange-400">{variant.submittedBy}</span></p>
                 </div>
             </div>
+            <div className="text-xs text-zinc-500 text-right">
+                <OriginalDropMeta submittedAt={variant.submittedAt} submittedBy={variant.submittedBy} />
+            </div>
+        </div>
 
             <div className="flex items-center justify-between gap-3">
+                
                 <Link href={mergedItemUrl} className="inline-flex items-center gap-2 text-sm text-zinc-300 hover:text-white">
                     <ArrowLeft size={16} />
                     Back to item page
                 </Link>
-                <Button variant="secondary" as={Link} size="sm" href={mergedItemUrl}>
+
+                <Button as={Link} variant="secondary" size="sm" href={mergedItemUrl}>
                     View merged
                 </Button>
             </div>
 
-            
-
             <ItemCard item={variant.parsedItem} hideSubmittedBy />
 
-          
+
 
             <section className="rounded-xl border border-zinc-800 bg-zinc-950/70 p-4 space-y-3">
                 <IdentifyDump raw={variant.raw} collapsible />

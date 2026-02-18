@@ -137,6 +137,7 @@ const ComboBox: React.FC<ComboBoxProps> = ({
       <div
         role="combobox"
         aria-expanded={isOpen}
+        aria-controls="combobox-list"
         tabIndex={0}
         onMouseDown={handleTriggerMouseDown}
         onKeyDown={(e) => {

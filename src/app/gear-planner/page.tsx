@@ -23,11 +23,11 @@ export default function GearPlannerPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 ">
-      
+
       <PageHeader
         title="Gear Planner"
         description="Build and compare equipment loadouts with stat calculations"
-        icons={<Sparkles className="text-orange-400" size={24} />}
+        icons={<NotebookPen className="text-orange-400" size={24} />}
       />
 
       <GearPlanner items={items} />

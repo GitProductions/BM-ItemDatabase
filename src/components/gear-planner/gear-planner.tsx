@@ -2,7 +2,6 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { Item } from '@/types/items';
-import { Sparkles } from 'lucide-react';
 import Summary from './components/summary';
 import ConfirmDialog from './../ui/ConfirmDialog';
 import ItemSelectionPanel from './components/item-selection-panel';

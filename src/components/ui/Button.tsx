@@ -34,7 +34,10 @@ type PolymorphicProps<C extends ElementType> = {
 const cn = (...parts: Array<string | undefined | false>) =>
   twMerge(...parts.filter(Boolean));
 
-const Button = forwardRef<HTMLElement, PolymorphicProps<'button'>>(
+const Button = forwardRef<
+  HTMLButtonElement | HTMLAnchorElement,
+  PolymorphicProps<ElementType>
+>(
   (
     {
       as,
@@ -58,8 +61,8 @@ const Button = forwardRef<HTMLElement, PolymorphicProps<'button'>>(
       focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-zinc-900
        disabled:opacity-60 disabled:cursor-not-allowed
       `;
-    const variantStyle = VARIANT_STYLES[variant] ?? VARIANT_STYLES.primary;
-    const sizeStyle = SIZE_STYLES[size] ?? SIZE_STYLES.md;
+    const variantStyle = VARIANT_STYLES[(variant ?? 'primary') as Variant] ?? VARIANT_STYLES.primary;
+    const sizeStyle = SIZE_STYLES[(size ?? 'md') as Size] ?? SIZE_STYLES.md;
     const widthStyle = fullWidth ? 'w-full' : '';
     const isDisabled = disabled || loading;
     const disabledStyle = isDisabled && !isButtonElement ? 'opacity-60 cursor-not-allowed pointer-events-none' : '';

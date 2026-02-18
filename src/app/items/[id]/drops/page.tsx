@@ -8,7 +8,7 @@ import { ItemCard } from '@/components/item-card';
 import { buildItemPath } from '@/lib/slug';
 import DropsPagination from './_components/DropsPagination';
 
-import { OriginalDropMeta, IdentifyDump, ItemHeaderBadges } from '@/components/item-details';
+import { OriginalDropMeta, ItemHeaderBadges } from '@/components/item-details';
 
 export const revalidate = 0;
 export const dynamic = 'force-dynamic';
@@ -85,7 +85,7 @@ export default async function ItemDropsPage({ params, searchParams}: { params: P
           <h1 className="text-3xl font-bold text-white leading-tight">{item.name || 'Unnamed item'}</h1>
         </div>
       </div>
-      
+
       {/* Comparison grid - merged + all drops side by side */}
       <div className="pb-2">
         <div className="grid gap-3 min-w-0 items-stretch grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">

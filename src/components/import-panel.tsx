@@ -1,7 +1,7 @@
 
 import React, { useMemo } from 'react';
 import Image from 'next/image';
-import { Save, Terminal, Info, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
+import { Save, Info, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
 import { ItemCard } from './item-card';
 import ComboBox from './ui/ComboBox';
 import Input from './ui/Input';
