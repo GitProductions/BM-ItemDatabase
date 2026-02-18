@@ -1,8 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { cache } from 'react';
 import { ArrowLeft } from 'lucide-react';
-import { fetchItemVariant, searchItems } from '@/lib/d1';
+import { fetchItemVariant } from '@/lib/d1';
 import { ItemCard } from '@/components/item-card';
 import { buildItemPath } from '@/lib/slug';
 import { OriginalDropMeta, IdentifyDump } from '@/components/item-details';
@@ -10,22 +9,14 @@ import { OriginalDropMeta, IdentifyDump } from '@/components/item-details';
 export const revalidate = 0;
 export const dynamic = 'force-dynamic';
 
-const fetchItem = cache(async (id: string) => {
-    const items = await searchItems({ id });
-    return items[0] ?? null;
-});
-
 type RouteParams = { id: string; submissionId: string };
 
 export default async function ItemDropPage({ params }: { params: Promise<RouteParams> }) {
     const { id, submissionId } = await params;
-    const item = await fetchItem(id);
-    if (!item) notFound();
-
     const variant = await fetchItemVariant(id, submissionId);
     if (!variant?.parsedItem) notFound();
 
-    const mergedItemUrl = buildItemPath(item.id, item.keywords);
+    const mergedItemUrl = buildItemPath(variant.itemId, variant.parsedItem.keywords);
 
     return (
         <div className="max-w-5xl mx-auto space-y-6">
@@ -35,7 +26,7 @@ export default async function ItemDropPage({ params }: { params: Promise<RoutePa
                     Back to merged view
                 </Link>
                 <div className="flex items-center gap-2 text-xs text-zinc-500 border border-zinc-700 rounded-sm px-2 py-1">
-                    <Link href={`/items/${id}/drops`} className="text-orange-300 hover:underline">
+                    <Link href={`/items/${variant.itemId}/drops`} className="text-orange-300 hover:underline">
                         View other similar drops
                     </Link>
                 </div>
