@@ -59,6 +59,16 @@ export type ItemsVersion = {
   totalAll: number;
 };
 
+export type ItemVariant = {
+  submissionId: string;
+  itemId: string;
+  submittedAt: string;
+  submittedBy?: string;
+  submittedByUserId?: string;
+  raw?: string[];
+  parsedItem?: Item;
+};
+
 export type ItemSearchParams = {
   q?: string;
   type?: string;
@@ -250,6 +260,15 @@ const submissionIdentity = (item: Item) =>
   `${item.name.toLowerCase().trim()}|${item.keywords.toLowerCase().trim()}|${item.type.toLowerCase().trim()}`;
 
 const normalizeSubmitterKey = (name?: string | null) => (name ?? '').trim().toLowerCase();
+
+const parseJson = <T>(value?: string | null): T | undefined => {
+  if (!value) return undefined;
+  try {
+    return JSON.parse(value) as T;
+  } catch {
+    return undefined;
+  }
+};
 
 const toFtsQuery = (raw: string): string | null => {
   const tokens = raw
@@ -524,6 +543,116 @@ export const searchItems = async (params: ItemSearchParams = {}): Promise<Item[]
   }
 
   return items;
+};
+
+export const fetchItemVariants = async (itemId: string, limit = 200): Promise<ItemVariant[]> => {
+  if (!itemId) return [];
+  const db = await getDatabase();
+  const cappedLimit = Math.max(1, Math.min(limit, 500));
+
+  const result = await db
+    .prepare(
+      `
+        SELECT id, itemId, submittedBy, submittedByUserId, submittedAt, raw, parsedItem
+        FROM submissions
+        WHERE itemId = ?1
+        ORDER BY submittedAt DESC, id DESC
+        LIMIT ?2;
+      `,
+    )
+    .bind(itemId, cappedLimit)
+    .all<{
+      id: string;
+      itemId: string;
+      submittedBy: string | null;
+      submittedByUserId: string | null;
+      submittedAt: string;
+      raw: string | null;
+      parsedItem: string | null;
+    }>();
+
+  const rows = (result.results ?? result.rows ?? []) as {
+    id: string;
+    itemId: string;
+    submittedBy: string | null;
+    submittedByUserId: string | null;
+    submittedAt: string;
+    raw: string | null;
+    parsedItem: string | null;
+  }[];
+
+  return rows.map((row) => {
+    const parsedItem = parseJson<Item>(row.parsedItem);
+    if (parsedItem) {
+      parsedItem.flags = parsedItem.flags ?? [];
+      parsedItem.stats = parsedItem.stats ?? { affects: [], weight: 0 };
+    }
+
+    return {
+      submissionId: row.id,
+      itemId: row.itemId,
+      submittedAt: row.submittedAt,
+      submittedBy: row.submittedBy ?? undefined,
+      submittedByUserId: row.submittedByUserId ?? undefined,
+      raw: parseJson<string[]>(row.raw),
+      parsedItem: parsedItem ?? undefined,
+    };
+  });
+};
+
+export const fetchItemVariant = async (itemId: string, submissionId: string): Promise<ItemVariant | null> => {
+  if (!itemId || !submissionId) return null;
+  const db = await getDatabase();
+
+  const result = await db
+    .prepare(
+      `
+        SELECT id, itemId, submittedBy, submittedByUserId, submittedAt, raw, parsedItem
+        FROM submissions
+        WHERE itemId = ?1 AND id = ?2
+        LIMIT 1;
+      `,
+    )
+    .bind(itemId, submissionId)
+    .all<{
+      id: string;
+      itemId: string;
+      submittedBy: string | null;
+      submittedByUserId: string | null;
+      submittedAt: string;
+      raw: string | null;
+      parsedItem: string | null;
+    }>();
+
+  const row = (result.results ?? result.rows ?? [])[0] as
+    | {
+        id: string;
+        itemId: string;
+        submittedBy: string | null;
+        submittedByUserId: string | null;
+        submittedAt: string;
+        raw: string | null;
+        parsedItem: string | null;
+      }
+    | undefined;
+
+  if (!row) return null;
+
+  const parsedItem = parseJson<Item>(row.parsedItem);
+  if (parsedItem) {
+    parsedItem.flags = parsedItem.flags ?? [];
+    parsedItem.stats = parsedItem.stats ?? { affects: [], weight: 0 };
+  }
+
+  return {
+    submissionId: row.id,
+    itemId: row.itemId,
+    submittedAt: row.submittedAt,
+    submittedBy: row.submittedBy ?? undefined,
+    submittedByUserId: row.submittedByUserId ?? undefined,
+    raw: parseJson<string[]>(row.raw),
+    parsedItem: parsedItem ?? undefined,
+  };
 };
 
 export const countItemsFiltered = async (params: ItemSearchParams = {}): Promise<number> => {

@@ -4,12 +4,13 @@ import type { Metadata } from 'next';
 import { cache } from 'react';
 import { AlertTriangle, ArrowLeft } from 'lucide-react';
 
-import { searchItems } from '@/lib/d1';
+import { fetchItemVariants, searchItems } from '@/lib/d1';
 import { ItemCard } from '@/components/item-card';
 import { StatBadge } from '@/components/stat-badge';
 import { canonicalizeSlots, guessSlot, normalizeWornSlots, slotLabel } from '@/lib/slots';
 import CopyButton from '@/components/ui/CopyButton';
 import { buildItemPath } from '@/lib/slug';
+import Button from '@/components/ui/Button';
 
 export const revalidate = 0;
 export const dynamic = 'force-dynamic';
@@ -47,6 +48,31 @@ const calculateDamage = (damage: string): DamageStats | null => {
   const highDamage = numDice * dieSides + modifier;
   const lowDamage = numDice * 1 + modifier;
   return { average: averageDamage.toFixed(2), high: highDamage, low: lowDamage };
+};
+
+const formatSubmittedAt = (value: string) => {
+  const submittedAt = new Date(value);
+  if (Number.isNaN(submittedAt.getTime())) return value;
+
+  const now = new Date();
+  const diffMs = Math.max(0, now.getTime() - submittedAt.getTime());
+  const diffMinutes = Math.floor(diffMs / 60000);
+
+  if (diffMinutes < 60) {
+    const minutes = Math.max(1, diffMinutes);
+    return `${minutes} minute${minutes === 1 ? '' : 's'} ago`;
+  }
+
+  const diffHours = Math.floor(diffMinutes / 60);
+  if (diffHours < 24) {
+    return `${diffHours} hour${diffHours === 1 ? '' : 's'} ago`;
+  }
+
+  return submittedAt.toLocaleString('en-US', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+    timeZone: 'UTC',
+  });
 };
 
 
@@ -138,6 +164,8 @@ export default async function ItemPage({ params }: { params: Promise<RouteParams
   const item = await fetchItem(id);
   if (!item) notFound();
 
+  const recentVariants = (await fetchItemVariants(id, 3)).filter((variant) => Boolean(variant.parsedItem));
+
   const stats = item.stats ?? { affects: [], weight: 0 };
   const affects = stats.affects ?? [];
   const wornSlots = canonicalizeSlots(normalizeWornSlots(item.worn));
@@ -154,6 +182,9 @@ export default async function ItemPage({ params }: { params: Promise<RouteParams
   const contributors = item.contributors ?? [];
   const primarySubmitter = contributors[0] ?? item.submittedBy ?? 'Unknown';
   const extraSubmitters = contributors.slice(1);
+  const submissionCount = item.submissionCount ?? 0;
+  const isMergedView = submissionCount > 1;
+  const variantsHref = `/items/${item.id}/drops`;
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
@@ -191,6 +222,15 @@ export default async function ItemPage({ params }: { params: Promise<RouteParams
                   Artifact
                 </span>
               )}
+              <span
+                className={
+                  isMergedView
+                    ? 'text-[11px] uppercase bg-orange-900/40 border border-orange-700 px-2 py-1 rounded-md text-orange-200'
+                    : 'text-[11px] uppercase bg-emerald-900/40 border border-emerald-700 px-2 py-1 rounded-md text-emerald-200'
+                }
+              >
+                {isMergedView ? 'Merged/Combined' : 'Original drop'}
+              </span>
               {item.flaggedForReview && (
                 <span className="inline-flex items-center gap-1 text-[11px] uppercase bg-rose-900/40 border border-rose-700 px-2 py-1 rounded-md text-rose-200">
                   <AlertTriangle size={12} />
@@ -202,6 +242,35 @@ export default async function ItemPage({ params }: { params: Promise<RouteParams
         </div>
 
         <ItemCard item={item} />
+        {recentVariants.length ? (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-white">Recent drops</h3>
+              {submissionCount > 1 ? (
+                <Link href={variantsHref} className="text-xs text-orange-300 hover:underline">
+                  View all {submissionCount}
+                </Link>
+              ) : null}
+            </div>
+            <div className="rounded-lg border border-zinc-800 bg-zinc-950/40 divide-y divide-zinc-800">
+              {recentVariants.map((variant) => (
+                <div key={variant.submissionId} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 text-sm">
+                  <Link href={`/items/${id}/drops/${variant.submissionId}`} className="text-orange-300 hover:underline">
+                    New Item Submission by {variant.submittedBy ?? 'Unknown'}
+
+                    {/* badge/button to give clue to click to view */}
+   
+
+                    <div className="text-xs text-zinc-400">
+                      {formatSubmittedAt(variant.submittedAt)}
+                    </div>
+                  </Link>
+                </div>
+        
+              ))}
+            </div>
+          </div>
+        ) : null}
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
