@@ -6,11 +6,10 @@ import { ArrowLeft } from 'lucide-react';
 
 import { fetchItemVariants, searchItems } from '@/lib/d1';
 import { ItemCard } from '@/components/item-card';
-import { canonicalizeSlots, guessSlot, normalizeWornSlots } from '@/lib/slots';
+import { canonicalizeSlots, guessSlot, normalizeWornSlots, slotLabel } from '@/lib/slots';
 import CopyButton from '@/components/ui/CopyButton';
 import { buildItemPath } from '@/lib/slug';
 import { IdentifyDump, ItemWornSource, ItemTraitsFlags, ItemContributors, ItemStatsSection, RecentDropsList, ItemHeaderBadges } from '@/components/item-details';
-import { slotLabel } from '@/lib/slots';
 
 export const revalidate = 0;
 export const dynamic = 'force-dynamic';
