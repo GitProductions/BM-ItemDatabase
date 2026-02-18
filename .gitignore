@@ -42,3 +42,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 /.open-next
+/.wrangler
+/backups
+src/app/api/admin/backfill-parsed-items/route.ts
