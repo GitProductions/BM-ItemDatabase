@@ -1,3 +1,16 @@
+### TO DO
+
+<!-- -- it seems we need to look into why we are calling `SELECT COUNT(*) AS count FROM items ;` it seems to be when we either search for items or maybe its when we go to an item page.  it seems tot rigger 2-4 times which is no good as we can make this count othe rplaces or other ways with no additional cost..   -->
+
+-- need to clean up and reuse some sections in our original items endpoint to reuse them in our drops item page.. 
+
+-- need to just revisit the design on these far as positioning the badge to show its an "original"d rop or ot
+-- need to change wording as 'Merged item' doesn sound right.. also back to 'merged view' seems wrong also.. 
+
+
+
+
+
 ## Blackmud Item Database (Next.js 15.5.10 + Tailwind CSS)
 
 Item database created for the Blackmud Community.
