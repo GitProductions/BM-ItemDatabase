@@ -25,8 +25,8 @@ export const ItemTraitsFlags = ({ flags, ego, egoMin, egoMax }: ItemTraitsFlagsP
       )}
     </div>
 
-    {/* Item Ego Label */}
-    {ego ? <p className="text-sm text-zinc-300">Ego: {egoMin} / {egoMax}</p> : null}
+    {/* Item Ego Label  - only showing egoMax if egoMin is different*/}
+    {ego && egoMin ? <p className="text-sm text-zinc-300">Ego: {egoMin} {egoMax && egoMin !== egoMax ? ` / ${egoMax}` : ''}</p> : null  }
 
   </div>
 );
