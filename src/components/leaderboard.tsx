@@ -15,9 +15,9 @@ type LeaderboardTotals = {
 };
 
 const formatDate = (iso?: string) => {
-  if (!iso) return '—';
+  if (!iso) return '-';
   const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return '—';
+  if (Number.isNaN(date.getTime())) return '-';
   return new Intl.DateTimeFormat('en', {
     month: 'short',
     day: 'numeric',
@@ -94,7 +94,7 @@ const Leaderboard: React.FC = () => {
                 <div>
                   <div className="font-semibold text-white">{entry.name || 'Unknown'}</div>
                   <div className="text-[11px] text-zinc-500">
-                    {entry.itemCount ? `${entry.itemCount} items touched` : '—'} • Last: {formatDate(entry.lastSubmittedAt)}
+                    {entry.itemCount ? `${entry.itemCount} items touched` : '-'} • Last: {formatDate(entry.lastSubmittedAt)}
                   </div>
                 </div>
               </div>

@@ -16,20 +16,51 @@ const geistMono = Geist_Mono({
 
 
 export const metadata: Metadata = {
-  title: "Blackmud Item Database",
-  description: "An item database and equipment calculator for the BlackMUD Community.",
+  title: {
+    default: "Blackmud Item Database",
+    template: "%s | Blackmud Item Database",
+  },
+  description:
+    "The Blackmud Item Database is a community-built reference for BlackMUD players. Browse and search a comprehensive catalog of weapons, armor, and equipment. Compare item stats, explore drop submissions contributed by the community, and look forward to an equipment planner currently in development.",
+
+  applicationName: "Blackmud Item Database",
+  keywords: [
+    "BlackMUD",
+    "MUD",
+    "multi-user dungeon",
+    "item database",
+    "equipment reference",
+    "Silly MUD",
+    "DikuMUD",
+    "Diku",
+    "text RPG",
+    "text-based RPG",
+    "online RPG",
+    "MUD game",
+    "longest running MUD",
+    "classic MUD",
+    "MUD community",
+    "weapons database",
+    "armor database",
+    "RPG items",
+  ], 
+ authors: [{ name: "BlackMUD Community" }],
+  creator: "BlackMUD Community",
 
   openGraph: {
     title: "Blackmud Item Database",
-    description: "An item database and equipment calculator for the BlackMUD Community.",
+    description:
+      "A community-built item reference for BlackMUD. Browse weapons, armor, and gear — compare stats, explore drop history, and stay tuned for an equipment planner coming soon.",
     type: "website",
     locale: "en_US",
+    url: "https://bm-itemdb.gitago.dev",
+    siteName: "Blackmud Item Database",
     images: [
       {
         url: "https://bm-itemdb.gitago.dev/bm-itemdb-ogimage.jpg",
         width: 1200,
         height: 630,
-        alt: "Blackmud Item Database",
+        alt: "Blackmud Item Database - Browse items, compare stats, and calculate equipment for BlackMUD",
       },
     ],
   },
@@ -37,11 +68,12 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Blackmud Item Database",
-    description: "An item database and equipment calculator for the BlackMUD Community.",
+    description:
+      "A community-built item reference for BlackMUD. Browse weapons, armor, and gear — compare stats, explore drop history, and stay tuned for an equipment planner coming soon.",
     images: [
       {
         url: "https://bm-itemdb.gitago.dev/bm-itemdb-ogimage.jpg",
-        alt: "Blackmud Item Database",
+        alt: "Blackmud Item Database - Browse items, compare stats, and calculate equipment for BlackMUD",
       },
     ],
   },
@@ -50,7 +82,18 @@ export const metadata: Metadata = {
     canonical: "https://bm-itemdb.gitago.dev",
   },
 
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
 
+  metadataBase: new URL("https://bm-itemdb.gitago.dev"),
 };
 
 const themeInitScript = `(() => {

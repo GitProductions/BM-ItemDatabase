@@ -6,11 +6,10 @@ import { ArrowLeft } from 'lucide-react';
 
 import { fetchItemVariants, searchItems } from '@/lib/d1';
 import { ItemCard } from '@/components/item-card';
-import { canonicalizeSlots, guessSlot, normalizeWornSlots } from '@/lib/slots';
+import { canonicalizeSlots, guessSlot, normalizeWornSlots, slotLabel } from '@/lib/slots';
 import CopyButton from '@/components/ui/CopyButton';
 import { buildItemPath } from '@/lib/slug';
 import { IdentifyDump, ItemWornSource, ItemTraitsFlags, ItemContributors, ItemStatsSection, RecentDropsList, ItemHeaderBadges } from '@/components/item-details';
-import { slotLabel } from '@/lib/slots';
 
 export const revalidate = 0;
 export const dynamic = 'force-dynamic';
@@ -167,7 +166,7 @@ export default async function ItemPage({ params }: { params: Promise<RouteParams
     <div className="max-w-5xl mx-auto space-y-6">
 
       {/* Item / Page Navigation */}
-      <div className="flex items-center justify-between gap-3 pt-4">
+      <div className="flex items-center justify-between gap-3 ">
         <Link href="/" className="inline-flex items-center gap-2 text-sm text-zinc-300 hover:text-white">
           <ArrowLeft size={16} />
           Back to items
@@ -182,6 +181,8 @@ export default async function ItemPage({ params }: { params: Promise<RouteParams
 
         {/* Item card */}
         <div className="flex-1 rounded-xl border border-zinc-800 bg-zinc-900/70 p-4 space-y-3">
+        
+          {/* Page title */}
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <p className="text-[11px] uppercase tracking-[0.18em] text-orange-300">Item</p>

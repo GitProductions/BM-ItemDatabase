@@ -33,6 +33,24 @@ const resolvePage = (rawPage: string | undefined, totalItems: number, pageSize: 
   return { page, totalPages, pageStart };
 };
 
+// export const metadata = {
+//   title: 'Item Drops | BlackMUD Item DB',
+//   description: 'Explore all original item drops submitted by the community, compare stats, and view raw data dumps.',
+// }
+
+export const generateMetadata = async ({ params }: { params: Promise<RouteParams> }) => {
+  const { id } = await params;
+  const item = await fetchItem(id);
+  if (!item) {
+    return { title: 'Item not found | BlackMUD Item DB' };
+  }
+
+  return {
+    title: `${item.name} Drops | BlackMUD Item DB`,
+    description: `Explore all original drops for ${item.name} submitted by the community, compare stats, and view raw data dumps.`,
+  };
+}
+
 export default async function ItemDropsPage({ params, searchParams}: { params: Promise<RouteParams>; searchParams?: Promise<SearchParams>}) {
   const [{ id }, resolvedSearchParams] = await Promise.all([params, searchParams]);
   const item = await fetchItem(id);
@@ -61,17 +79,18 @@ export default async function ItemDropsPage({ params, searchParams}: { params: P
       </div>
 
       {/* Page title */}
-      <div>
-        <p className="text-[11px] uppercase tracking-widest text-orange-300 mb-1">Item Drop List & Comparison</p>
-        <h1 className="text-2xl font-bold text-white leading-tight">{item.name}</h1>
-
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="text-[11px] uppercase tracking-[0.18em] text-orange-300">Item Drop List & Comparison</p>
+          <h1 className="text-3xl font-bold text-white leading-tight">{item.name || 'Unnamed item'}</h1>
+        </div>
       </div>
-
-      {/* Comparison grid — merged + all drops side by side */}
+      
+      {/* Comparison grid - merged + all drops side by side */}
       <div className="pb-2">
         <div className="grid gap-3 min-w-0 items-stretch grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
 
-          {/* Merged view — pinned first column */}
+          {/* Merged view - pinned first column */}
           <div className="flex flex-col gap-3 h-full">
             <div className="rounded-xl border border-orange-800/50 bg-zinc-900/70 p-4 space-y-3 flex flex-col h-full">
               <div className="flex flex-col gap-2">
