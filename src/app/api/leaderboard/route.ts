@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
       {
         status: 200,
         headers: {
-          'Cache-Control': 'public, max-age=300',
+          'Cache-Control': 'public, max-age=86400', // 24 hours
         },
       },
     ),

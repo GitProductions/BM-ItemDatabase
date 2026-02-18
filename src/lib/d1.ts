@@ -313,38 +313,24 @@ export const fetchSubmitterLeaderboard = async (limit = 20): Promise<Leaderboard
 
   const cappedLimit = Math.max(1, Math.min(limit, 100));
 
-  // Aggregate directly from submissions to keep counts accurate without a materialized table
+  // Single-pass aggregation with correlated subquery for latest name (avoids double table scan)
   const result = await db
     .prepare(
       `
-        WITH aggregated AS (
-          SELECT
-            submittedByKey,
-            COUNT(*) AS submissionCount,
-            COUNT(DISTINCT itemId) AS itemCount,
-            MAX(submittedAt) AS lastSubmittedAt
-          FROM submissions
-          GROUP BY submittedByKey
-        ),
-        latest_name AS (
-          SELECT
-            submittedByKey,
-            COALESCE(NULLIF(TRIM(submittedBy), ''), 'Unknown') AS name,
-            ROW_NUMBER() OVER (
-              PARTITION BY submittedByKey
-              ORDER BY submittedAt DESC, id DESC
-            ) AS rn
-          FROM submissions
-        )
         SELECT
-          COALESCE(n.name, 'Unknown') AS name,
-          a.submissionCount,
-          a.itemCount,
-          a.lastSubmittedAt
-        FROM aggregated a
-        LEFT JOIN latest_name n
-          ON n.submittedByKey = a.submittedByKey
-         AND n.rn = 1
+          COALESCE(
+            (SELECT COALESCE(NULLIF(TRIM(submittedBy), ''), 'Unknown')
+             FROM submissions s2
+             WHERE s2.submittedByKey = s.submittedByKey
+             ORDER BY s2.submittedAt DESC, s2.id DESC
+             LIMIT 1),
+            'Unknown'
+          ) AS name,
+          COUNT(*) AS submissionCount,
+          COUNT(DISTINCT itemId) AS itemCount,
+          MAX(submittedAt) AS lastSubmittedAt
+        FROM submissions s
+        GROUP BY submittedByKey
         ORDER BY submissionCount DESC, lastSubmittedAt DESC
         LIMIT ?1;
       `,
@@ -758,6 +744,7 @@ export const fetchItemsVersion = async (): Promise<ItemsVersion> => {
   const totalAll = row?.totalAll ?? 0;
   return { latestUpdatedAt, totalAll };
 };
+
 // Insert into items with upsert on normalized identityKey.
 // We update all mutable fields on conflict to ensure latest data is stored.
 // Returns the stable item IDs (existing or newly created) in the same order as the input.

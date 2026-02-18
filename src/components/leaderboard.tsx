@@ -36,7 +36,8 @@ const Leaderboard: React.FC = () => {
       setError(null);
       try {
         const res = await fetch('/api/leaderboard?limit=25', 
-          { next: { revalidate: 3600 } }
+          // { next: { revalidate: 3600 } }
+          { next: { revalidate: 86400 } } // cache for 24 hours  - later we can maybe make it more strict to only revalidate every 24 hours if submission otherwise every 3 days or something?
           // { cache: 'no-store' }
         );
         if (!res.ok) throw new Error(`Request failed (${res.status})`);
