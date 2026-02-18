@@ -2,11 +2,11 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { cache } from 'react';
 import { ArrowLeft } from 'lucide-react';
-
 import { fetchItemVariant, searchItems } from '@/lib/d1';
 import { ItemCard } from '@/components/item-card';
 import { buildItemPath } from '@/lib/slug';
 import { OriginalDropMeta, IdentifyDump } from '@/components/item-details';
+
 export const revalidate = 0;
 export const dynamic = 'force-dynamic';
 
@@ -34,11 +34,12 @@ export default async function ItemDropPage({ params }: { params: Promise<RoutePa
                     <ArrowLeft size={16} />
                     Back to merged view
                 </Link>
-                <div className="flex items-center gap-2 text-xs text-zinc-500">
+                <div className="flex items-center gap-2 text-xs text-zinc-500 border border-zinc-700 rounded-sm px-2 py-1">
                     <Link href={`/items/${id}/drops`} className="text-orange-300 hover:underline">
-                        All drops
+                        View other similar drops
                     </Link>
                 </div>
+  
             </div>
 
             <section className="rounded-xl border border-zinc-800 bg-zinc-950/70 p-4 space-y-3">
@@ -50,7 +51,7 @@ export default async function ItemDropPage({ params }: { params: Promise<RoutePa
                 <ItemCard item={variant.parsedItem} />
 
 
-                 {/* If theres a raw dump then show it */}
+                {/* If theres a raw dump then show it */}
                 <IdentifyDump raw={variant.raw} collapsible />
 
             </section>
