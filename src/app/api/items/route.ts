@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidateTag, unstable_cache } from 'next/cache';
 import { parseIdentifyDump } from '@/lib/parse-identify-dump';
-import { countItems, countItemsFiltered, deleteItem, fetchItemsVersion, searchItems, upsertItems } from '@/lib/d1';
+import { countItemsFiltered, deleteItem, fetchItemsVersion, searchItems, upsertItems } from '@/lib/d1';
 import { ItemInput, normalizeItemInput, parseBooleanParam, withCors } from '@/lib/items-api';
 import { Item } from '@/types/items';
 import { getAuthSession } from '@/lib/auth';
@@ -42,8 +42,7 @@ const runItemsQuery = async (input: ItemsQueryCacheInput) => {
     offset: input.offset,
   });
 
-  const [totalAll, totalMatching, versionInfo] = await Promise.all([
-    countItems(),
+  const [totalMatching, versionInfo] = await Promise.all([
     countItemsFiltered({ q: input.q, type: input.type, flagged: input.flagged, id: input.id }),
     fetchItemsVersion(),
   ]);
@@ -52,7 +51,7 @@ const runItemsQuery = async (input: ItemsQueryCacheInput) => {
     items,
     count: items.length,
     total: totalMatching,
-    totalAll,
+    totalAll: versionInfo.totalAll,
     latestUpdatedAt: versionInfo.latestUpdatedAt,
   };
 };
@@ -68,12 +67,12 @@ const getCachedItemsQuery = unstable_cache(
 
 const getCachedShortQueryMiss = unstable_cache(
   async () => {
-    const [totalAll, versionInfo] = await Promise.all([countItems(), fetchItemsVersion()]);
+    const versionInfo = await fetchItemsVersion();
     return {
       items: [],
       count: 0,
       total: 0,
-      totalAll,
+      totalAll: versionInfo.totalAll,
       latestUpdatedAt: versionInfo.latestUpdatedAt,
     };
   },
@@ -83,12 +82,12 @@ const getCachedShortQueryMiss = unstable_cache(
 
 // Bypass helpers intentionally skip unstable_cache and hit DB directly.
 const runShortQueryMiss = async () => {
-  const [totalAll, versionInfo] = await Promise.all([countItems(), fetchItemsVersion()]);
+  const versionInfo = await fetchItemsVersion();
   return {
     items: [],
     count: 0,
     total: 0,
-    totalAll,
+    totalAll: versionInfo.totalAll,
     latestUpdatedAt: versionInfo.latestUpdatedAt,
   };
 };
