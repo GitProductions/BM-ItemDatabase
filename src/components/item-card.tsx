@@ -7,6 +7,7 @@ import { StatBadge } from './stat-badge';
 type ItemCardProps = {
   item: Item;
   hideSubmittedBy?: boolean;
+  full?: boolean;
 };
 
 type DamageStats = {
@@ -49,7 +50,7 @@ const formatValueRange = (
   return value !== undefined ? fmt(value) : '';
 };
 
-export const ItemCard: React.FC<ItemCardProps> = ({ item, hideSubmittedBy }) => {
+export const ItemCard: React.FC<ItemCardProps> = ({ item, hideSubmittedBy, full }) => {
   let Icon = Database;
   let typeColor = 'text-zinc-400';
 
@@ -90,10 +91,10 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item, hideSubmittedBy }) => 
   }
 
   return (
-    <div className="relative flex flex-col rounded-lg p-4 
+    <div className={`relative flex flex-col rounded-lg p-4 ${!full ? 'h-full' : ''}
      bg-zinc-800 border border-zinc-700 hover:border-zinc-500 
-      transition-colors shadow-sm"
-    >
+      transition-colors shadow-sm`
+    }>
       <div className="flex justify-between items-start mb-2">
         <div className="flex items-start gap-3">
           <div className={`p-2 rounded-md bg-zinc-900 ${typeColor}`}>

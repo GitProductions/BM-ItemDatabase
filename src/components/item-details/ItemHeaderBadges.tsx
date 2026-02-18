@@ -37,9 +37,10 @@ export const ItemHeaderBadges = ({
             ) : null}
 
 
+                    {/* Letting user know if this is an original drop or overall */}
+{/* 
             {hideBadges ? null : (
                 <>
-                    {/* Letting user know if this is an original drop or overall */}
                     <span
                         className={
                             isMergedView
@@ -50,7 +51,7 @@ export const ItemHeaderBadges = ({
                         {isMergedView ? 'Overall Stats' : 'Original drop'}
                     </span>
                 </>
-            )}
+            )} */}
 
             {/* Flagged for review badge */}
             {flaggedForReview ? (

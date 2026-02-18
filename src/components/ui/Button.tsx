@@ -34,7 +34,7 @@ type PolymorphicProps<C extends ElementType> = {
 const cn = (...parts: Array<string | undefined | false>) =>
   twMerge(...parts.filter(Boolean));
 
-const Button = forwardRef<HTMLButtonElement, PolymorphicProps<'button'>>(
+const Button = forwardRef<HTMLElement, PolymorphicProps<'button'>>(
   (
     {
       as,
@@ -52,6 +52,7 @@ const Button = forwardRef<HTMLButtonElement, PolymorphicProps<'button'>>(
     ref,
   ) => {
     const Component = (as ?? 'button') as ElementType;
+    const isButtonElement = Component === 'button';
     const base =`
       inline-flex items-center justify-center whitespace-nowrap  font-semibold transition-colors 
       focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-zinc-900
@@ -61,12 +62,14 @@ const Button = forwardRef<HTMLButtonElement, PolymorphicProps<'button'>>(
     const sizeStyle = SIZE_STYLES[size] ?? SIZE_STYLES.md;
     const widthStyle = fullWidth ? 'w-full' : '';
     const isDisabled = disabled || loading;
+    const disabledStyle = isDisabled && !isButtonElement ? 'opacity-60 cursor-not-allowed pointer-events-none' : '';
 
     return (
       <Component
         ref={ref}
-        className={cn(base, variantStyle, sizeStyle, widthStyle, className)}
-        disabled={isDisabled}
+        className={cn(base, variantStyle, sizeStyle, widthStyle, disabledStyle, className)}
+        disabled={isButtonElement ? isDisabled : undefined}
+        aria-disabled={!isButtonElement && isDisabled ? true : undefined}
         aria-busy={loading || undefined}
         {...props}
       >
