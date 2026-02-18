@@ -59,6 +59,7 @@ export const ensureSchema = async (db: D1Database) => {
         submittedByUserId TEXT,
         submittedAt TEXT NOT NULL,
         raw TEXT,
+        parsedItem TEXT,
         ipHash TEXT,
         FOREIGN KEY(itemId) REFERENCES items(id) ON DELETE CASCADE
       );

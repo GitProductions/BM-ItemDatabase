@@ -36,6 +36,7 @@ CREATE TABLE IF NOT EXISTS submissions (
   submittedByUserId TEXT,
   submittedAt TEXT NOT NULL,
   raw TEXT,
+  parsedItem TEXT,
   ipHash TEXT,
   FOREIGN KEY(itemId) REFERENCES items(id) ON DELETE CASCADE
 );

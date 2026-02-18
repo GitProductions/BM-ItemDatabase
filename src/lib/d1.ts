@@ -778,9 +778,9 @@ export const upsertItems = async (
         .prepare(
           `
           INSERT INTO submissions (
-            id, itemId, identityKey, submittedBy, submittedByKey, submittedByUserId, submittedAt, raw, ipHash
+            id, itemId, identityKey, submittedBy, submittedByKey, submittedByUserId, submittedAt, raw, parsedItem, ipHash
           )
-          VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9);
+          VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10);
         `,
         )
         .bind(
@@ -792,6 +792,7 @@ export const upsertItems = async (
           submitterId ?? null,
           now,
           item.raw ? JSON.stringify(item.raw) : null,
+          JSON.stringify(item),
           context?.submissionIpHash ?? null,
         );
     }),
