@@ -27,21 +27,21 @@ export const RecentDropsList = ({
       {/* Section Header */}
       <div className="flex items-center justify-between mb-4 px-1">
         <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">
-          Recent Item Drops
+          Recent Drops
         </h3>
         {submissionCount > displayed.length && (
           <Link
             href={variantsHref}
             className="text-xs font-medium text-orange-500 hover:text-orange-400 transition-colors"
           >
-            Full Log ({submissionCount})
+            View All ({submissionCount})
           </Link>
         )}
       </div>
 
       {displayed.length === 0 ? (
         <p className="text-sm text-zinc-600 py-6 border-t border-zinc-800/50">
-          No recorded drops in the database.
+          No recorded drops for this item.
         </p>
       ) : (
         <div className="divide-y divide-zinc-800/60 border-t border-zinc-800/60">
@@ -86,6 +86,7 @@ export const RecentDropsList = ({
                 >
                   View
                 </Link>
+                
               </div>
             );
           })}
