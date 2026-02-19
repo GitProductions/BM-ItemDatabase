@@ -50,12 +50,12 @@ function getStaticRoutes(): MetadataRoute.Sitemap {
       changeFrequency: 'monthly',
       priority: 0.8,
     },
-    {
-      url: `${BASE_URL}/login`,
-      lastModified: new Date(),
-      changeFrequency: 'monthly',
-      priority: 0.7,
-    },
+    // {
+    //   url: `${BASE_URL}/login`,
+    //   lastModified: new Date(),
+    //   changeFrequency: 'monthly',
+    //   priority: 0.7,
+    // },
     {
       url: `${BASE_URL}/leaderboard`,
       lastModified: new Date(),
@@ -68,12 +68,12 @@ function getStaticRoutes(): MetadataRoute.Sitemap {
       changeFrequency: 'monthly',
       priority: 0.8,
     },
-    {
-      url: `${BASE_URL}/account`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.7,
-    },
+    // {
+    //   url: `${BASE_URL}/account`,
+    //   lastModified: new Date(),
+    //   changeFrequency: 'weekly',
+    //   priority: 0.7,
+    // },
     {
       url: `${BASE_URL}/add-item`,
       lastModified: new Date(),
@@ -109,12 +109,12 @@ async function getItemRoutes(): Promise<MetadataRoute.Sitemap> {
       });
 
       // Item drops summary page
-      routes.push({
-        url: `${BASE_URL}/items/${item.id}/drops`,
-        lastModified: new Date(),
-        changeFrequency: 'weekly',
-        priority: 0.7,
-      });
+      // routes.push({
+      //   url: `${BASE_URL}/items/${item.id}/drops`,
+      //   lastModified: new Date(),
+      //   changeFrequency: 'weekly',
+      //   priority: 0.7,
+      // });
     });
 
     return routes;

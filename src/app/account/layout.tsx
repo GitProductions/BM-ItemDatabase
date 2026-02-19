@@ -5,9 +5,9 @@ import { buildPageMetadata } from "@/lib/seo/metadata";
 
 export const metadata: Metadata = {
   ...buildPageMetadata({
-    title: "Add Item",
-    description: 'You\'ve always wanted to become a legend, Why not today? Help the BlackMUD community by adding new items to the database or updating existing ones.',
-    path: "/add-item",
+    title: "Account",
+    description: 'Manage your account settings and preferences.',
+    path: "/account",
   }),
 
 };
