@@ -53,6 +53,7 @@ const calculateDamage = (damage: string): DamageStats | null => {
 
 
 type RouteParams = { id: string; slug?: string[] };
+
 export async function generateMetadata({ params }: { params: Promise<RouteParams> }): Promise<Metadata> {
   const { id } = await params;
   const item = await fetchItem(id);

@@ -1,13 +1,15 @@
 import React from "react";
 import Link from "next/link";
+import { buildPageMetadata } from "@/lib/seo/metadata";
 
-export const metadata = {
-    title: 'About',
+
+export const metadata: Metadata = {
+  ...buildPageMetadata({
+    title: "About BlackMUD Item Database",
     description: 'Learn about the BlackMUD Item Database, a community-driven resource for players of BlackMUD. Discover its features, goals, and how to get involved.',
-    alternates: {
-        canonical: `${process.env.NEXT_PUBLIC_BASE_URL}/about`,
-    },
-}
+    path: "/about",
+  }),
+};
 
 const AboutPage = () => (
     <main className="max-w-5xl mx-auto my-2 bg-zinc-800 border border-zinc-700 rounded-lg p-4 mb-4 hover:border-zinc-500 transition-colors shadow-sm h-full">
