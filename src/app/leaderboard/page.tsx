@@ -1,6 +1,12 @@
 import React from 'react'
 import Leaderboard from '@/components/leaderboard'
 
+
+export const metadata = {
+  title: "Leaderboard - Top Contributors",
+  description: "Top contributors & most active players on the BlackMUD Item Database. See who's submitted the most drops and helped expand the database for the community.",
+};
+
 function Page() {
   return (
     <div className="max-w-3xl mx-auto py-8 px-4">

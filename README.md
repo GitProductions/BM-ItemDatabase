@@ -2,10 +2,12 @@
 
 <!-- -- it seems we need to look into why we are calling `SELECT COUNT(*) AS count FROM items ;` it seems to be when we either search for items or maybe its when we go to an item page.  it seems tot rigger 2-4 times which is no good as we can make this count othe rplaces or other ways with no additional cost..   -->
 
--- need to clean up and reuse some sections in our original items endpoint to reuse them in our drops item page.. 
+-- need to add a global seo component so we dont repeat so much.. 
+  - need to add open graph meta data for all sections the same as normal meta
+  - need to add open graph tags
+-- need to pull proper URL for mudlet app
+-- need to make mudlet app check for latest download available or if one is available...
 
--- need to just revisit the design on these far as positioning the badge to show its an "original"d rop or ot
--- need to change wording as 'Merged item' doesn sound right.. also back to 'merged view' seems wrong also.. 
 
 
 

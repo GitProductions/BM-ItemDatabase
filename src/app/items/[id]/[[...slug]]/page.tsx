@@ -75,8 +75,7 @@ export async function generateMetadata({ params }: { params: Promise<RouteParams
   //   slotText ? `Slots: ${slotText}` : null,
   // ].filter(Boolean);
 
-  const description = "Learn more item details for " + item.name + (slotText ? ` worn on ${slotText}` : '');
-
+  const description = `${item.name}${slotText ? ` worn on ${slotText}` : ''}${item.type ? ` | ${item.type}` : ''} — Explore stats, properties & drop history on the Blackmud Item Database.`;
   // if we create an image with all the details, people would be less likely to click through
   // const ogParams = new URLSearchParams({
   //   name: item.name,
@@ -105,7 +104,7 @@ export async function generateMetadata({ params }: { params: Promise<RouteParams
   // });
   // const metaOGImage = `/api/thumbnails/item?${ogParams.toString()}`;
   return {
-    title: `${item.name}`,
+    title: `View details about ${item.keywords ? item.keywords : item.name}`,
     description: description || 'BlackMUD item details',
     openGraph: {
       title: `${item.name} | BlackMUD Item DB`,

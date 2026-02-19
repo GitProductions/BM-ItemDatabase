@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 // import PageHeader from '@/components/ui/PageHeader';
+import { keywordsToSlug } from '@/lib/slug';
 import { ArrowLeft, FileText } from 'lucide-react';
 import { fetchItemVariant } from '@/lib/d1';
 import { formatSubmittedAt } from '@/lib/format-submitted-at';
@@ -26,12 +27,12 @@ export const generateMetadata = async ({ params }: { params: Promise<RouteParams
 
     return {
         title: `${variant.parsedItem.name} Drop`,
-        description: `${variant.parsedItem.name} was dropped and submitted by ${variant.submittedBy} ${timeNormalized}. View the original unmerged drop data for this submission, compare its stats against the other identical drop variants.`,
+        description: `${variant.parsedItem.name} - dropped by ${variant.submittedBy} ${timeNormalized}. View drop stats & compare variants on BlackMUD Item Database.`,
 
         // Canonical URL is purposely pointing to the merged item view rather than the individual drop, since the drop pages are often near duplicates of the same item and may cause SEO issues
         // but we still want them to be crawlable and followable for discovery so we do not index but allow following
         alternates : {
-            canonical: `${process.env.NEXT_PUBLIC_BASE_URL}/items/${id}`,
+            canonical: `${process.env.NEXT_PUBLIC_BASE_URL}/items/${id}/${keywordsToSlug(variant.parsedItem.keywords)}`,
         },
         robots: {
             index: false,
