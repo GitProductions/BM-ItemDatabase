@@ -47,6 +47,7 @@ export default async function ItemDropPage({ params }: { params: Promise<RoutePa
     if (!variant?.parsedItem) notFound();
 
     const mergedItemUrl = buildItemPath(variant.itemId, variant.parsedItem.keywords);
+    const otherDropsUrl = buildItemPath(variant.itemId, 'drops');
 
     return (
         <div className="max-w-5xl mx-auto space-y-6">
@@ -70,8 +71,8 @@ export default async function ItemDropPage({ params }: { params: Promise<RoutePa
                     Back to item page
                 </Link>
 
-                <Button as={Link} variant="secondary" size="sm" href={mergedItemUrl}>
-                    View merged
+                <Button as={Link} variant="secondary" size="sm" href={otherDropsUrl}>
+                    View Other Drops
                 </Button>
             </div>
 

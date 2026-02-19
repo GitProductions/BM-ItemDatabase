@@ -74,7 +74,7 @@ export async function generateMetadata({ params }: { params: Promise<RouteParams
   const description = `${item.name}${slotText ? ` worn on ${slotText}` : ''}${item.type ? ` | ${item.type}` : ''} - Explore stats, properties & drop history on the Blackmud Item Database.`;
 
   return buildPageMetadata({
-    title: `${item.name} | BlackMUD Item DB`,
+    title: `${item.name}`,
     description,
     path: `/items/${id}/${keywordsToSlug(item.keywords)}`,
   })

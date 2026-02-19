@@ -8,15 +8,20 @@ function Footer() {
         <Link href="/" className="hover:underline hover:text-orange-600">
           Home
         </Link>
-        <Link href="/gear-planner" className="hover:underline hover:text-orange-600">
-          Gear Planner
+        <Link href="/about" className="hover:underline hover:text-orange-600">
+          About
         </Link>
         <Link href="/add-item" className="hover:underline hover:text-orange-600">
           Add Items
         </Link>
-        <Link href="/about" className="hover:underline hover:text-orange-600">
-          About
+        <Link href="/gear-planner" className="hover:underline hover:text-orange-600">
+          Gear Planner
         </Link>
+        <Link href="/leaderboard" className="hover:underline hover:text-orange-600">
+          Leaderboard
+        </Link>
+
+
       </div>
 
       <p className=" text-[10px]">Created by David &quot;Gitago&quot; Bell in collaboration with GitProductions.</p>

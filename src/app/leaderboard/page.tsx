@@ -1,5 +1,6 @@
 import React from 'react'
 import Leaderboard from '@/components/leaderboard'
+import type { Metadata } from "next";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 
 
