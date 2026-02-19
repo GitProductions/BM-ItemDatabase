@@ -25,12 +25,15 @@ export const generateMetadata = async ({ params }: { params: Promise<RouteParams
         return { title: 'Item drop not found' };
     }
 
-    const timeNormalized = formatSubmittedAt(variant.submittedAt, { relativeWithinHours: 24 })
+    // const timeNormalized = formatSubmittedAt(variant.submittedAt, { relativeWithinHours: 24 })
+
+    // time to date dd/mm/yyyy
+    const timeNormalized = formatSubmittedAt(variant.submittedAt, { dateOnly: true });
 
 
     return buildPageMetadata({
-        title: `${variant.parsedItem.name} Drop`,
-        description: `${variant.parsedItem.name} - dropped by ${variant.submittedBy} ${timeNormalized}. View drop stats & compare variants on BlackMUD Item Database.`, 
+        title: `${variant.parsedItem.name} - Item Submission`,
+        description: `Item submitted ${timeNormalized}. View complete drop statistics, item variants, and compare with other submissions on BlackMUD Item Database.`, 
         
         // Canonical URL is purposely pointing to the merged item view rather than the individual drop, since the drop pages are often near duplicates of the same item and may cause SEO issues
         // but we still want them to be crawlable and followable for discovery so we do not index but allow following

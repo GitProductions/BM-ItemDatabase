@@ -1,35 +1,37 @@
 type FormatOptions = {
   relativeWithinHours?: number;
   timeZone?: string;
+  dateOnly?: boolean;
 };
 
 export const formatSubmittedAt = (value: string, options: FormatOptions = {}): string => {
   const submittedAt = new Date(value);
   if (Number.isNaN(submittedAt.getTime())) return value;
 
-  const relativeWithinHours = options.relativeWithinHours ?? 0;
-  if (relativeWithinHours > 0) {
-    const now = new Date();
-    const diffMs = now.getTime() - submittedAt.getTime();
+  const now = new Date();
+  const diffMs = now.getTime() - submittedAt.getTime();
 
-    if (diffMs >= 0) {
-      const diffMinutes = Math.floor(diffMs / 60000);
+  if (diffMs >= 0) {
+    const diffMinutes = Math.floor(diffMs / 60000);
 
+    // Show relative time within specified hours (default 24)
+    const relativeWithinMinutes = (options.relativeWithinHours ?? 24) * 60;
+
+    if (diffMinutes < relativeWithinMinutes) {
       if (diffMinutes < 60) {
         const minutes = Math.max(1, diffMinutes);
         return `${minutes} minute${minutes === 1 ? '' : 's'} ago`;
       }
 
       const diffHours = Math.floor(diffMinutes / 60);
-      if (diffHours < relativeWithinHours) {
-        return `${diffHours} hour${diffHours === 1 ? '' : 's'} ago`;
-      }
+      return `${diffHours} hour${diffHours === 1 ? '' : 's'} ago`;
     }
   }
 
+  // For old dates, show date only by default
   return submittedAt.toLocaleString('en-US', {
     dateStyle: 'medium',
-    timeStyle: 'short',
+    ...(options.dateOnly === false ? { timeStyle: 'short' } : {}),
     timeZone: options.timeZone ?? 'UTC',
   });
 };
