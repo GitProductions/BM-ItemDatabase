@@ -24,6 +24,13 @@
   .scrollable-content {
     @apply overflow-y-auto pr-1;
   }
+
+  /* Glass morphism header */
+  /* header {
+    background: rgba(9, 9, 11, 0.7) !important;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  } */
 }
 
 :root {

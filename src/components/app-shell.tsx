@@ -38,9 +38,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               )}
             </div>
           </div>
-          <Footer />
+          {/* <Footer /> */}
         </main>
-        
+            <Footer />
       </div>
     </div>
   );
