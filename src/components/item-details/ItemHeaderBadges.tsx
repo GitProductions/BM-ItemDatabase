@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 
 type ItemHeaderBadgesProps = {
     isArtifact?: boolean;
-    isMergedView: boolean;
+    isMergedView?: boolean;
     flaggedForReview?: boolean;
     align?: 'left' | 'right';
     hideBadges?: boolean; // Option to hide badges, useful for when we want to show the badges in a different section/header but still want to use the component for layout purposes
@@ -13,10 +13,8 @@ type ItemHeaderBadgesProps = {
 
 export const ItemHeaderBadges = ({
     isArtifact,
-    isMergedView,
     flaggedForReview,
     align = 'right',
-    hideBadges = false,
     asRow = false,
     children,
 }: ItemHeaderBadgesProps) => {

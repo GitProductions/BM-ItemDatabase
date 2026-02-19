@@ -127,15 +127,6 @@ const ComboBox: React.FC<ComboBoxProps> = ({
     });
   };
 
-  // Remove buttons use onMouseDown so they fire before the parent's handler.
-  // They set the suppress flag so handleTriggerMouseDown won't also toggle.
-  const handleRemoveMouseDown = (option: string, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    suppressToggleRef.current = true;
-    removeOption(option);
-  };
-
   return (
     <div ref={containerRef} className={`relative w-full ${className}`}>
       {/* Trigger / selected items display */}

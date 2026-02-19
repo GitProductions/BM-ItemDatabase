@@ -3,7 +3,6 @@
 import { GearPlanner } from '@/components/gear-planner/gear-planner';
 import { useAppData } from '@/components/app-provider';
 import PageHeader from '@/components/ui/PageHeader';
-import { Sparkles } from 'lucide-react';
 import { NotebookPen } from 'lucide-react';
 
 

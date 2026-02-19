@@ -1,8 +1,9 @@
-import { ItemDB } from '@/components/database-view';
+import { SearchView } from '@/components/search-view';
 import type { Metadata } from 'next';
 import { buildPageMetadata } from '@/lib/seo/metadata';
 import { fetchItemsVersion, searchItems } from '@/lib/d1';
 import { Item } from '@/types/items';
+import { PAGE_SIZE } from '@/components/search/use-search-results';
 
 type HomePageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -19,7 +20,7 @@ export async function generateMetadata({
     // Get total items to calculate total pages
     const versionData = await fetchItemsVersion();
     const totalItems = versionData.totalAll || 0;
-    const PAGE_SIZE = 20;
+    // const PAGE_SIZE = 20;
     const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
     
     // Clamp current page to valid range
@@ -41,7 +42,7 @@ export async function generateMetadata({
   }
 }
 
-const PAGE_SIZE = 20;
+// const PAGE_SIZE = 20;
 
 export default async function HomePage({ searchParams }: HomePageProps) {
   const params = await searchParams;
@@ -61,7 +62,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
   return (
     <>
-      <ItemDB
+      <SearchView
         initialPage={pageParam}
         initialItems={initialItems}
         initialTotalCount={totalItems}

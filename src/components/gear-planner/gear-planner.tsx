@@ -8,7 +8,6 @@ import ItemSelectionPanel from './components/item-selection-panel';
 import { computeTotals } from './util';
 import { Selected, SlotKey, GearPlannerProps } from './types/types';
 import { SLOT_CONFIG, matchesSlot, slotMatchRank } from '@/lib/slots';
-import Image from 'next/image';
 import { getRandomOrcPhrase } from '@/lib/orc-phrases';
 
 const defaultGearState: Selected = SLOT_CONFIG.reduce((acc, slot) => {

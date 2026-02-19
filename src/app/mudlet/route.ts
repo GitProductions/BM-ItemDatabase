@@ -1,11 +1,11 @@
 // app/mudlet/route.ts
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { withCors } from '@/lib/items-api'; 
 
 const GITHUB_URL = process.env.GITHUB_RELEASE_URL || ''
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const response = await fetch(GITHUB_URL, {
       redirect: 'follow',
