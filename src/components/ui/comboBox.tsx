@@ -143,7 +143,7 @@ const ComboBox: React.FC<ComboBoxProps> = ({
         role="combobox"
         aria-expanded={isOpen}
         aria-controls="combobox-list"
-        {...(ariaLabel && { 'aria-label': ariaLabel })}
+        aria-label={ariaLabel || placeholder}
         {...(ariaLabelledby && { 'aria-labelledby': ariaLabelledby })}
         tabIndex={0}
         onMouseDown={handleTriggerMouseDown}

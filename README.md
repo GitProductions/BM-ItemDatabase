@@ -2,11 +2,19 @@
 
 <!-- -- it seems we need to look into why we are calling `SELECT COUNT(*) AS count FROM items ;` it seems to be when we either search for items or maybe its when we go to an item page.  it seems tot rigger 2-4 times which is no good as we can make this count othe rplaces or other ways with no additional cost..   -->
 
+
+
+<!-- https://app.ahrefs.com/site-audit/9458835/overview -->
 -- need to add a global seo component so we dont repeat so much.. 
   - need to add open graph meta data for all sections the same as normal meta
   - need to add open graph tags
 -- need to pull proper URL for mudlet app
 -- need to make mudlet app check for latest download available or if one is available...
+-- account page has no h1 header
+  - also missing proper cannocial url
+-- meta dsescriptions on various items are too short.. we can safely add atleast 20 letters to each to be in good spot
+-- titles too long for various items due to havig longer item names plus the template adding "| Blackmud Item Database" to it.. 
+
 
 
 
