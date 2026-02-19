@@ -11,6 +11,7 @@ import { canonicalizeSlots, guessSlot, normalizeWornSlots, slotLabel } from '@/l
 import CopyButton from '@/components/ui/CopyButton';
 import { buildItemPath } from '@/lib/slug';
 import { IdentifyDump, ItemWornSource, ItemTraitsFlags, ItemContributors, ItemStatsSection, RecentDropsList, ItemHeaderBadges } from '@/components/item-details';
+import { buildPageMetadata } from "@/lib/seo/metadata";
 
 export const revalidate = 0;
 export const dynamic = 'force-dynamic';
@@ -70,71 +71,13 @@ export async function generateMetadata({ params }: { params: Promise<RouteParams
     })();
 
   const slotText = guessedSlots.map((slot) => slotLabel(slot)).join(', ');
-  // const descParts = [
-  //   item.type,
-  //   item.keywords ? `Keywords: ${item.keywords}` : null,
-  //   slotText ? `Slots: ${slotText}` : null,
-  // ].filter(Boolean);
+  const description = `${item.name}${slotText ? ` worn on ${slotText}` : ''}${item.type ? ` | ${item.type}` : ''} - Explore stats, properties & drop history on the Blackmud Item Database.`;
 
-  const description = `${item.name}${slotText ? ` worn on ${slotText}` : ''}${item.type ? ` | ${item.type}` : ''} — Explore stats, properties & drop history on the Blackmud Item Database.`;
-  // if we create an image with all the details, people would be less likely to click through
-  // const ogParams = new URLSearchParams({
-  //   name: item.name,
-  //   type: item.type,
-  //   keywords: item.keywords ?? '',
-  //   worn: slotText,
-  //   damage: item.stats?.damage ?? '',
-  //   ac: item.stats?.ac !== undefined ? String(item.stats.ac) : '',
-  //   weight: item.stats?.weight !== undefined ? String(item.stats.weight) : '',
-  //   ego: item.ego ?? '',
-  //   droppedBy: item.droppedBy ?? '',
-  //   artifact: item.isArtifact ? '1' : '',
-  //   flags: item.flags?.join(',') ?? '',
-  //   affects: JSON.stringify(
-  //     (item.stats?.affects ?? []).map((affect) => ({
-  //       type: affect.type,
-  //       stat: affect.stat,
-  //       value: affect.value,
-  //       min: affect.min,
-  //       max: affect.max,
-  //       spell: affect.spell,
-  //       level: affect.level,
-  //     })),
-  //   ),
-  //   submittedBy: (item.contributors?.[0] ?? item.submittedBy ?? ''),
-  // });
-  // const metaOGImage = `/api/thumbnails/item?${ogParams.toString()}`;
-  return {
-    title: `View details about ${item.keywords ? item.keywords : item.name}`,
-    description: description || 'BlackMUD item details',
-    openGraph: {
-      title: `${item.name} | BlackMUD Item DB`,
-      description: description || 'BlackMUD item details',
-      //   images: metaOGImage ? [
-      //         {
-      //           url: metaOGImage,
-      //           alt: item.name,
-      //         },
-      //       ]
-      //     : undefined,
-      // },
-      //  twitter: {
-      //   card: 'summary_large_image',
-      //   title: `${item.name} | BlackMUD Item DB`,
-      //   description: description || 'BlackMUD item details',
-      //   images: metaOGImage ? [
-      //         {
-      //           url: metaOGImage,
-      //           alt: item.name,
-      //         },
-      //       ]
-      //     : undefined,
-    },
-
-    alternates: {
-      canonical: `${process.env.NEXT_PUBLIC_BASE_URL}/items/${id}/${keywordsToSlug(item.keywords)}`,
-    },
-  };
+  return buildPageMetadata({
+    title: `${item.name} | BlackMUD Item DB`,
+    description,
+    path: `/items/${id}/${keywordsToSlug(item.keywords)}`,
+  })
 
 
 }

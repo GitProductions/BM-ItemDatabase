@@ -9,11 +9,13 @@ import { ItemCard } from '@/components/item-card';
 import { buildItemPath } from '@/lib/slug';
 import { OriginalDropMeta, IdentifyDump } from '@/components/item-details';
 import Button from '@/components/ui/Button';
+import { buildPageMetadata } from "@/lib/seo/metadata";
 
 export const revalidate = 0;
 export const dynamic = 'force-dynamic';
 
 type RouteParams = { id: string; submissionId: string };
+
 
 export const generateMetadata = async ({ params }: { params: Promise<RouteParams> }) => {
     const { id, submissionId } = await params;
@@ -25,20 +27,18 @@ export const generateMetadata = async ({ params }: { params: Promise<RouteParams
 
     const timeNormalized = formatSubmittedAt(variant.submittedAt, { relativeWithinHours: 24 })
 
-    return {
-        title: `${variant.parsedItem.name} Drop`,
-        description: `${variant.parsedItem.name} - dropped by ${variant.submittedBy} ${timeNormalized}. View drop stats & compare variants on BlackMUD Item Database.`,
 
+    return buildPageMetadata({
+        title: `${variant.parsedItem.name} Drop`,
+        description: `${variant.parsedItem.name} - dropped by ${variant.submittedBy} ${timeNormalized}. View drop stats & compare variants on BlackMUD Item Database.`, 
+        
         // Canonical URL is purposely pointing to the merged item view rather than the individual drop, since the drop pages are often near duplicates of the same item and may cause SEO issues
         // but we still want them to be crawlable and followable for discovery so we do not index but allow following
-        alternates : {
-            canonical: `${process.env.NEXT_PUBLIC_BASE_URL}/items/${id}/${keywordsToSlug(variant.parsedItem.keywords)}`,
-        },
-        robots: {
-            index: false,
-            follow: true,
-        },
-    };
+        path: `/items/${id}/${keywordsToSlug(variant.parsedItem.keywords)}`,
+       
+        noindex: true, // we noindex this page since it's near duplicate content of the same item page and may cause SEO issues, but we still want it to be crawlable and followable for discovery so we do not set nofollow
+        nofollow: false,
+    });
 }
 
 export default async function ItemDropPage({ params }: { params: Promise<RouteParams> }) {

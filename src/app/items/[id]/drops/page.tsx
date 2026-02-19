@@ -7,6 +7,7 @@ import { fetchItemVariants, searchItems } from '@/lib/d1';
 import { ItemCard } from '@/components/item-card';
 import { buildItemPath } from '@/lib/slug';
 import DropsPagination from './_components/DropsPagination';
+import { buildPageMetadata } from "@/lib/seo/metadata";
 
 import { OriginalDropMeta, ItemHeaderBadges } from '@/components/item-details';
 
@@ -33,10 +34,6 @@ const resolvePage = (rawPage: string | undefined, totalItems: number, pageSize: 
   return { page, totalPages, pageStart };
 };
 
-// export const metadata = {
-//   title: 'Item Drops | BlackMUD Item DB',
-//   description: 'Explore all original item drops submitted by the community, compare stats, and view raw data dumps.',
-// }
 
 export const generateMetadata = async ({ params }: { params: Promise<RouteParams> }) => {
   const { id } = await params;
@@ -45,13 +42,14 @@ export const generateMetadata = async ({ params }: { params: Promise<RouteParams
     return { title: 'Item not found' };
   }
 
-  return {
+  
+  return buildPageMetadata({
     title: `${item.name} Drops`,
     description: `Explore all original drops for ${item.name} submitted by the community, compare stats, and view raw data dumps.`,
-    alternates : {
-      canonical: `${process.env.NEXT_PUBLIC_BASE_URL}/items/${id}/drops`,
-    },
-  };
+    path: `/items/${id}/drops`,
+    noindex: true, // we noindex this page since it's near duplicate content of the main item page and may cause SEO issues, but we still want it to be crawlable and followable for discovery so we do not set nofollow
+    nofollow: false,
+  });
 }
 
 export default async function ItemDropsPage({ params, searchParams}: { params: Promise<RouteParams>; searchParams?: Promise<SearchParams>}) {
