@@ -55,7 +55,7 @@ const Leaderboard: React.FC = () => {
   }, []);
 
   return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 shadow-sm">
+    <div className="border-panel rounded-xl p-4 shadow-sm">
       <div className="flex items-center justify-between mb-4">
         <div>
           <p className="text-xs uppercase tracking-[0.18em] text-orange-300">Hall of the Lost</p>
@@ -85,7 +85,7 @@ const Leaderboard: React.FC = () => {
           {entries.map((entry, idx) => (
             <li
               key={entry.name}
-              className="flex items-center justify-between bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 hover:border-orange-500/70 transition-colors"
+              className="flex items-center justify-between bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 hover:border-orange-500/70 transition-colors"
             >
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-zinc-800 text-zinc-200 font-semibold grid place-items-center">
@@ -99,7 +99,7 @@ const Leaderboard: React.FC = () => {
                 </div>
               </div>
               <div className="text-right">
-                <div className="text-xs text-zinc-400">Submissions</div>
+                <div className="text-xs text-zinc-200">Submissions</div>
                 <div className="text-lg font-bold text-orange-400">{entry.submissionCount}</div>
               </div>
             </li>

@@ -28,7 +28,7 @@ export const IdentifyDump = ({ raw, title = defaultTitle, summaryLabel = default
   }
 
   return (
-    <section className="rounded-xl border border-zinc-800 bg-zinc-950/70 p-4 space-y-2">
+    <section className="card-section-dark">
       <h2 className="text-sm font-semibold text-white">{title}</h2>
       <div className="rounded-lg border border-zinc-800 bg-black/50 p-3">
         {dumpBody(raw)}

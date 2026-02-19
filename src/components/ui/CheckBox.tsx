@@ -16,7 +16,7 @@ const CheckBox = forwardRef<HTMLInputElement, CheckBoxProps>(
     }, [indeterminate, resolvedRef]);
 
     const base =
-      'h-4 w-4 rounded border border-zinc-600 bg-zinc-900 text-orange-500 focus:ring-orange-500 focus:ring-1 focus:outline-none';
+      'checkbox-base';
 
     return <input ref={resolvedRef} type="checkbox" className={`${base} ${className}`.trim()} {...props} />;
   },

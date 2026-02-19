@@ -6,7 +6,7 @@ type ItemTraitsFlagsProps = {
 };
 
 export const ItemTraitsFlags = ({ flags, ego, egoMin, egoMax }: ItemTraitsFlagsProps) => (
-  <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-4 space-y-3">
+  <div className="card-section">
 
     <h2 className="text-sm font-semibold text-white">Traits & Flags</h2>
 

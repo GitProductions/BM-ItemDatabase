@@ -154,7 +154,7 @@ const ComboBox: React.FC<ComboBoxProps> = ({
           value.map((item) => (
             <span
               key={item}
-              className="inline-flex items-center gap-1 px-2 bg-orange-900/40 text-orange-100 border border-orange-800 rounded-md text-xs"
+              className="badge-selected"
             >
               {labelForOption(item)}
               {!disabled && (

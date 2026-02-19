@@ -2,6 +2,30 @@
 @tailwind components;
 @tailwind utilities;
 
+
+/* Global element utilities for common interactions */
+@layer components {
+  /* Disabled state for buttons and inputs (10+ occurrences) */
+  button:disabled,
+  input:disabled {
+    @apply opacity-60 cursor-not-allowed;
+  }
+
+  /* Typography - Common uppercase labels */
+  .label-small {
+    @apply text-xs uppercase tracking-wide text-zinc-400;
+  }
+
+  .label-xs {
+    @apply text-[11px] uppercase text-zinc-400;
+  }
+
+  /* Scrollable content with scrollbar compensation */
+  .scrollable-content {
+    @apply overflow-y-auto pr-1;
+  }
+}
+
 :root {
   color-scheme: light;
   --bg: #f6f7fb;

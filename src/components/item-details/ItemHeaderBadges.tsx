@@ -31,7 +31,7 @@ export const ItemHeaderBadges = ({
 
             {/* IsItem Artifact Flag */}
             {isArtifact ? (
-                <span className="text-[11px] uppercase bg-amber-900/40 border border-amber-700 px-2 py-1 rounded-md text-amber-200">
+                <span className="badge-artifact">
                     Artifact
                 </span>
             ) : null}
@@ -55,7 +55,7 @@ export const ItemHeaderBadges = ({
 
             {/* Flagged for review badge */}
             {flaggedForReview ? (
-                <span className="inline-flex items-center gap-1 text-[11px] uppercase bg-rose-900/40 border border-rose-700 px-2 py-1 rounded-md text-rose-200">
+                <span className="badge-danger">
                     <AlertTriangle size={12} />
                     Needs review
                 </span>
@@ -69,7 +69,7 @@ export const ItemHeaderBadges = ({
         <div className="flex flex-wrap items-center justify-between gap-2">
 
             {badges}
-            {children ? <div className="text-xs text-zinc-400">{children}</div> : null}
+            {children ? <div className="text-xs text-zinc-200">{children}</div> : null}
         </div>
     );
 };

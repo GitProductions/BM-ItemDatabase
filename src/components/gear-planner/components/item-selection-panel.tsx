@@ -50,7 +50,7 @@ const ItemSelectionPanel: React.FC<ItemSelectionPanelProps> = ({
   const activeSelected = selected[activeSlot];
 
   return (
-    <div className="space-y-3 rounded-xl border border-zinc-800 bg-zinc-950/80 p-4 shadow-inner">
+    <div className="card-section-dark">
       <div className="flex items-center justify-between gap-3">
         <div>
           <div className="text-xs uppercase text-zinc-500">Active Slot</div>

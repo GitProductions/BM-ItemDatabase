@@ -91,7 +91,7 @@ function ItemPreviewCard({ item, editable = false, onChange }: ItemPreviewCardPr
 
   if (!editable || !onChange) {
     return (
-      <div className="rounded-lg border border-zinc-800 bg-zinc-950/70 p-3 text-xs text-zinc-200 space-y-2">
+      <div className="rounded-lg border border-zinc-800 bg-zinc-900/70 p-3 text-xs text-zinc-200 space-y-2">
         <div className="flex justify-between gap-3">
           <div className="font-semibold text-sm text-white">{item.name}</div>
           <span className="px-2 py-0.5 rounded bg-zinc-900 border border-zinc-700 text-[11px] text-zinc-400">
@@ -152,9 +152,9 @@ function ItemPreviewCard({ item, editable = false, onChange }: ItemPreviewCardPr
   }
 
   return (
-    <div className="rounded-lg border border-orange-700/60 bg-zinc-950 p-4 text-xs text-zinc-200 space-y-3 shadow-lg">
+    <div className="rounded-lg border border-orange-700/60 bg-zinc-900 p-4 text-xs text-zinc-200 space-y-3 shadow-lg">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <label className="text-[11px] uppercase text-zinc-400 space-y-1">
+        <label className="label-xs space-y-1">
           <span>Name</span>
 
           <Input
@@ -165,7 +165,7 @@ function ItemPreviewCard({ item, editable = false, onChange }: ItemPreviewCardPr
         </label>
 
 
-        <label className="text-[11px] uppercase text-zinc-400 space-y-1">
+        <label className="label-xs space-y-1">
           <span>Keywords</span>
           <Input
             value={item.keywords}
@@ -187,7 +187,7 @@ function ItemPreviewCard({ item, editable = false, onChange }: ItemPreviewCardPr
       </label> */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
 
-        <div className="text-[11px] uppercase text-zinc-400 space-y-1">
+        <div className="label-xs space-y-1">
           <span>Type</span>
           <ComboBox
             options={itemTypeOptions}
@@ -198,7 +198,7 @@ function ItemPreviewCard({ item, editable = false, onChange }: ItemPreviewCardPr
           />
         </div>
 
-        <div className="text-[11px] uppercase text-zinc-400 space-y-1">
+        <div className="label-xs space-y-1">
           <span>Flags</span>
           <ComboBox
             options={flagOptions}
@@ -209,7 +209,7 @@ function ItemPreviewCard({ item, editable = false, onChange }: ItemPreviewCardPr
         </div>
 
 
-        <div className="text-[11px] uppercase text-zinc-400 space-y-1">
+        <div className="label-xs space-y-1">
           <span>Worn slots</span>
           <ComboBox
             options={SLOT_CONFIG.map(slot => slot.key)}
@@ -247,7 +247,7 @@ function ItemPreviewCard({ item, editable = false, onChange }: ItemPreviewCardPr
         {/* we need to determine a list item item types first since its text right now */}
 
 
-        <label className="text-[11px] uppercase text-zinc-400 space-y-1">
+        <label className="label-xs space-y-1">
           <span>Weight</span>
           <Input
             type="number"
@@ -263,7 +263,7 @@ function ItemPreviewCard({ item, editable = false, onChange }: ItemPreviewCardPr
         {/* Only sure AC if the item is armor, since that should be the only place its applied? */}
         {/* but then what about some held items, are they flagged as armor?  or do any weapons have ac maybe not knowing about? */}
         {/* {item.type === 'armor' && ( */}
-          <label className="text-[11px] uppercase text-zinc-400 space-y-1">
+          <label className="label-xs space-y-1">
             <span>AC</span>
             <Input
               type="number"
@@ -279,7 +279,7 @@ function ItemPreviewCard({ item, editable = false, onChange }: ItemPreviewCardPr
 
         {/* Only show damage if the item type is weapon or wand (unsure if we need wand here but just incase for now) */}
         {(item.type === 'weapon' || item.type === 'wand') && (
-          <label className="text-[11px] uppercase text-zinc-400 space-y-1">
+          <label className="label-xs space-y-1">
             <span>Damage</span>
             <Input
               value={stats.damage ?? ''}
@@ -292,7 +292,7 @@ function ItemPreviewCard({ item, editable = false, onChange }: ItemPreviewCardPr
 
 
         {/* Not 100% sure how the game marks artifacts anymore.. but this is just incase for now */}
-        <label className="text-[11px] uppercase text-zinc-400 inline-flex items-center gap-2">
+        <label className="label-xs inline-flex items-center gap-2">
           <Checkbox
             checked={Boolean(item.isArtifact)}
             onChange={(e) => updateItem({ isArtifact: e.target.checked })}
@@ -307,7 +307,7 @@ function ItemPreviewCard({ item, editable = false, onChange }: ItemPreviewCardPr
       {/* Adding affects  */}
       <div className="border border-zinc-800 rounded-lg p-3 space-y-2 bg-zinc-900/40">
         <div className="flex items-center justify-between">
-          <span className="text-[11px] uppercase text-zinc-400">Affects</span>
+          <span className="label-small">Affects</span>
           <Button
             size="sm"
             onClick={addAffect}
@@ -389,7 +389,7 @@ function ItemPreviewCard({ item, editable = false, onChange }: ItemPreviewCardPr
         )}
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <label className="text-[11px] uppercase text-zinc-400 space-y-1">
+        <label className="label-xs space-y-1">
           <span>Dropped by</span>
           <Input
             value={item.droppedBy ?? ''}

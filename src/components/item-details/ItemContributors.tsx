@@ -4,7 +4,7 @@ type ItemContributorsProps = {
 };
 
 export const ItemContributors = ({ primarySubmitter, extraSubmitters }: ItemContributorsProps) => (
-  <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-4 space-y-3">
+  <div className="card-section">
 
     <h2 className="text-sm font-semibold text-white">Contributors</h2>
 
@@ -17,7 +17,7 @@ export const ItemContributors = ({ primarySubmitter, extraSubmitters }: ItemCont
     {extraSubmitters.length ? (
       <div className="flex flex-wrap gap-2">
         {extraSubmitters.map((name) => (
-          <span key={name} className="text-xs bg-zinc-800 border border-zinc-700 px-2 py-1 rounded-full text-zinc-200">
+          <span key={name} className="badge-tag">
             {name}
           </span>
         ))}

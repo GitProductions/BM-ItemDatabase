@@ -13,7 +13,7 @@ type TextAreaProps = React.TextareaHTMLAttributes<HTMLTextAreaElement> & {
 const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
   ({ size = 'sm', className = '', spellCheck = false, minHeight, style, ...props }, ref) => {
     const base =
-      'w-full bg-zinc-950 border border-zinc-700 rounded-lg font-mono text-zinc-300 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500';
+      'w-full bg-zinc-900 border border-zinc-700 rounded-lg font-mono text-zinc-300 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500';
     const sizeStyle = SIZE_STYLES[size] ?? SIZE_STYLES.sm;
     return (
       <textarea

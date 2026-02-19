@@ -129,7 +129,7 @@ function Header({
       {/* Should we move the user info outside of the hamburg menu for mobile users? */}
       {/* Mobile sheet */}
       {mobileOpen && (
-        <div className="md:hidden border-t border-zinc-800 bg-zinc-950/95 backdrop-blur supports-[backdrop-filter]:backdrop-blur-md">
+        <div className="md:hidden border-t border-zinc-800 bg-zinc-900/95 backdrop-blur supports-[backdrop-filter]:backdrop-blur-md">
           <div ref={panelRef} className="max-w-7xl mx-auto px-4 py-3 flex flex-col gap-2">
             <NavButtons onDone={() => setMobileOpen(false)} />
             {session?.user ? (

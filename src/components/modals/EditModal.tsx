@@ -53,30 +53,7 @@ type SuggestionModalProps = {
 //   'move_regen',
 //   'move',
 
-//   'strength',
-//   'intelligence',
-//   'wisdom',
-//   'dexterity',
-//   'constitution',
-//   'charisma',
-
-//   'save_all',
-
-//   'weight',
-
-// ];
-
-// const knownItemFlags = [
-//   'glowing',
-//   'hum',
-//   'invisible',
-//   'magic',
-//   'nodrop',
-//   'bless',
-
-//   'anti_good',
-//   'anti_evil',
-//   'anti_neutral',
+//   'st 'anti_neutral',
 
 //   'noremove',
 // ]  
@@ -293,7 +270,7 @@ const EditModal: React.FC<SuggestionModalProps> = ({ item, open, isSubmitting, f
           {feedback && <div className="text-sm text-amber-300">{feedback}</div>}
         </div>
 
-        <div className="sticky bottom-0 left-0 right-0 flex flex-wrap items-center gap-3 py-3 px-1 bg-zinc-950 border-t border-zinc-800">
+        <div className="sticky bottom-0 left-0 right-0 flex flex-wrap items-center gap-3 py-3 px-1 bg-zinc-900 border-t border-zinc-800">
 
 
           {/* Display 'Admin' checkbox if user is owner of the item or an admin */}
@@ -332,7 +309,7 @@ const EditModal: React.FC<SuggestionModalProps> = ({ item, open, isSubmitting, f
               <Button
                 onClick={handleDeleteItem}
                 disabled={adminSaving || !draftItem}
-                className="px-4 py-2 text-sm rounded-md bg-red-600 hover:bg-red-500 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                className="btn-danger"
               >
                 {adminSaving ? 'Deleting...' : 'Delete Item'}
                 <Loader2 className={`ml-2 h-4 w-4 animate-spin ${adminSaving ? 'inline-block' : 'hidden'}`} />
@@ -341,7 +318,7 @@ const EditModal: React.FC<SuggestionModalProps> = ({ item, open, isSubmitting, f
               <Button
                 onClick={handleDirectSave}
                 disabled={adminSaving || !draftItem}
-                className="px-4 py-2 text-sm rounded-md bg-orange-600 hover:bg-orange-500 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                className="btn-primary"
               >
 
                 {adminSaving ? 'Saving... ' : 'Save directly'}
@@ -354,7 +331,7 @@ const EditModal: React.FC<SuggestionModalProps> = ({ item, open, isSubmitting, f
               title={!reason.trim() ? 'Please describe why you are making this edit before submitting' : ''}
               disabled={isSubmitting || !reason.trim()}
               onClick={handleSubmit}
-              className="px-4 py-2 text-sm rounded-md bg-orange-600 hover:bg-orange-500 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+              className="btn-primary"
             >
               Submit
             </Button>

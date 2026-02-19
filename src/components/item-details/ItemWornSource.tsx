@@ -10,7 +10,7 @@ type ItemWornSourceProps = {
 };
 
 export const ItemWornSource = ({ displaySlots, droppedBy, duplicateOf }: ItemWornSourceProps) => (
-  <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-4 space-y-3">
+  <div className="card-section">
 
     <h2 className="text-sm font-semibold text-white">Worn & Source</h2>
 
@@ -18,7 +18,7 @@ export const ItemWornSource = ({ displaySlots, droppedBy, duplicateOf }: ItemWor
     <div className="flex flex-wrap gap-2">
       {displaySlots.length ? (
         displaySlots.map((slot) => (
-          <span key={slot} className="text-xs bg-zinc-800 text-zinc-200 border border-zinc-700 px-2 py-1 rounded-full">
+          <span key={slot} className="badge-tag">
             {slotLabel(slot as SlotKey)}
           </span>
         ))

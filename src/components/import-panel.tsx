@@ -15,7 +15,7 @@ import { useAppData } from '@/components/app-provider';
 import { useSession } from 'next-auth/react';
 
 const LoadingOverlay = ({ message }: { message: string }) => (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+  <div className="overlay-modal">
     <div className="flex flex-col items-center gap-3 rounded-xl border border-zinc-800 bg-zinc-900/90 px-6 py-6 shadow-2xl max-w-sm text-center">
       <Image
         src="/no-results.png"
@@ -29,7 +29,7 @@ const LoadingOverlay = ({ message }: { message: string }) => (
         <Loader2 className="h-5 w-5 animate-spin text-orange-400" />
         <span>Please wait...</span>
       </div>
-      <p className="text-xs text-zinc-400 px-2">{message}</p>
+      <p className="text-xs text-zinc-200 px-2">{message}</p>
       {/* <p className="text-[11px] text-zinc-500">Big batches can take a moment while we flag duplicates.</p> */}
     </div>
   </div>
@@ -123,7 +123,7 @@ export const ImportPanel: React.FC<ImportPanelProps> = ({
                 {duplicateCheck.newItems.length > 0 ? (
                   duplicateCheck.newItems.map((item) => <ItemCard key={item.id} item={item} />)
                 ) : (
-                  <div className="rounded-lg border border-zinc-800 bg-zinc-950/60 px-3 py-2 text-xs text-zinc-500">
+                  <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 px-3 py-2 text-xs text-zinc-500">
                     No new items found.
                   </div>
                 )}
@@ -151,14 +151,14 @@ export const ImportPanel: React.FC<ImportPanelProps> = ({
             <Button
               onClick={onCancelDuplicates}
               disabled={shouldShowLoading}
-              className="px-4 py-2 rounded-lg text-zinc-300 hover:text-zinc-100 hover:bg-zinc-800 text-sm font-medium transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+              className="btn-secondary"
             >
               Cancel
             </Button>
             <Button
               onClick={onProceedWithDuplicates}
               disabled={shouldShowLoading}
-              className="px-6 py-2 rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-bold transition-colors shadow-lg shadow-amber-900/50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className="btn-warning flex items-center gap-2"
             >
               <Save size={18} /> Proceed with Import
             </Button>
@@ -178,7 +178,7 @@ export const ImportPanel: React.FC<ImportPanelProps> = ({
       </div>
 
       {/* Tips/Notes */}
-      <div className="bg-zinc-950/50 rounded-lg p-2 mb-4 border border-zinc-800 text-sm text-zinc-400">
+      <div className="bg-zinc-900/50 rounded-lg p-2 mb-4 border border-zinc-800 text-sm text-zinc-400">
         <p className="flex gap-2 items-center mb-1"> <Info  /> Paste your identify item output directly from the MUD or your doc file below. </p>
         <p className="mb-1">Enchanted items are stripped of their enchantments during import to maintain database consistency. </p>
       </div>
@@ -213,7 +213,7 @@ export const ImportPanel: React.FC<ImportPanelProps> = ({
             onChange={(event) => onRawInputChange(event.target.value)}
             spellCheck={false}
             placeholder="Paste content here (e.g. 'a heavy, black flail (excellent)...')"
-            className="w-full h-64 bg-zinc-950 border border-zinc-700  p-4 text-xs"
+            className="w-full h-64 bg-zinc-900 border border-zinc-700  p-4 text-xs"
             // className="w-full h-64 bg-zinc-950 border border-zinc-700 rounded-lg p-4 font-mono text-xs text-zinc-300 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
           />
 
@@ -221,7 +221,7 @@ export const ImportPanel: React.FC<ImportPanelProps> = ({
             <Button
               onClick={onCheckDuplicates}
               disabled={shouldShowLoading || !rawInput.trim() || hasMissingNames}
-              className="px-6 py-2 rounded-lg bg-orange-600 hover:bg-orange-500 text-white font-bold transition-colors shadow-lg shadow-orange-900/50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className="btn-primary flex items-center gap-2"
             >
               {shouldShowLoading ? <><Loader2 className="animate-spin h-4 w-4" /> Submitting </>  : <><Save size={18} /> Check & Import  </>}
               
@@ -250,7 +250,7 @@ export const ImportPanel: React.FC<ImportPanelProps> = ({
                 const resolvedName = resolveName(item);
                 const needsName = !resolvedName.trim();
                 return (
-                  <div key={item.id} className="border border-zinc-800 rounded-lg p-3 bg-zinc-950/60 flex flex-col gap-3">
+                  <div key={item.id} className="border border-zinc-800 rounded-lg p-3 bg-zinc-900/60 flex flex-col gap-3">
                     <label className="flex flex-col text-xs text-zinc-400">
                       <span className="mb-1">
                         Item name {needsName ? <span className="text-amber-400">(needed)</span> : null}
@@ -309,7 +309,7 @@ export const ImportPanel: React.FC<ImportPanelProps> = ({
               })}
             </div>
           ) : (
-            <div className="rounded-lg border border-zinc-800 bg-zinc-950/60 px-4 py-3 text-xs text-zinc-500">
+            <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 px-4 py-3 text-xs text-zinc-500">
 
           <div className="text-center py-20 text-zinc-600">
             <Image src="/no-results.png" alt="No Results" width={200} height={200} className="mx-auto mb-4" />

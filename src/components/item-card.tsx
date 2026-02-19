@@ -178,7 +178,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item, hideSubmittedBy, full 
                 <div
                   className="absolute 
                     top-full left-[100%] -translate-x-1/2
-                     mb-2 bg-zinc-950 border border-red-700 rounded px-3 py-2 
+                     mb-2 bg-zinc-900 border border-red-700 rounded px-3 py-2 
                      text-xs text-red-200 whitespace-nowrap 
                      opacity-0 group-hover:opacity-100 
                      transition-opacity pointer-events-none shadow-lg z-10"
