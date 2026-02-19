@@ -20,10 +20,14 @@ export const metadata: Metadata = {
     default: "Blackmud Item Database",
     template: "%s | Blackmud Item Database",
   },
+  icons: {
+    icon: "/bm-logo.png",
+    apple: "/bm-logo.png",
+  },
+
   description:
     "Community-driven item database for BlackMUD players: Explore player-submitted weapons, armor, and gear - compare stats & check drop history contributed by the community!",
 
-  applicationName: "Blackmud Item Database",
   keywords: [
     "BlackMUD",
     "MUD",
@@ -44,9 +48,11 @@ export const metadata: Metadata = {
     "armor database",
     "RPG items",
   ], 
- authors: [{ name: "BlackMUD Community" }],
-  creator: "BlackMUD Community",
 
+  authors: [{ name: "BlackMUD Community" }],
+  creator: "GitProductions",
+  publisher: "GitProductions",
+  
   openGraph: {
     title: "Blackmud Item Database",
     description:

@@ -2,7 +2,7 @@ import type { MetadataRoute } from 'next';
 import { searchItems } from '@/lib/d1';
 import { keywordsToSlug } from '@/lib/slug';
 
-export const dynamic = 'force-static';
+export const dynamic = 'force-dynamic';
 export const revalidate = 86400; // Revalidate every 24 hours  - We can look into maybe being able to add a single item to the sitemap every time instead??
 
 const BASE_URL = 'https://bm-itemdb.gitago.dev';
