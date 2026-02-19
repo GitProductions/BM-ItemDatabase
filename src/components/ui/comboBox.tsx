@@ -5,6 +5,7 @@ const SIZE_STYLES = {
   md: 'min-h-[40px] px-3 py-2 text-sm',
 } as const;
 
+
 type ComboBoxProps = {
   options: string[];
   value: string[];
@@ -16,6 +17,8 @@ type ComboBoxProps = {
   size?: keyof typeof SIZE_STYLES;
   singleSelect?: boolean;
   labelForOption?: (value: string) => string;
+  'aria-label'?: string;
+  'aria-labelledby'?: string;
 };
 
 const ComboBox: React.FC<ComboBoxProps> = ({
@@ -27,9 +30,11 @@ const ComboBox: React.FC<ComboBoxProps> = ({
 
   allowCustom = true,
   disabled = false,
-  size = 'sm',
+  size = 'md',
   singleSelect = false,
   labelForOption = (v) => v,
+  'aria-label': ariaLabel,
+  'aria-labelledby': ariaLabelledby,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -138,6 +143,8 @@ const ComboBox: React.FC<ComboBoxProps> = ({
         role="combobox"
         aria-expanded={isOpen}
         aria-controls="combobox-list"
+        {...(ariaLabel && { 'aria-label': ariaLabel })}
+        {...(ariaLabelledby && { 'aria-labelledby': ariaLabelledby })}
         tabIndex={0}
         onMouseDown={handleTriggerMouseDown}
         onKeyDown={(e) => {
@@ -154,14 +161,20 @@ const ComboBox: React.FC<ComboBoxProps> = ({
           value.map((item) => (
             <span
               key={item}
-              className="badge-selected"
+              className="badge-selected inline-flex items-center gap-1"
             >
               {labelForOption(item)}
               {!disabled && (
                 <button
                   type="button"
-                  onMouseDown={(e) => handleRemoveMouseDown(item, e)}
-                  className="hover:text-white text-orange-200 rounded-full p-0.5 transition-colors"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    removeOption(item);
+                    setIsOpen(false);
+                    setSearchTerm('');
+                  }}
+                  className="hover:text-white text-orange-200 rounded-full p-1 transition-colors flex items-center justify-center"
                   aria-label={`Remove ${item}`}
                 >
                   <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -227,14 +240,12 @@ const ComboBox: React.FC<ComboBoxProps> = ({
                       e.stopPropagation();
                       toggleOption(option);
                     }}
-                    className={`w-full text-left ${sizeStyle} cursor-pointer flex items-center gap-2 transition-colors ${
-                      isSelected ? 'bg-orange-900/30 text-orange-100' : 'hover:bg-zinc-800 text-zinc-200'
-                    }`}
+                    className={`w-full text-left ${sizeStyle} cursor-pointer flex items-center gap-2 transition-colors ${isSelected ? 'bg-orange-900/30 text-orange-100' : 'hover:bg-zinc-800 text-zinc-200'
+                      }`}
                   >
                     <span
-                      className={`inline-flex h-4 w-4 items-center justify-center rounded border ${
-                        isSelected ? 'bg-orange-500 border-orange-500' : 'border-zinc-600'
-                      }`}
+                      className={`inline-flex h-4 w-4 items-center justify-center rounded border ${isSelected ? 'bg-orange-500 border-orange-500' : 'border-zinc-600'
+                        }`}
                     >
                       {isSelected && (
                         <svg className="w-3 h-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor">
