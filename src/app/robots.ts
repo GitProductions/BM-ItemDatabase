@@ -17,7 +17,7 @@ export default function robots(): MetadataRoute.Robots {
       {
         // Stricter rules for aggressive bots
         userAgent: ['AhrefsSiteAudit', 'SemrushBot', 'DotBot'],
-        crawlDelay: 10,
+        crawlDelay: 1,
       },
     ],
     sitemap: `${process.env.NEXT_PUBLIC_BASE_URL}/sitemap.xml`,

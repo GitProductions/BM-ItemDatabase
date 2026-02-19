@@ -1,21 +1,75 @@
 "use client";
 
 import React from "react";
-import Button from "./Button";
 
 type PaginationProps = {
   total: number;
   page: number;
   pageSize: number;
-  onPageChange: (page: number) => void;
+  onPageChange?: (page: number) => void;
   className?: string;
+  basePath?: string; // used for anchor-based navigation when onPageChange is not provided
 };
 
 const range = (start: number, end: number) => Array.from({ length: end - start + 1 }, (_, i) => start + i);
 
-export const Pagination: React.FC<PaginationProps> = ({ total, page, pageSize, onPageChange, className }) => {
+const getPageUrl = (pageNum: number, basePath: string = '/'): string => {
+  if (pageNum === 1) return basePath;
+  return `${basePath}?page=${pageNum}`;
+};
+
+type LinkButtonProps = {
+  disabled: boolean;
+  href?: string;
+  onClick?: () => void;
+  active?: boolean;
+  children: React.ReactNode;
+};
+const LinkButton = ({ disabled, href, onClick, active = false, children }: LinkButtonProps) => {
+  if (disabled) {
+    return (
+      <button
+        disabled
+        className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded bg-zinc-800 text-zinc-100 opacity-50 cursor-not-allowed"
+      >
+        {children}
+      </button>
+    );
+  }
+  const activeStyles = active ? 'bg-orange-500 text-black hover:bg-orange-400' : 'bg-zinc-800 text-zinc-100 hover:bg-zinc-700';
+
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        className={`inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded ${activeStyles} transition-colors`}
+      >
+        {children}
+      </button>
+    );
+  }
+
+  return (
+    <a
+      href={href}
+      className={`inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded ${activeStyles} transition-colors`}
+    >
+      {children}
+    </a>
+  );
+};
+
+export const Pagination: React.FC<PaginationProps> = ({ total, page, pageSize, onPageChange, className, basePath = '/' }) => {
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const currentPage = Math.min(page, totalPages);
+  const useAnchors = !onPageChange;
+
+  const goTo = (targetPage: number) => {
+    if (!onPageChange) return;
+    const clamped = Math.min(Math.max(targetPage, 1), totalPages);
+    onPageChange(clamped);
+  };
 
   const canPrev = currentPage > 1;
   const canNext = currentPage < totalPages;
@@ -29,30 +83,47 @@ export const Pagination: React.FC<PaginationProps> = ({ total, page, pageSize, o
 
   return (
     <div className={`flex items-center gap-2 flex-wrap ${className ?? ""}`}>
-      <Button variant="secondary" size="sm" onClick={() => onPageChange(1)} disabled={!canPrev}>
+      <LinkButton
+        disabled={!canPrev}
+        href={useAnchors ? getPageUrl(1, basePath) : undefined}
+        onClick={!useAnchors ? () => goTo(1) : undefined}
+      >
         « First
-      </Button>
-      <Button variant="secondary" size="sm" onClick={() => onPageChange(currentPage - 1)} disabled={!canPrev}>
+      </LinkButton>
+      <LinkButton
+        disabled={!canPrev}
+        href={useAnchors ? getPageUrl(currentPage - 1, basePath) : undefined}
+        onClick={!useAnchors ? () => goTo(currentPage - 1) : undefined}
+      >
         ‹ Prev
-      </Button>
+      </LinkButton>
 
       {pages.map((p) => (
-        <Button
+        <LinkButton
           key={p}
-          variant={p === currentPage ? "primary" : "secondary"}
-          size="sm"
-          onClick={() => onPageChange(p)}
+          disabled={false}
+          href={useAnchors ? getPageUrl(p, basePath) : undefined}
+          onClick={!useAnchors ? () => goTo(p) : undefined}
+          active={p === currentPage}
         >
           {p}
-        </Button>
+        </LinkButton>
       ))}
 
-      <Button variant="secondary" size="sm" onClick={() => onPageChange(currentPage + 1)} disabled={!canNext}>
+      <LinkButton
+        disabled={!canNext}
+        href={useAnchors ? getPageUrl(currentPage + 1, basePath) : undefined}
+        onClick={!useAnchors ? () => goTo(currentPage + 1) : undefined}
+      >
         Next ›
-      </Button>
-      <Button variant="secondary" size="sm" onClick={() => onPageChange(totalPages)} disabled={!canNext}>
+      </LinkButton>
+      <LinkButton
+        disabled={!canNext}
+        href={useAnchors ? getPageUrl(totalPages, basePath) : undefined}
+        onClick={!useAnchors ? () => goTo(totalPages) : undefined}
+      >
         Last »
-      </Button>
+      </LinkButton>
 
       <span className="text-xs text-zinc-500 ml-1">
         Page {currentPage} of {totalPages} • {total} items

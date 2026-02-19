@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useMemo, useState, useEffect } from 'react';
 import PageHeader from './ui/PageHeader';
 import { Search, DatabaseSearch } from 'lucide-react';
@@ -16,7 +18,12 @@ import { useRouter } from 'next/navigation';
 import { matchesSlot, SlotKey, canonicalSlot, slotLabel, SLOT_CONFIG } from '@/lib/slots';
 import ComboBox from './ui/ComboBox';
 
-type ItemDBProps = Record<string, never>;
+type ItemDBProps = {
+  initialPage?: string;
+  initialItems?: Item[];
+  initialTotalCount?: number;
+  initialResultCount?: number;
+};
 
 const PAGE_SIZE = 20;
 const DEFAULT_LIMIT = PAGE_SIZE;
@@ -24,13 +31,32 @@ const SEARCH_LIMIT = PAGE_SIZE;
 const MIN_SEARCH_LENGTH = 2;
 const DEBOUNCE_MS = 400;
 
-export const ItemDB: React.FC<ItemDBProps> = () => {
+export const ItemDB: React.FC<ItemDBProps> = ({
+    initialPage = '1', initialItems = [],
+    initialTotalCount = 0, initialResultCount = 0
+  }) => {
   const router = useRouter();
-  const { items, refresh, totalCount, resultCount } = useAppData();
-  
+  const { items: appItems, refresh, totalCount, resultCount } = useAppData();
+
+  // Using server-side initialItems for fresh data and crawler visibility
+  const [items, setItems] = useState<Item[]>(() => initialItems);
+
   const [search, setSearch] = useState('');
   const [filterType] = useState('all');
   const [slotFilter, setSlotFilter] = useState<string>('all');
+
+  // Update items when appItems changes BUT ONLY if user has an active search query
+  // This prevents the global app state from overwriting server-side paginated data
+  const hasActiveSearch = search.trim().length >= MIN_SEARCH_LENGTH;
+  useEffect(() => {
+    if (appItems.length > 0 && hasActiveSearch) {
+      setItems(appItems);
+    } else if (!hasActiveSearch) {
+      // If search was cleared, go back to server-fetched initialItems
+      setItems(initialItems);
+    }
+  }, [appItems, hasActiveSearch, initialItems]);
+
   const slotOptions = useMemo(() => {
     const uniq = new Set<string>();
     uniq.add('all');
@@ -41,20 +67,29 @@ export const ItemDB: React.FC<ItemDBProps> = () => {
   const [suggestItem, setSuggestItem] = useState<Item | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [suggestFeedback, setSuggestFeedback] = useState<string | null>(null);
-  const [page, setPage] = useState(1);
+
+  // Parse page from URL parameter, default to 1
+  const [page, setPage] = useState(() => {
+    const parsed = Number.parseInt(initialPage, 10);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+  });
 
   const filteredItemsBySlot =
     slotFilter === 'all'
       ? items
       : items.filter((item) => {
-          const target = canonicalSlot(slotFilter as SlotKey);
-          return matchesSlot(item, target as SlotKey);
-        });
+        const target = canonicalSlot(slotFilter as SlotKey);
+        return matchesSlot(item, target as SlotKey);
+      });
 
   const filteredItems = filteredItemsBySlot; // server already applied search/type filters; slot applied client-side
 
   const hasFilters = filterType !== 'all' || search.trim().length >= MIN_SEARCH_LENGTH;
-  const baseTotal = hasFilters ? resultCount : totalCount;
+
+  const effectiveTotalCount = totalCount > 0 ? totalCount : initialTotalCount;
+  const effectiveResultCount = resultCount > 0 ? resultCount : initialResultCount;
+  const baseTotal = hasFilters ? effectiveResultCount : effectiveTotalCount;
+  
   const total = slotFilter === 'all' ? baseTotal : filteredItems.length;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const pageItems = filteredItems;
@@ -84,11 +119,6 @@ export const ItemDB: React.FC<ItemDBProps> = () => {
     return () => clearTimeout(timeout);
   }, [search, filterType, slotFilter, page, refresh]);
 
-  // Reset pagination when filters change
-  useEffect(() => {
-    setPage(1);
-  }, [search, filterType, slotFilter]);
-
   useEffect(() => {
     if (page > totalPages) {
       setPage(totalPages);
@@ -104,14 +134,14 @@ export const ItemDB: React.FC<ItemDBProps> = () => {
         title="Item Database"
         description="Browse, filter, and search the community BlackMUD item database"
         icons={<DatabaseSearch className="text-orange-400" size={24} />}
-        />
+      />
       <div className="bg-zinc-900 p-4 rounded-xl border border-zinc-800 shadow-sm flex flex-col md:flex-row gap-4 md:items-end">
 
         {/* Main Search  */}
         <div className="relative flex-1 ">
-           <span className="text-[11px] uppercase tracking-wide text-zinc-500">Search</span>
+          <span className="text-[11px] uppercase tracking-wide text-zinc-500">Search</span>
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 mt-3" size={18} />
-          
+
           <Input
             type="text"
             className="bg-zinc-950 border-zinc-700 rounded-lg pl-10 pr-3 h-10 text-sm"
@@ -186,7 +216,7 @@ export const ItemDB: React.FC<ItemDBProps> = () => {
                   }}
                   className='absolute bottom-0 left-1/2 -translate-x-1/2 inline-flex items-center gap-1 w-auto z-10  text-[10px] px-2 bg-transparent py-1 rounded
                    text-white/40 hover:text-orange-400 hover:border-orange-500 hover:bg-transparent'
-          
+
                 >
                   Edit Details
                 </Button>
@@ -195,7 +225,7 @@ export const ItemDB: React.FC<ItemDBProps> = () => {
             ))}
           </div>
           <div className="pt-4 flex flex-col items-center gap-1">
-          <Pagination total={total} page={page} pageSize={PAGE_SIZE} onPageChange={setPage} />
+            <Pagination total={total} page={page} pageSize={PAGE_SIZE} basePath="/" />
             <p className="text-xs text-zinc-500">
               Page {page} of {totalPages} • {total} items total
             </p>
