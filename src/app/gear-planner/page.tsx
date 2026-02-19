@@ -6,6 +6,10 @@ import PageHeader from '@/components/ui/PageHeader';
 import { Sparkles } from 'lucide-react';
 import { NotebookPen } from 'lucide-react';
 
+
+
+
+
 export default function GearPlannerPage() {
   const { items, loading, error } = useAppData();
 

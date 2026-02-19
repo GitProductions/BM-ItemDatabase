@@ -1,6 +1,14 @@
 import React from "react";
 import Link from "next/link";
 
+export const metadata = {
+    title: 'About',
+    description: 'Learn about the BlackMUD Item Database, a community-driven resource for players of BlackMUD. Discover its features, goals, and how to get involved.',
+    alternates: {
+        canonical: `${process.env.NEXT_PUBLIC_BASE_URL}/about`,
+    },
+}
+
 const AboutPage = () => (
     <main className="max-w-5xl mx-auto my-2 bg-zinc-800 border border-zinc-700 rounded-lg p-4 mb-4 hover:border-zinc-500 transition-colors shadow-sm h-full">
         <h1 className="text-3xl font-bold mb-4 text-white">About BlackMUD Item Database</h1>

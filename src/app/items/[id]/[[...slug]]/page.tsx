@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { cache } from 'react';
 import { ArrowLeft } from 'lucide-react';
+import { keywordsToSlug } from '@/lib/slug';
 
 import { fetchItemVariants, searchItems } from '@/lib/d1';
 import { ItemCard } from '@/components/item-card';
@@ -104,7 +105,7 @@ export async function generateMetadata({ params }: { params: Promise<RouteParams
   // });
   // const metaOGImage = `/api/thumbnails/item?${ogParams.toString()}`;
   return {
-    title: `${item.name} | BlackMUD Item DB`,
+    title: `${item.name}`,
     description: description || 'BlackMUD item details',
     openGraph: {
       title: `${item.name} | BlackMUD Item DB`,
@@ -128,6 +129,10 @@ export async function generateMetadata({ params }: { params: Promise<RouteParams
       //         },
       //       ]
       //     : undefined,
+    },
+
+    alternates: {
+      canonical: `${process.env.NEXT_PUBLIC_BASE_URL}/items/${id}/${keywordsToSlug(item.keywords)}`,
     },
   };
 
@@ -181,7 +186,7 @@ export default async function ItemPage({ params }: { params: Promise<RouteParams
 
         {/* Item card */}
         <div className="flex-1 rounded-xl border border-zinc-800 bg-zinc-900/70 p-4 space-y-3">
-        
+
           {/* Page title */}
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>

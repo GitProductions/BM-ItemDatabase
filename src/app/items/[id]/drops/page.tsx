@@ -42,12 +42,15 @@ export const generateMetadata = async ({ params }: { params: Promise<RouteParams
   const { id } = await params;
   const item = await fetchItem(id);
   if (!item) {
-    return { title: 'Item not found | BlackMUD Item DB' };
+    return { title: 'Item not found' };
   }
 
   return {
-    title: `${item.name} Drops | BlackMUD Item DB`,
+    title: `${item.name} Drops`,
     description: `Explore all original drops for ${item.name} submitted by the community, compare stats, and view raw data dumps.`,
+    alternates : {
+      canonical: `${process.env.NEXT_PUBLIC_BASE_URL}/items/${id}/drops`,
+    },
   };
 }
 

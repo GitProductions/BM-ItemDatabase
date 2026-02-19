@@ -20,6 +20,6 @@ export default function robots(): MetadataRoute.Robots {
         crawlDelay: 10,
       },
     ],
-    sitemap: 'https://bm-itemdb.gitago.dev/sitemap.xml',
+    sitemap: `${process.env.NEXT_PUBLIC_BASE_URL}/sitemap.xml`,
   };
 }

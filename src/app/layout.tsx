@@ -59,11 +59,11 @@ export const metadata: Metadata = {
       "A community-built item reference for BlackMUD. Browse weapons, armor, and gear - compare stats, explore drop history, and stay tuned for an equipment planner coming soon.",
     type: "website",
     locale: "en_US",
-    url: "https://bm-itemdb.gitago.dev",
+    url: process.env.NEXT_PUBLIC_BASE_URL || "https://bm-itemdb.gitago.dev",
     siteName: "Blackmud Item Database",
     images: [
       {
-        url: "https://bm-itemdb.gitago.dev/bm-itemdb-ogimage.jpg",
+        url: `${process.env.NEXT_PUBLIC_BASE_URL}/bm-itemdb-ogimage.jpg`,
         width: 1200,
         height: 630,
         alt: "Blackmud Item Database - Browse items, compare stats, and calculate equipment for BlackMUD",
@@ -78,14 +78,14 @@ export const metadata: Metadata = {
       "Community-driven item database for BlackMUD players: Explore player-submitted weapons, armor, and gear - compare stats & check drop history contributed by the community!",
     images: [
       {
-        url: "https://bm-itemdb.gitago.dev/bm-itemdb-ogimage.jpg",
+        url: `${process.env.NEXT_PUBLIC_BASE_URL}/bm-itemdb-ogimage.jpg`,
         alt: "Blackmud Item Database - Browse items, compare stats, and calculate equipment for BlackMUD",
       },
     ],
   },
 
   alternates: {
-    canonical: "https://bm-itemdb.gitago.dev",
+    canonical: `${process.env.NEXT_PUBLIC_BASE_URL}`,
   },
 
   robots: {
@@ -99,7 +99,7 @@ export const metadata: Metadata = {
     },
   },
 
-  metadataBase: new URL("https://bm-itemdb.gitago.dev"),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || "https://bm-itemdb.gitago.dev"),
 };
 
 const themeInitScript = `(() => {
