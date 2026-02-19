@@ -11,7 +11,7 @@ type EditSuggestionModalProps = {
   proposerLocked?: string;
   hideAdminControls?: boolean;
   hideNameInput?: boolean;
-};
+};s
 
 export function EditSuggestionModal({
   item,
