@@ -160,6 +160,7 @@ function ItemPreviewCard({ item, editable = false, onChange }: ItemPreviewCardPr
           <Input
             value={item.name}
             onChange={(e) => updateItem({ name: e.target.value })}
+            aria-label="Item name"
             className="w-full rounded border px-3 py-2 text-sm text-white"
           />
         </label>
@@ -170,6 +171,7 @@ function ItemPreviewCard({ item, editable = false, onChange }: ItemPreviewCardPr
           <Input
             value={item.keywords}
             onChange={(e) => updateItem({ keywords: e.target.value })}
+            aria-label="Item keywords"
             className="w-full rounded border px-3 py-2 text-sm text-white"
           />
         </label>
@@ -195,6 +197,8 @@ function ItemPreviewCard({ item, editable = false, onChange }: ItemPreviewCardPr
             onChange={(selected) => updateItem({ type: selected[0] ?? '' })}
             placeholder="Select item type"
             singleSelect
+            size="md"
+            aria-label="Item type"
           />
         </div>
 
@@ -205,6 +209,8 @@ function ItemPreviewCard({ item, editable = false, onChange }: ItemPreviewCardPr
             value={item.flags ?? []}
             onChange={(selected) => updateItem({ flags: selected })}
             placeholder="Select or type flags"
+            size="md"
+            aria-label="Item flags"
           />
         </div>
 
@@ -216,6 +222,8 @@ function ItemPreviewCard({ item, editable = false, onChange }: ItemPreviewCardPr
             value={item.worn || []}
             onChange={(selected) => updateItem({ worn: selected.length ? selected : undefined })}
             placeholder="Choose worn slots"
+            size="md"
+            aria-label="Item worn slots"
           />
         </div>
       </div>
@@ -256,6 +264,7 @@ function ItemPreviewCard({ item, editable = false, onChange }: ItemPreviewCardPr
               const val = e.target.value;
               updateStats({ weight: val === '' ? undefined : Number(val) });
             }}
+            aria-label="Item weight"
             className="w-full rounded border px-3 py-2 text-sm text-white"
           />
         </label>
@@ -272,6 +281,7 @@ function ItemPreviewCard({ item, editable = false, onChange }: ItemPreviewCardPr
                 const val = e.target.value;
                 updateStats({ ac: val === '' ? undefined : Number(val) });
               }}
+              aria-label="Item armor class"
               className="w-full rounded border px-3 py-2 text-sm text-white"
             />
           </label>
@@ -285,6 +295,7 @@ function ItemPreviewCard({ item, editable = false, onChange }: ItemPreviewCardPr
               value={stats.damage ?? ''}
               placeholder="e.g. 2d5+3"
               onChange={(e) => updateStats({ damage: e.target.value || undefined })}
+              aria-label="Item damage"
               className="w-full rounded border px-3 py-2 text-sm text-white"
             />
           </label>
@@ -329,6 +340,7 @@ function ItemPreviewCard({ item, editable = false, onChange }: ItemPreviewCardPr
                 <select
                   value={affect.type}
                   onChange={(e) => updateAffect(idx, { type: e.target.value as ItemAffect['type'] })}
+                  aria-label={`Affect ${idx + 1} type`}
                   className="rounded border h-8 border-zinc-700 bg-zinc-900 px-2 text-sm text-white leading-8 focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
                 >
                   <option value="stat">Stat</option>
@@ -341,6 +353,7 @@ function ItemPreviewCard({ item, editable = false, onChange }: ItemPreviewCardPr
                       value={affect.spell ?? ''}
                       placeholder="Spell name"
                       onChange={(e) => updateAffect(idx, { spell: e.target.value })}
+                      aria-label={`Affect ${idx + 1} spell name`}
                       className="rounded border px-2 py-2 text-sm text-white"
                     />
                     <Input
@@ -351,6 +364,7 @@ function ItemPreviewCard({ item, editable = false, onChange }: ItemPreviewCardPr
                         const val = e.target.value;
                         updateAffect(idx, { level: val === '' ? undefined : Number(val) });
                       }}
+                      aria-label={`Affect ${idx + 1} spell level`}
                       className="rounded border px-2 py-2 text-sm text-white"
                     />
                   </>
@@ -360,6 +374,7 @@ function ItemPreviewCard({ item, editable = false, onChange }: ItemPreviewCardPr
                       value={affect.stat ?? ''}
                       placeholder="Stat"
                       onChange={(e) => updateAffect(idx, { stat: e.target.value })}
+                      aria-label={`Affect ${idx + 1} stat name`}
                       className="rounded border px-2 py-2 text-sm text-white"
                     />
                     <Input
@@ -370,6 +385,7 @@ function ItemPreviewCard({ item, editable = false, onChange }: ItemPreviewCardPr
                         const val = e.target.value;
                         updateAffect(idx, { value: val === '' ? undefined : Number(val) });
                       }}
+                      aria-label={`Affect ${idx + 1} stat value`}
                       className="rounded border px-2 py-2 text-sm text-white"
                     />
                   </>
@@ -394,6 +410,7 @@ function ItemPreviewCard({ item, editable = false, onChange }: ItemPreviewCardPr
           <Input
             value={item.droppedBy ?? ''}
             onChange={(e) => updateItem({ droppedBy: e.target.value || undefined })}
+            aria-label="Item dropped by (location/NPC)"
             className="w-full rounded border px-3 py-2 text-sm text-white"
           />
         </label>
