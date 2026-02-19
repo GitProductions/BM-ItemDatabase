@@ -99,6 +99,3 @@ export const SearchView: React.FC<SearchViewProps> = ({
         </div>
     );
 };
-
-// Temporary alias while we migrate naming across the app
-export const ItemDB = SearchView;
