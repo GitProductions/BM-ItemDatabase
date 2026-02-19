@@ -12,17 +12,20 @@ export const metadata = {
 const AboutPage = () => (
     <main className="max-w-5xl mx-auto my-2 bg-zinc-800 border border-zinc-700 rounded-lg p-4 mb-4 hover:border-zinc-500 transition-colors shadow-sm h-full">
         <h1 className="text-3xl font-bold mb-4 text-white">About BlackMUD Item Database</h1>
+
         <p className="mb-4 text-zinc-300 leading-relaxed">
             The <span className="font-semibold text-orange-600">BlackMUD Item Database</span> is a community-driven resource for players of <Link className="underline" href="https://blackmud.com">BlackMUD</Link>.
             It provides a searchable and organized collection of items found within the game,
             helping adventurers discover equipment, compare stats, and plan their journeys.
         </p>
+
         <p className="mb-8 text-zinc-300 leading-relaxed">
             The goal is to make item information accessible and easy to browse,
             supporting both new and veteran players in their adventures... and save gold of course!
         </p>
 
         <h2 className="text-2xl font-semibold mb-3 text-orange-600">What&apos;s inside</h2>
+        
         <ul className="list-disc list-inside space-y-3 text-zinc-200 mb-4">
             <li>
                 <span className="font-semibold text-orange-500">Backend API</span> for submissions and searches, so tools like Mudlet can push
