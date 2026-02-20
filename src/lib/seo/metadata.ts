@@ -65,8 +65,8 @@ export function buildPageMetadata({
         },
         description: resolvedDescription,
         icons: {
-            icon: `${SITE_URL}/bm-logo.png`,
-            apple: `${SITE_URL}/bm-logo.png`,
+            icon: `${SITE_URL}/bm-logo.ico`,
+            apple: `${SITE_URL}/bm-logo.ico`,
         },
 
         keywords: [

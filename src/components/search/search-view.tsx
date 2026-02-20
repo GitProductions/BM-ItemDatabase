@@ -3,14 +3,14 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { DatabaseSearch } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import PageHeader from './ui/PageHeader';
+import PageHeader from '../ui/PageHeader';
 import { Item } from '@/types/items';
 import { SLOT_CONFIG, canonicalSlot } from '@/lib/slots';
-import { SearchControls } from './search/search-controls';
-import { useSearchResults, PAGE_SIZE } from './search/use-search-results';
-import { ResultsGrid } from './search/results-grid';
-import { EditSuggestionModal } from './search/edit-suggestion-modal';
-import { Pagination } from './ui/Pagination';
+import { SearchControls } from '../search/search-controls';
+import { useSearchResults, PAGE_SIZE } from '../search/use-search-results';
+import { ResultsGrid } from '../search/results-grid';
+import { EditSuggestionModal } from '../search/edit-suggestion-modal';
+import { Pagination } from '../ui/Pagination';
 import { getRandomOrcPhrase } from '@/lib/orc-phrases';
 import Image from 'next/image';
 

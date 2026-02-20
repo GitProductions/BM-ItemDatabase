@@ -1,4 +1,4 @@
-import { SearchView } from '@/components/search-view';
+import { SearchView } from '@/components/search/search-view';
 import type { Metadata } from 'next';
 import { buildPageMetadata } from '@/lib/seo/metadata';
 import { fetchItemsVersion, searchItems } from '@/lib/d1';
