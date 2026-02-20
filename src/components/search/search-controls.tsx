@@ -19,7 +19,7 @@ export function SearchControls({
   slotOptions,
 }: SearchControlsProps) {
   return (
-    <div className="bg-zinc-900 p-4 rounded-xl border border-zinc-800 shadow-sm flex flex-col md:flex-row gap-4 md:items-end">
+    <div className="bg-zinc-900 px-4 pb-3 rounded-lg border border-zinc-800 shadow-sm flex flex-col md:flex-row gap-4 md:items-end">
       <div className="relative flex-1">
         <span className="text-[11px] uppercase tracking-wide text-zinc-500">Search</span>
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 mt-3" size={18} />
@@ -32,20 +32,21 @@ export function SearchControls({
         />
       </div>
 
-      <div className="flex flex-col gap-1 w-full md:w-72">
-        <span className="text-[11px] uppercase tracking-wide text-zinc-500">Slot</span>
-        <ComboBox
-          options={slotOptions}
-          value={[slotFilter]}
-          allowCustom={false}
-          onChange={(vals) => onSlotChange(vals[0] ?? 'all')}
-          placeholder="All slots"
-          className="w-full"
-          size="md"
-          singleSelect
-          labelForOption={(opt) => (opt === 'all' ? 'All slots' : slotLabel(opt as SlotKey))}
-        />
+        <div className="flex flex-col w-full md:w-72">
+          <span className="text-[11px] uppercase tracking-wide text-zinc-500">Slot</span>
+          <ComboBox
+            options={slotOptions}
+            value={[slotFilter]}
+            allowCustom={false}
+            onChange={(vals) => onSlotChange(vals[0] ?? 'all')}
+            placeholder="All slots"
+            className="w-full"
+            size="md"
+            singleSelect
+            labelForOption={(opt) => (opt === 'all' ? 'All slots' : slotLabel(opt as SlotKey))}
+          />
+
+        </div>
       </div>
-    </div>
   );
 }

@@ -83,7 +83,7 @@ export default async function ItemDropPage({ params }: { params: Promise<RoutePa
 
 
 
-            <section className="rounded-xl border border-zinc-800 bg-zinc-950/70 p-4 space-y-3">
+            <section className="rounded-lg border border-zinc-800 bg-zinc-950/70 p-4 space-y-3">
                 <IdentifyDump raw={variant.raw} collapsible />
             </section>
         </div>

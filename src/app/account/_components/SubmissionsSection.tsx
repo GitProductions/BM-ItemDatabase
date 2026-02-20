@@ -16,7 +16,7 @@ export default function SubmissionsSection({ onEdit, refreshKey }: SubmissionsSe
   const [page, setPage] = useState(1);
 
   return (
-    <section className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 space-y-3">
+    <section className="bg-zinc-900 border border-zinc-800 rounded-lg p-5 space-y-3">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold text-white">Your submissions</h2>
 

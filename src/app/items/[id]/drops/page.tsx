@@ -93,7 +93,7 @@ export default async function ItemDropsPage({ params, searchParams}: { params: P
 
           {/* Merged view - pinned first column */}
           <div className="flex flex-col gap-3 h-full">
-            <div className="rounded-xl border border-orange-800/50 bg-zinc-900/70 p-4 space-y-3 flex flex-col h-full">
+            <div className="rounded-lg border border-orange-800/50 bg-zinc-900/70 p-4 space-y-3 flex flex-col h-full">
               <div className="flex flex-col gap-2">
                 <ItemHeaderBadges
                   align="left"
@@ -114,7 +114,7 @@ export default async function ItemDropsPage({ params, searchParams}: { params: P
           {/* Individual drops */}
           {pageVariants.map((variant, i) => (
             <div key={variant.submissionId} className="flex flex-col gap-3 h-full">
-              <div className="rounded-xl border border-zinc-800 bg-zinc-950/70 p-4 space-y-3 flex flex-col h-full">
+              <div className="rounded-lg border border-zinc-800 bg-zinc-950/70 p-4 space-y-3 flex flex-col h-full">
 
                 {/* Drop header */}
                 <div className="flex flex-col gap-2">

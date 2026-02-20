@@ -16,7 +16,7 @@ import { useSession } from 'next-auth/react';
 
 const LoadingOverlay = ({ message }: { message: string }) => (
   <div className="overlay-modal">
-    <div className="flex flex-col items-center gap-3 rounded-xl border border-zinc-800 bg-zinc-900/90 px-6 py-6 shadow-2xl max-w-sm text-center">
+    <div className="flex flex-col items-center gap-3 rounded-lg border border-zinc-800 bg-zinc-900/90 px-6 py-6 shadow-2xl max-w-sm text-center">
       <Image
         src="/no-results.png"
         alt="Grumpy half-orc"
@@ -97,7 +97,7 @@ export const ImportPanel: React.FC<ImportPanelProps> = ({
   if (duplicateCheck && duplicateCheck.hasDuplicates) {
     return (
       <div className="">
-        <div className="bg-zinc-900 rounded-xl border border-zinc-800 p-6 shadow-lg">
+        <div className="bg-zinc-900 rounded-lg border border-zinc-800 p-6 shadow-lg">
           {shouldShowOverlay ? <LoadingOverlay message={waitingPhrase} /> : null}
           
           <div className="flex items-center gap-3 mb-4">
@@ -171,7 +171,7 @@ export const ImportPanel: React.FC<ImportPanelProps> = ({
   // Otherwise, show the main import panel
   return (
     <div className="">
-      <div className="bg-zinc-900 rounded-xl border border-zinc-800 p-6 shadow-lg">
+      <div className="bg-zinc-900 rounded-lg border border-zinc-800 p-6 shadow-lg">
         {shouldShowOverlay ? <LoadingOverlay message={waitingPhrase} /> : null}
         <div className="flex items-center gap-3 mb-4">
         <h2 className="text-lg font-bold text-white ps-2">Import Identify Data</h2>

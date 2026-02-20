@@ -29,11 +29,11 @@ const config: Config = {
            Used in: ItemWornSource, ItemTraitsFlags, ItemStatsSection, ItemContributors, 
            IdentifyDump, summary.tsx, item-selection-panel.tsx */
         '.card-section': {
-          '@apply rounded-xl border border-zinc-800 bg-zinc-900/60 p-4 space-y-3': {},
+          '@apply rounded-lg border border-zinc-800 bg-zinc-900/60 p-4 space-y-3': {},
         },
 
         '.card-section-dark': {
-          '@apply rounded-xl border border-zinc-800 bg-zinc-950/80 p-4 shadow-inner': {},
+          '@apply rounded-lg border border-zinc-800 bg-zinc-950/80 p-4 shadow-inner': {},
         },
 
         /* Badge & Tag Styling 

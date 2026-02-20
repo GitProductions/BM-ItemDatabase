@@ -403,7 +403,7 @@ export const GearPlanner: React.FC<GearPlannerProps> = ({ items }) => {
 
 
           {/* Equipment Layout Panel */}
-          <div className="relative overflow-hidden rounded-xl border border-zinc-800 bg-gradient-to-b from-orange-900/10 via-zinc-900/40 to-zinc-950/80 p-5">
+          <div className="relative overflow-hidden rounded-lg border border-zinc-800 bg-gradient-to-b from-orange-900/10 via-zinc-900/40 to-zinc-950/80 p-5">
 
             <div className="relative z-10 space-y-3">
              

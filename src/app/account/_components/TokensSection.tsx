@@ -22,7 +22,7 @@ export default function TokensSection() {
   } = useTokens();
 
   return (
-    <section className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 space-y-4">
+    <section className="bg-zinc-900 border border-zinc-800 rounded-lg p-5 space-y-4">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold text-white">API Tokens</h2>

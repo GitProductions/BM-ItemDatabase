@@ -208,7 +208,7 @@ export default function AddItemPage() {
        
       </div>
       {statusMessage && (
-        <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-3 text-sm text-rose-400">
+        <div className="rounded-lg border border-zinc-800 bg-zinc-900/40 px-4 py-3 text-sm text-rose-400">
           {statusMessage}
         </div>
       )}

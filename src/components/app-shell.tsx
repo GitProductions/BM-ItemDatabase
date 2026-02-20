@@ -30,7 +30,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <div className="mx-auto w-full max-w-7xl px-4 py-4 space-y-6">
               {loading ? (
                 <div className="space-y-4 animate-pulse min-h-[90vh]" aria-busy="true">
-                  <div className="rounded-xl bg-zinc-800/60" />
+                  <div className="rounded-lg bg-zinc-800/60" />
 
                 </div>
               ) : (

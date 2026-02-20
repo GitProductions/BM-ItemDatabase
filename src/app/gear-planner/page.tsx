@@ -18,7 +18,7 @@ export default function GearPlannerPage() {
 
   if (error) {
     return (
-      <div className="rounded-xl border border-rose-800/60 bg-rose-900/20 px-4 py-3 text-sm text-rose-200">
+      <div className="rounded-lg border border-rose-800/60 bg-rose-900/20 px-4 py-3 text-sm text-rose-200">
         {error}
       </div>
     );

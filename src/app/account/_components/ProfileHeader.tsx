@@ -48,7 +48,7 @@ export default function ProfileHeader({ session, update, onSignOut }: ProfileHea
   };
 
   return (
-    <div className="flex items-center justify-between bg-zinc-900 border border-zinc-800 rounded-xl p-5">
+    <div className="flex items-center justify-between bg-zinc-900 border border-zinc-800 rounded-lg p-5">
       <div>
         <p className="text-sm text-zinc-400">Signed in as</p>
         <div className="mt-1 mb-3 grid grid-cols-[auto,1fr] items-center gap-4">

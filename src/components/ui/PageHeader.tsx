@@ -6,9 +6,9 @@ type PageHeaderProps = {
   icons?: React.ReactNode;
 }
 
-function PageHeader({ title, description, icons }: PageHeaderProps) {
+function PageHeader({ title, description, icons, className }: PageHeaderProps & { className?: string }) {
   return (
-          <div className="flex items-center gap-3 mb-6">
+          <div className={`flex items-center gap-3 ${className || 'mb-6'}`}>
         {icons}
         <div>
           <h1 className="text-2xl font-bold text-white">{title}</h1>

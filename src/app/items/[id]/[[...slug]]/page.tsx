@@ -128,7 +128,7 @@ export default async function ItemPage({ params }: { params: Promise<RouteParams
       <div className="flex items-start gap-4">
 
         {/* Item card */}
-        <div className="flex-1 rounded-xl border border-zinc-800 bg-zinc-900/70 p-4 space-y-3">
+        <div className="flex-1 rounded-lg border border-zinc-800 bg-zinc-900/70 p-4 space-y-3">
 
           {/* Page title */}
           <div className="flex flex-wrap items-start justify-between gap-3">
@@ -153,7 +153,7 @@ export default async function ItemPage({ params }: { params: Promise<RouteParams
         {/* Recent Drops + Contributors */}
         {shouldShowRecentDrops && (
           <div className="w-72 shrink-0 space-y-4">
-            <div className="rounded-xl border border-zinc-800 bg-zinc-900/70 p-4">
+            <div className="rounded-lg border border-zinc-800 bg-zinc-900/70 p-4">
               <RecentDropsList
                 itemId={id}
                 recentVariants={recentVariants}
@@ -161,7 +161,7 @@ export default async function ItemPage({ params }: { params: Promise<RouteParams
                 variantsHref={variantsHref}
               />
             </div>
-            <div className="rounded-xl ">
+            <div className="rounded-lg ">
               <ItemContributors primarySubmitter={primarySubmitter} extraSubmitters={extraSubmitters} />
             </div>
           </div>

@@ -55,7 +55,7 @@ const Leaderboard: React.FC = () => {
   }, []);
 
   return (
-    <div className="border-panel rounded-xl p-4 shadow-sm">
+    <div className="border-panel rounded-lg p-4 shadow-sm">
       <div className="flex items-center justify-between mb-4">
         <div>
           <p className="text-xs uppercase tracking-[0.18em] text-orange-300">Hall of the Lost</p>

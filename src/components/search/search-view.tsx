@@ -77,6 +77,7 @@ export const SearchView: React.FC<SearchViewProps> = ({
                 title="Item Database"
                 description="Browse, filter, and search the community BlackMUD item database"
                 icons={<DatabaseSearch className="text-orange-400" size={24} />}
+                className='mb-4'
             />
 
             <SearchControls
