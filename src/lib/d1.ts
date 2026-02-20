@@ -716,8 +716,27 @@ export const fetchUserSubmissions = async (
     params.push(itemId);
   }
   query += ' ORDER BY submittedAt DESC';
-  const result = await db.prepare(query).bind(...params).all();
-  const rows = (result.results ?? result.rows ?? []) as any[];
+  const result = await db
+    .prepare(query)
+    .bind(...params)
+    .all<{
+      submissionId: string;
+      itemId: string;
+      submittedAt: string;
+      submittedBy: string | null;
+      submittedByUserId: string | null;
+      parsedItem: string | null;
+    }>();
+
+  const rows = (result.results ?? result.rows ?? []) as {
+    submissionId: string;
+    itemId: string;
+    submittedAt: string;
+    submittedBy: string | null;
+    submittedByUserId: string | null;
+    parsedItem: string | null;
+  }[];
+
   return rows.map((row) => ({
     submissionId: row.submissionId,
     itemId: row.itemId,
