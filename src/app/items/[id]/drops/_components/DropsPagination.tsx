@@ -2,19 +2,23 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import Pagination from '@/components/ui/Pagination';
+import { useState } from "react";
 
 type DropsPaginationProps = {
   total: number;
-  page: number;
   pageSize: number;
 };
 
-const DropsPagination = ({ total, page, pageSize }: DropsPaginationProps) => {
+const DropsPagination = ({ total, pageSize }: DropsPaginationProps) => {
+  const [page, setPage] = useState(1); 
   const router = useRouter();
   const searchParams = useSearchParams();
 
   const onPageChange = (nextPage: number) => {
+    setPage(nextPage);
+
     const params = new URLSearchParams(searchParams.toString());
+    
     if (nextPage <= 1) {
       params.delete('page');
     } else {
@@ -28,9 +32,9 @@ const DropsPagination = ({ total, page, pageSize }: DropsPaginationProps) => {
   return (
     <Pagination
       total={total}
-      page={page}
       pageSize={pageSize}
       onPageChange={onPageChange}
+      page={page}
       className="justify-center"
     />
   );

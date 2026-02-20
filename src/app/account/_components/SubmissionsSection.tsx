@@ -4,6 +4,7 @@ import Button from '@/components/ui/Button';
 import Pagination from '@/components/ui/Pagination';
 import { Item } from '@/types/items';
 import { useSubmissions } from '../_hooks/useSubmissions';
+import { useState } from "react";
 
 type SubmissionsSectionProps = {
   onEdit: (item: Item) => void;
@@ -11,7 +12,8 @@ type SubmissionsSectionProps = {
 };
 
 export default function SubmissionsSection({ onEdit, refreshKey }: SubmissionsSectionProps) {
-  const { items, loading, error, page, pageSize, setPage, refresh } = useSubmissions(refreshKey);
+  const { items, loading, error, pageSize, refresh } = useSubmissions(refreshKey);
+  const [page, setPage] = useState(1);
 
   return (
     <section className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 space-y-3">
@@ -43,7 +45,6 @@ export default function SubmissionsSection({ onEdit, refreshKey }: SubmissionsSe
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
-                  {/* <span className="text-[11px] text-zinc-400">Updated {item.submissionCount ?? ''}</span> */}
                   <Button size="sm" variant="primary" onClick={() => onEdit(item)}>
                     Edit
                   </Button>

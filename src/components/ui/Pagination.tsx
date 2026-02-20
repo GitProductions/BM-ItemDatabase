@@ -2,14 +2,15 @@
 
 import Link from "next/link";
 import React from "react";
+import { useSearchParams } from "next/navigation";
 
 type PaginationProps = {
   total: number;
-  page: number;
   pageSize: number;
   onPageChange?: (page: number) => void;
   className?: string;
   basePath?: string; // used for anchor-based navigation when onPageChange is not provided
+  page?: number; // optional prop to override the page from URL, used for non-anchor pagination
 };
 
 const range = (start: number, end: number) => Array.from({ length: end - start + 1 }, (_, i) => start + i);
@@ -37,6 +38,7 @@ const LinkButton = ({ disabled, href, onClick, active = false, children }: LinkB
       </button>
     );
   }
+
   const activeStyles = active ? 'bg-orange-500 text-black hover:bg-orange-400' : 'bg-zinc-800 text-zinc-100 hover:bg-zinc-700';
 
   if (onClick) {
@@ -60,28 +62,20 @@ const LinkButton = ({ disabled, href, onClick, active = false, children }: LinkB
   }
 
   return (
-    <a
+    <Link
       href={href}
       className={`inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded ${activeStyles} transition-colors`}
     >
       {children}
-    </a>
-
-    // we may need to use the <a> instead due to some weird issue with ahref and google search engines crawling...
-    // downside is using <a> seems to cause a complete hot reload of the page which is ugly for the user 
-    // as it causes a flash to occur. The Link component from nextjs is supposed to handle this better but for some reason isn't working in this case.
-    // <Link
-    //   className={`inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded ${activeStyles} transition-colors`}
-    //   // replace
-    //   // scroll
-    //   href={href}
-    //   >
-    //     {children}
-    // </Link>
+    </Link>
   );
 };
 
-export const Pagination: React.FC<PaginationProps> = ({ total, page, pageSize, onPageChange, className, basePath = '/' }) => {
+export const Pagination: React.FC<PaginationProps> = ({ total, pageSize, onPageChange, className, basePath = '/', page: propPage }) => {
+  const searchParams = useSearchParams();
+  const pageFromUrl = Number(searchParams.get("page")) || 1; 
+  const page = propPage ?? pageFromUrl; 
+
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const currentPage = Math.min(page, totalPages);
   const useAnchors = !onPageChange;

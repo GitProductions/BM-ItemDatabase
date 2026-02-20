@@ -146,7 +146,7 @@ export default async function ItemDropsPage({ params, searchParams}: { params: P
       </div>
 
       {totalPages > 1 && (
-        <DropsPagination total={variants.length} page={page} pageSize={dropsPerPage} />
+        <DropsPagination total={variants.length} pageSize={dropsPerPage} />
       )}
 
       {/* Empty state */}

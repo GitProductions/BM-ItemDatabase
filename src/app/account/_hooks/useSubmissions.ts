@@ -5,7 +5,7 @@ export const useSubmissions = (refreshKey?: number) => {
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [page, setPage] = useState(1);
+  // const [page, setPage] = useState(1);
   const pageSize = 10;
 
   const loadItems = async () => {
@@ -32,17 +32,17 @@ export const useSubmissions = (refreshKey?: number) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshKey]);
 
-  useEffect(() => {
-    setPage(1);
-  }, [items.length]);
+  // useEffect(() => {
+  //   setPage(1);
+  // }, [items.length]);
 
   return {
     items,
     loading,
     error,
-    page,
+    // page,
     pageSize,
-    setPage,
+    // setPage,
     refresh,
   };
 };
