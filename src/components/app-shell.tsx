@@ -29,7 +29,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div className="flex-1">
             <div className="mx-auto w-full max-w-7xl px-4 py-4 space-y-6">
               {loading ? (
-                <div className="space-y-4 animate-pulse min-h-[70vh]" aria-busy="true">
+                <div className="space-y-4 animate-pulse min-h-[90vh]" aria-busy="true">
                   <div className="rounded-xl bg-zinc-800/60" />
 
                 </div>
@@ -38,9 +38,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               )}
             </div>
           </div>
-          {/* <Footer /> */}
+          <Footer />
         </main>
-            <Footer />
+            {/* <Footer /> */}
       </div>
     </div>
   );
