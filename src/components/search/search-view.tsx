@@ -13,6 +13,7 @@ import { EditSuggestionModal } from '../search/edit-suggestion-modal';
 import { Pagination } from '../ui/Pagination';
 import { getRandomOrcPhrase } from '@/lib/orc-phrases';
 import Image from 'next/image';
+import ScrollToTopButton from '../ui/ScrollToTop';
 
 type SearchViewProps = {
     initialPage?: string;
@@ -20,6 +21,7 @@ type SearchViewProps = {
     initialTotalCount?: number;
     initialResultCount?: number;
 };
+
 
 export const SearchView: React.FC<SearchViewProps> = ({
     initialPage = '1',
@@ -88,11 +90,15 @@ export const SearchView: React.FC<SearchViewProps> = ({
                 slotOptions={slotOptions}
             />
 
+            <ScrollToTopButton />
+                        
+
             {hasResults ? (
                 <>
                     <ResultsGrid items={items} onEdit={setSuggestItem} onPrefetch={handlePrefetch} />
                     <div className="pt-4 flex flex-col items-center gap-1">
-                        
+
+               
                         
                         <Pagination total={total}  pageSize={PAGE_SIZE} basePath="/" />
 
