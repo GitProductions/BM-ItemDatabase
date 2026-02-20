@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import React from "react";
 
 type PaginationProps = {
@@ -50,6 +51,14 @@ const LinkButton = ({ disabled, href, onClick, active = false, children }: LinkB
     );
   }
 
+  if (!href) {
+    return (
+      <span className={`inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded ${activeStyles} transition-colors`}>
+        {children}
+      </span>
+    );
+  }
+
   return (
     <a
       href={href}
@@ -57,6 +66,18 @@ const LinkButton = ({ disabled, href, onClick, active = false, children }: LinkB
     >
       {children}
     </a>
+
+    // we may need to use the <a> instead due to some weird issue with ahref and google search engines crawling...
+    // downside is using <a> seems to cause a complete hot reload of the page which is ugly for the user 
+    // as it causes a flash to occur. The Link component from nextjs is supposed to handle this better but for some reason isn't working in this case.
+    // <Link
+    //   className={`inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded ${activeStyles} transition-colors`}
+    //   // replace
+    //   // scroll
+    //   href={href}
+    //   >
+    //     {children}
+    // </Link>
   );
 };
 

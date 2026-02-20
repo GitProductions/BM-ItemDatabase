@@ -34,6 +34,7 @@ export const SearchView: React.FC<SearchViewProps> = ({
         slotFilter,
         setSlotFilter,
         page,
+        // setPage,
         items,
         total,
         totalPages,
@@ -61,6 +62,15 @@ export const SearchView: React.FC<SearchViewProps> = ({
         [router]
     );
 
+    // const handlePageChange = useCallback(
+    //     (p: number) => {
+    //         setPage(p);
+    //         const url = p === 1 ? '/' : `/?page=${p}`;
+    //         router.replace(url, { scroll: false });
+    //     },
+    //     [setPage, router]
+    // );
+
     return (
         <div>
             <PageHeader
@@ -81,7 +91,12 @@ export const SearchView: React.FC<SearchViewProps> = ({
                 <>
                     <ResultsGrid items={items} onEdit={setSuggestItem} onPrefetch={handlePrefetch} />
                     <div className="pt-4 flex flex-col items-center gap-1">
+                        {/* <Pagination total={total} page={page} pageSize={PAGE_SIZE} onPageChange={handlePageChange} /> */}
+                        
+                        
+                        {/* resetting to basepath allows or forces a refresh on page which is great for our SEO issues but terrible for the end user as it causes a refresh on screen */}
                         <Pagination total={total} page={page} pageSize={PAGE_SIZE} basePath="/" />
+
                         <p className="text-xs text-zinc-500">
                             Page {page} of {totalPages} • {total} items total
                         </p>
