@@ -700,6 +700,35 @@ export const fetchRecentSubmissions = async (limit = 5): Promise<RecentSubmissio
   });
 };
 
+
+/**
+ * Fetch all submissions for a given user, optionally filtered by itemId.
+*/
+export const fetchUserSubmissions = async (
+  userId: string,
+  itemId?: string,
+): Promise<RecentSubmission[]> => {
+  const db = await getDatabase();
+  let query = `SELECT id as submissionId, itemId, submittedAt, submittedBy, submittedByUserId, parsedItem FROM submissions WHERE submittedByUserId = ?`;
+  const params: unknown[] = [userId];
+  if (itemId) {
+    query += ' AND itemId = ?';
+    params.push(itemId);
+  }
+  query += ' ORDER BY submittedAt DESC';
+  const result = await db.prepare(query).bind(...params).all();
+  const rows = (result.results ?? result.rows ?? []) as any[];
+  return rows.map((row) => ({
+    submissionId: row.submissionId,
+    itemId: row.itemId,
+    submittedAt: row.submittedAt,
+    submittedBy: row.submittedBy ?? undefined,
+    submittedByUserId: row.submittedByUserId ?? undefined,
+    parsedItem: parseJson(row.parsedItem),
+  }));
+};
+
+
 export const countItemsFiltered = async (params: ItemSearchParams = {}): Promise<number> => {
   const db = await getDatabase();
   const { joins, where, values } = buildItemQueryFilters(params);
