@@ -1,0 +1,80 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"main": ".open-next/worker.js",
+	"name": "bm-item-database",
+	"account_id": "c6d06e402cc1a55fd8080bf1212ecb9a",
+	"compatibility_date": "2025-11-04",
+	"compatibility_flags": [
+		"nodejs_compat",
+		"global_fetch_strictly_public"
+	],
+	"assets": {
+		"directory": ".open-next/assets",
+		"binding": "ASSETS"
+	},
+	"routes": [
+		{
+			"pattern": "bm-itemdb.gitago.dev",
+			"zone_name": "gitago.dev",
+			"custom_domain": true
+		}
+	],
+	"services": [
+		{
+			"environment": "production",
+			"binding": "WORKER_SELF_REFERENCE",
+			"service": "bm-item-database"
+		}
+	],
+	"d1_databases": [
+		// Our primary item database
+		{
+			"binding": "bm_itemdb",
+			"database_name": "bm_itemdb",
+			"database_id": "f57549bf-5f10-46db-a16f-c665f2766368"
+		},
+		// Cache database for Next.js tag revalidation
+		{
+			"binding": "NEXT_TAG_CACHE_D1",
+			"database_name": "bm_itemdb_cache",
+			"database_id": "1d28c8f5-89f0-4e63-90b1-10f63bcc069c"
+		}
+	],
+	"r2_buckets": [
+		// R2 bucket for Next.js incremental cache
+		{
+			"binding": "NEXT_INC_CACHE_R2_BUCKET",
+			"bucket_name": "bm-itemdb-cache"
+		}
+	],
+	"durable_objects": {
+		// Durable Object for Next.js tag cache
+		"bindings": [
+			{
+				"name": "NEXT_CACHE_DO_QUEUE",
+				"class_name": "DOQueueHandler"
+			}
+		]
+	},
+	"migrations": [
+		{
+			"tag": "v1",
+			"new_sqlite_classes": [
+				"DOQueueHandler"
+			]
+		}
+	],
+	"vars": {
+		"NEXT_PUBLIC_BASE_URL": "https://bm-itemdb.gitago.dev",
+		"NEXTAUTH_URL": "https://bm-itemdb.gitago.dev",
+		"GITHUB_RELEASE_URL": "https://github.com/GitProductions/BM-ITEMDB_MUDLET/releases/latest/download/BM-ITEMDB.mpackage"
+	},
+	"workers_dev": true,
+	"preview_urls": true,
+	"observability": {
+		"logs": {
+			"enabled": true,
+			"invocation_logs": true
+		}
+	}
+}

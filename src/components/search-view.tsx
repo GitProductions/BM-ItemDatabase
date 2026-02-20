@@ -34,7 +34,7 @@ export const SearchView: React.FC<SearchViewProps> = ({
         slotFilter,
         setSlotFilter,
         page,
-        // setPage,
+        setPage,
         items,
         total,
         totalPages,
@@ -62,14 +62,14 @@ export const SearchView: React.FC<SearchViewProps> = ({
         [router]
     );
 
-    // const handlePageChange = useCallback(
-    //     (p: number) => {
-    //         setPage(p);
-    //         const url = p === 1 ? '/' : `/?page=${p}`;
-    //         router.replace(url, { scroll: false });
-    //     },
-    //     [setPage, router]
-    // );
+    const handlePageChange = useCallback(
+        (p: number) => {
+            setPage(p);
+            const url = p === 1 ? '/' : `/?page=${p}`;
+            router.replace(url, { scroll: false });
+        },
+        [setPage, router]
+    );
 
     return (
         <div>
