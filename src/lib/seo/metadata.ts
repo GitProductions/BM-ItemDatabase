@@ -57,7 +57,7 @@ export function buildPageMetadata({
     //title = plainify(resolvedTitle);
 
     return {
-        metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || "https://bm-itemdb.gitago.dev"),
+        metadataBase: new URL(SITE_URL || "https://bm-itemdb.gitago.dev"),
 
         title: {
             default: resolvedTitle,
@@ -65,8 +65,8 @@ export function buildPageMetadata({
         },
         description: resolvedDescription,
         icons: {
-            icon: "/bm-logo.png",
-            apple: "/bm-logo.png",
+            icon: `${SITE_URL}/bm-logo.png`,
+            apple: `${SITE_URL}/bm-logo.png`,
         },
 
         keywords: [
