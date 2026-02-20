@@ -1,0 +1,73 @@
+# /_next/static/*
+#   Cache-Control: public, max-age=31536000, immutable  # 1 year
+#   Expires: Thu, 31 Dec 2026 23:55:55 GMT
+# 
+# /static/*
+#   Cache-Control: public, max-age=31536000  # 1 year
+#   Expires: Thu, 31 Dec 2026 23:55:55 GMT
+
+# /images/*
+#   Cache-Control: public, max-age=2592000  # 30 days
+#   Expires: Thu, 17 Dec 2025 23:55:55 GMT
+# 
+# /*.js
+#   Cache-Control: public, max-age=2592000  # 30 days
+#   Expires: Thu, 17 Dec 2025 23:55:55 GMT
+# 
+# /*.css
+#   Cache-Control: public, max-age=2592000  # 30 days
+#   Expires: Thu, 17 Dec 2025 23:55:55 GMT
+
+
+/*.woff2
+  Cache-Control: public, max-age=15552000  # 6 months
+  Expires: Thu, 18 Feb 2026 23:55:55 GMT
+
+/*.mp4
+  Cache-Control: public, max-age=15552000  # 6 months
+  Expires: Thu, 18 Feb 2026 23:55:55 GMT
+
+/*.jpg
+  Cache-Control: public, max-age=7552000  # ~3 months
+  Expires: Thu, 18 Feb 2026 23:55:55 GMT
+
+/*.webp
+  Cache-Control: public, max-age=7552000  # ~3 months
+  Expires: Thu, 18 Feb 2026 23:55:55 GMT
+
+/*.webm
+  Cache-Control: public, max-age=7552000  # ~3 months
+  Expires: Thu, 18 Feb 2026 23:55:55 GMT
+
+
+
+
+
+
+
+
+# ------------------------------------------------------------
+# Production domain
+# Allow indexing explicitly
+# ------------------------------------------------------------
+# https://teamchargeshot.com/*
+#   X-Robots-Tag: all
+
+
+
+# ------------------------------------------------------------
+# Default Cloudflare Pages domain
+# ------------------------------------------------------------
+# https://:project.pages.dev/*
+#   X-Robots-Tag: all
+#   Cache-Control: public, max-age=86400
+
+
+
+# ------------------------------------------------------------
+# Preview builds (development / versioned deployments)
+# Disallow indexing so crawlers don't index test versions
+# ------------------------------------------------------------
+https://:version.:project.pages.dev/*
+  X-Robots-Tag: noindex, nofollow, nosnippet, noarchive
+  Cache-Control: no-store

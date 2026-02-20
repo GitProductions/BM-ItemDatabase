@@ -76,12 +76,12 @@ function Header({
             <Link href="/" className="flex items-center gap-2">
               <Image
                 priority
-                // quality={60}
-                sizes="30px"
+                quality={50}
+                sizes="32px"
                 src="/bm-logo.webp"
                 alt="BlackMUD Logo"
-                width={30}
-                height={30}
+                width={32}
+                height={32}
               />
             </Link>
           </div>

@@ -16,8 +16,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <Image
           src="/bm-logo.webp"
           alt="Background Logo"
+          sizes='(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw'
           width={600}
           height={900}
+          priority
+          quality={50}
           loading="eager"
           className="h-full w-full object-contain"
         />
